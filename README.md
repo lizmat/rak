@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/lizmat/raku/actions/workflows/test.yml/badge.svg)](https://github.com/lizmat/raku/actions)
+[![Actions Status](https://github.com/lizmat/rak/actions/workflows/test.yml/badge.svg)](https://github.com/lizmat/rak/actions)
 
 NAME
 ====
@@ -23,6 +23,76 @@ DESCRIPTION
 ===========
 
 The `rak` subroutine provides a mostly abstract core search functionality to be used by modules such as `App::Rak`.
+
+THEORY OF OPERATION
+===================
+
+The `rak` subroutine basically goes through 4 steps to produce a result.
+
+1. Acquire sources
+------------------
+
+The first step is determining the objects that should be searched for the specified pattern. If an object is a `Str`, it will be assume that it is a path specification of a file to be searched in some form and an `IO::Path` object will be created for it.
+
+Related named arguments are (in alphabetical order):
+
+  * :dir - filter for directory basename check to include
+
+  * :file - filter for file basename check to include
+
+  * :files-from - file containing filenames as source
+
+  * :paths - paths to recurse into if directory
+
+  * :paths-from - file containing paths to recurse into
+
+  * :sources - list of objects to be considered as source
+
+The result of this step, is a (potentially lazy and hyperable) sequence of objects.
+
+### 2. Produce items to search in
+
+The second step is to create the logic for creating items to search in from the objects in step 1. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
+
+Related named arguments are (in alphabetical order):
+
+  * :encoding - encoding to be used when creating items
+
+  * :per-file - logic to create one item per object
+
+  * :per-line - logic to create one item per line in the object
+
+The result of this step, is a (potentially lazy and hyperable) sequence of objects.
+
+### 3. Create logic for matching
+
+Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 2.
+
+Related named arguments are (in alphabetical order):
+
+  * :invert-match - invert the logic of matching
+
+  * :quietly - absorb any warnings produced by the matcher
+
+  * :silently - absorb any output done by the matcher
+
+### 4. Create logic for contextualizing
+
+Take the logic of the `Callable` of step 3 and create a `Callable` that will produce the items found and their possible context. If no specific context setting is found, then it will just use the `Callable` of step 3.
+
+Related named arguments are (in alphabetical order):
+
+  * :after-context - number of lines to show after a match
+
+  * :before-context - number of lines to show before a match
+
+  * :context - number of lines to show around a match
+
+  * :paragraph-context - lines around match until empty line
+
+### 5. Run the sequence(s)
+
+The final step is to take the `Callable` of step 4 and run that repeatedly on the sequence of step 1, and for each item of that sequence, run the sequence of step 2 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. And produce a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
 
 EXPORTED SUBROUTINES
 ====================
@@ -118,6 +188,27 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 
 If specified, indicates a list of objects that should be used as a source for the production of lines.
 
+PATTERN RETURN VALUES
+---------------------
+
+The return value of the pattern `Callable` is interpreted in the following ways:
+
+### True
+
+If the `Bool`ean True value is returned, assume the pattern is found. Produce the line unless `:invert-match` was specified.
+
+### False
+
+If the `Bool`ean Fals value is returned, assume the pattern is **not** found. Do **not** produce the line unless `:invert-match` was specified.
+
+### Empty
+
+Always produce the line. Even if `:invert-match` was specified.
+
+### any other value
+
+Produce that value.
+
 PHASERS
 -------
 
@@ -127,6 +218,10 @@ AUTHOR
 ======
 
 Elizabeth Mattijsen <liz@raku.rocks>
+
+Source can be located at: https://github.com/lizmat/rak . Comments and Pull Requests are welcome.
+
+If you like this module, or what I’m doing more generally, committing to a [small sponsorship](https://github.com/sponsors/lizmat/) would mean a great deal to me!
 
 COPYRIGHT AND LICENSE
 =====================

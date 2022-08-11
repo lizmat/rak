@@ -20,8 +20,10 @@
   },
   "resources": [
   ],
-  "source-url": "https://github.com/lizmat/raku.git",
+  "source-url": "https://github.com/lizmat/rak.git",
   "tags": [
+    "RAK",
+    "SEARCH"
   ],
   "test-depends": [
   ],

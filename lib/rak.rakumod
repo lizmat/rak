@@ -306,7 +306,6 @@ multi sub rak(&needle, %n) {
         &next-phaser  = &needle.callable_for_phaser('NEXT');
         &last-phaser  = &needle.callable_for_phaser('LAST');
     }
-    my $has-phasers := &first || &next || &last;
 
     my &producer := do if (%n<per-file>:delete)<> -> $per-file {
         $per-file =:= True
@@ -355,25 +354,29 @@ multi sub rak(&needle, %n) {
     }
 
     first-phaser() if &first-phaser;
-    my $seq := &next-phaser
-      ?? $sources-seq.map: -> $source {
-             my \result :=
-               Pair.new: $source, (producer($source).map: &runner).Slip;
-             next-phaser();
-             result
-         }
-      !! $sources-seq.map: -> $source {
-             Pair.new: $source, (producer($source).map: &runner).Slip
-         }
+    my $result-seq := do if &next-phaser {
+        my $lock := Lock.new;
+        $sources-seq.map: -> $source {
+            my \result :=
+              Pair.new: $source, (producer($source).map: &runner).Slip;
+            $lock.protect: &next-phaser;
+            result
+        }
+    }
+    else {
+        $sources-seq.map: -> $source {
+            Pair.new: $source, (producer($source).map: &runner).Slip
+        }
+    }
 
 
     if &last-phaser {
-        my @result = $seq;
+        my @result = $result-seq;
         last-phaser();
         @result
     }
     else {
-        $seq
+        $result-seq
     }
 }
 
@@ -402,6 +405,83 @@ for rak *.contains("foo") -> (:key($path), :value(@found)) {
 
 The C<rak> subroutine provides a mostly abstract core search
 functionality to be used by modules such as C<App::Rak>.
+
+=head1 THEORY OF OPERATION
+
+The C<rak> subroutine basically goes through 4 steps to produce a
+result.
+
+=head2 1. Acquire sources
+
+The first step is determining the objects that should be searched
+for the specified pattern.  If an object is a C<Str>, it will be
+assume that it is a path specification of a file to be searched in
+some form and an C<IO::Path> object will be created for it.
+
+Related named arguments are (in alphabetical order):
+
+=item :dir - filter for directory basename check to include
+=item :file - filter for file basename check to include
+=item :files-from - file containing filenames as source
+=item :paths - paths to recurse into if directory
+=item :paths-from - file containing paths to recurse into
+=item :sources - list of objects to be considered as source
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head3 2. Produce items to search in
+
+The second step is to create the logic for creating items to
+search in from the objects in step 1.  If search is to be done
+per object, then C<.slurp> is called on the object.  Otherwise
+C<.lines> is called on the object.  Unless one provides their
+own logic for producing items to search in.
+
+Related named arguments are (in alphabetical order):
+
+=item :encoding - encoding to be used when creating items
+=item :per-file - logic to create one item per object
+=item :per-line - logic to create one item per line in the object
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head3 3. Create logic for matching
+
+Take the logic of the pattern C<Callable>, and create a C<Callable> to
+do the actual matching with the items produced in step 2.
+
+Related named arguments are (in alphabetical order):
+
+=item :invert-match - invert the logic of matching
+=item :quietly - absorb any warnings produced by the matcher
+=item :silently - absorb any output done by the matcher
+
+=head3 4. Create logic for contextualizing
+
+Take the logic of the C<Callable> of step 3 and create a C<Callable>
+that will produce the items found and their possible context.  If
+no specific context setting is found, then it will just use the
+C<Callable> of step 3.
+
+Related named arguments are (in alphabetical order):
+
+=item :after-context - number of lines to show after a match
+=item :before-context - number of lines to show before a match
+=item :context - number of lines to show around a match
+=item :paragraph-context - lines around match until empty line
+
+=head3 5. Run the sequence(s)
+
+The final step is to take the C<Callable> of step 4 and run that
+repeatedly on the sequence of step 1, and for each item of that
+sequence, run the sequence of step 2 on that.  Make sure any
+phasers (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
+time in a thread-safe manner.  And produce a sequence in which the
+key is the source, and the value is a C<Slip> of C<Pair>s where the
+key is the line-number and the value is line with the match, or
+whatever the pattern matcher returned.
 
 =head1 EXPORTED SUBROUTINES
 
@@ -551,6 +631,29 @@ and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 
 If specified, indicates a list of objects that should be used
 as a source for the production of lines.
+
+=head2 PATTERN RETURN VALUES
+
+The return value of the pattern C<Callable> is interpreted in the
+following ways:
+
+=head3 True
+
+If the C<Bool>ean True value is returned, assume the pattern is found.
+Produce the line unless C<:invert-match> was specified.
+
+=head3 False
+
+If the C<Bool>ean Fals value is returned, assume the pattern is B<not>
+found.  Do B<not> produce the line unless C<:invert-match> was specified.
+
+=head3 Empty
+
+Always produce the line.  Even if C<:invert-match> was specified.
+
+=head3 any other value
+
+Produce that value.
 
 =head2 PHASERS
 
