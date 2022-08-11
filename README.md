@@ -58,6 +58,8 @@ Related named arguments are (in alphabetical order):
 
   * :encoding - encoding to be used when creating items
 
+  * :find - map sequence of step 1 to item producer
+
   * :per-file - logic to create one item per object
 
   * :per-line - logic to create one item per line in the object
@@ -141,6 +143,10 @@ If specified, indicates the matcher that should be used to select acceptable fil
 ### :files-from($filename)
 
 If specified, indicates the name of the file from which a list of files to be used as sources will be read.
+
+### :find
+
+Flag. If specified, maps the sources of items into items to search.
 
 ### :invert-match
 

@@ -266,13 +266,16 @@ multi sub rak(&needle, *%n) {
     rak &needle, %n
 }
 multi sub rak(&needle, %n) {
+    # any execution error will ne caught and become a return state
     CATCH { return $_ => .message }
 
+    # Some settings we always need
     my $batch  := %n<batch>:delete;
     my $degree := %n<degree>:delete;
     my $enc    := %n<encoding>:delete // 'utf8-c8';
 
-    my $sources-seq := do if %n<files-from>:delete -> $files-from {
+    # Step 1: sources sequence
+    my $sources-seq = do if %n<files-from>:delete -> $files-from {
         paths-from-file($files-from)
     }
     elsif %n<paths-from>:delete -> $paths-from {
@@ -298,15 +301,7 @@ multi sub rak(&needle, %n) {
         paths ".", |paths-arguments(%n)
     }
 
-    my &first-phaser;
-    my &next-phaser;
-    my &last-phaser;
-    if &needle.has-loop-phasers {
-        &first-phaser = &needle.callable_for_phaser('FIRST');
-        &next-phaser  = &needle.callable_for_phaser('NEXT');
-        &last-phaser  = &needle.callable_for_phaser('LAST');
-    }
-
+    # Step 2: producer Callable
     my &producer := do if (%n<per-file>:delete)<> -> $per-file {
         $per-file =:= True
           ?? -> $source {
@@ -315,7 +310,7 @@ multi sub rak(&needle, %n) {
                    ?? $source.IO.slurp(:$enc)
                    !! $source.slurp(:$enc)
              }
-          !! $per-file
+          !! $per-file  # assume Callable
     }
     elsif (%n<per-line>:delete)<> -> $per-line {
         $per-line =:= True
@@ -325,7 +320,12 @@ multi sub rak(&needle, %n) {
                    ?? $source.IO.lines(:$enc)
                    !! $source.lines(:$enc)
              }
-          !! $per-line
+          !! $per-line  # assume Callable
+    }
+    elsif %n<find>:delete {
+        my $seq := $sources-seq<>;
+        $sources-seq = ("<find>",);
+        -> $ { $seq }
     }
     else {
         -> $source {
@@ -336,7 +336,10 @@ multi sub rak(&needle, %n) {
         }
     }
 
+    # Step 3: matching logic
     my &matcher = make-matcher(&needle, %n);
+
+    # Step 4: contextualizing logic
     my &runner := do if %n<paragraph-context>:delete {
         make-paragraph-context-runner(&matcher)
     }
@@ -353,6 +356,17 @@ multi sub rak(&needle, %n) {
         make-runner(&matcher)
     }
 
+    # Step 5: run the sequences
+    my &first-phaser;
+    my &next-phaser;
+    my &last-phaser;
+    if &needle.has-loop-phasers {
+        &first-phaser = &needle.callable_for_phaser('FIRST');
+        &next-phaser  = &needle.callable_for_phaser('NEXT');
+        &last-phaser  = &needle.callable_for_phaser('LAST');
+    }
+
+    # Set up result sequence
     first-phaser() if &first-phaser;
     my $result-seq := do if &next-phaser {
         my $lock := Lock.new;
@@ -369,12 +383,14 @@ multi sub rak(&needle, %n) {
         }
     }
 
-
+    # With a LAST phaser, need to run all searches before firing
     if &last-phaser {
         my @result = $result-seq;
         last-phaser();
         @result
     }
+
+    # No LAST phaser, let the caller handle laziness
     else {
         $result-seq
     }
@@ -441,6 +457,7 @@ own logic for producing items to search in.
 Related named arguments are (in alphabetical order):
 
 =item :encoding - encoding to be used when creating items
+=item :find - map sequence of step 1 to item producer
 =item :per-file - logic to create one item per object
 =item :per-line - logic to create one item per line in the object
 
@@ -559,6 +576,10 @@ check.
 
 If specified, indicates the name of the file from which a list
 of files to be used as sources will be read.
+
+=head3 :find
+
+Flag.  If specified, maps the sources of items into items to search.
 
 =head3 :invert-match
 
