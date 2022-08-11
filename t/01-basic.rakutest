@@ -1,0 +1,8 @@
+use Test;
+use rak;
+
+plan 1;
+
+ok MY::<&rak>, 'did rak get exported';
+
+# vim: expandtab shiftwidth=4

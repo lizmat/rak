@@ -1,0 +1,29 @@
+{
+  "auth": "zef:lizmat",
+  "authors": [
+    "Elizabeth Mattijsen"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "has-word:ver<0.0.3>:auth<zef:lizmat>",
+    "hyperize:ver<0.0.2>:auth<zef:lizmat>",
+    "paths:ver<10.0.7>:auth<zef:lizmat>",
+    "Trap:ver<0.0.1>:auth<zef:lizmat>"
+  ],
+  "description": "look for clues in stuff",
+  "license": "Artistic-2.0",
+  "name": "rak",
+  "perl": "6.d",
+  "provides": {
+    "rak": "lib/rak.rakumod"
+  },
+  "resources": [
+  ],
+  "source-url": "https://github.com/lizmat/raku.git",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
+}
