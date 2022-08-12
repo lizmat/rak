@@ -5,7 +5,7 @@ plan 11;
 
 my $dir := $?FILE.IO.sibling("target").absolute;
 my %name2path = <zero one two three four five six seven eight nine>.map: {
-    $_ => "$dir/$_"
+    $_ => $dir.IO.add($_).absolute
 }
 my %path2name = %name2path.kv.reverse;
 
