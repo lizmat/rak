@@ -5,6 +5,9 @@ use paths:ver<10.0.7>:auth<zef:lizmat>;
 use path-utils:ver<0.0.1>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
+my class PairMatched is Pair is export { method matched(--> True)  { } }
+my class PairContext is Pair is export { method matched(--> False) { } }
+
 # Return a Seq with ~ paths substituted for actual home directory paths
 my sub paths-from-file($from) {
     my $home := $*HOME.absolute ~ '/';
@@ -115,7 +118,7 @@ my sub make-paragraph-context-runner(&matcher) {
         my $result := matcher($item.value);
         if $result {
             $after = True;
-            @before.push(Pair.new: $item.key, $result).splice.Slip
+            @before.push(PairMatched.new: $item.key, $result).splice.Slip
         }
         elsif $after {
             if $item.value {
@@ -146,7 +149,7 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
             my $result := matcher($item.value);
             if $result {
                 $todo = $after;
-                @before.push(Pair.new: $item.key, $result).splice.Slip
+                @before.push(PairMatched.new: $item.key, $result).splice.Slip
             }
             elsif $todo {
                 --$todo;
@@ -165,7 +168,7 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
             my $result := matcher($item.value);
             if $result {
                 $todo = $after;
-                Pair.new: $item.key, $result
+                PairMatched.new: $item.key, $result
             }
             elsif $todo {
                 --$todo;
@@ -182,7 +185,7 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
 sub make-runner(&matcher) {
     -> $item {
         (my $result := matcher($item.value))
-          ?? Pair.new($item.key, $result)
+          ?? PairMatched.new($item.key, $result)
           !! Empty
     }
 }
@@ -232,7 +235,7 @@ multi sub rak(&needle, %n) {
         $per-file =:= True
           ?? -> $source {
                  CATCH { return Empty }
-                 (Pair.new: 1, Str.ACCEPTS($source)
+                 (PairContext.new: 1, Str.ACCEPTS($source)
                    ?? $source.IO.slurp(:$enc)
                    !! $source.slurp(:$enc),
                  )
@@ -247,7 +250,7 @@ multi sub rak(&needle, %n) {
                    ?? $source.IO.lines(:$enc)
                    !! $source.lines(:$enc);
                  my $line-number = 0;
-                 $seq.map: { Pair.new: ++$line-number, $_ }
+                 $seq.map: { PairContext.new: ++$line-number, $_ }
              }
           !! $per-line  # assume Callable
     }
@@ -255,7 +258,7 @@ multi sub rak(&needle, %n) {
         my $seq := $sources-seq<>;
         $sources-seq = ("<find>",);
         my $line-number = 0;
-        -> $ { $seq.map: { Pair.new: ++$line-number, $_ } }
+        -> $ { $seq.map: { PairContext.new: ++$line-number, $_ } }
     }
     else {
         -> $source {
@@ -264,7 +267,7 @@ multi sub rak(&needle, %n) {
               ?? $source.IO.lines(:$enc)
               !! $source.lines(:$enc);
             my $line-number = 0;
-            $seq.map: { Pair.new: ++$line-number, $_ }
+            $seq.map: { PairContext.new: ++$line-number, $_ }
         }
     }
 
@@ -647,6 +650,17 @@ Produce that value.
 
 Any C<FIRST>, C<NEXT> and C<LAST> phaser that are specified in the
 pattern C<Callable>, will be executed at the correct time.
+
+=head2 MATCHING LINES vs CONTEXT LINES
+
+The C<Pair>s that contain the search result within an object, have
+an additional method mixed in: C<matched>.  This returns C<True> for
+lines that matched, and C<False> for lines that have been added because
+of a context specification (C<:context>, C<:before-context>, C<:after-context>
+or C<paragraph-context>).
+
+These C<Pair>s can also be recognized by their class: C<PairMatched> versus
+C<PairContext>, which are also exported.
 
 =head1 AUTHOR
 

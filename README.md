@@ -102,9 +102,9 @@ EXPORTED SUBROUTINES
 rak
 ---
 
-The `rak` subroutine takes a `Callable` pattern as the only positional argument and quite a number of named arguments. Or it takes a `Callable` as the first positional argument for the pattern, and a hash with named arguments as the second positional argument. In the latter case, the hash will have the arguments removed that the `rak` subroutine needed for its configuration and execution.
+The `rak` subroutine takes a `Callable` (or `Regex`) pattern as the only positional argument and quite a number of named arguments. Or it takes a `Callable` (or `Regex`) as the first positional argument for the pattern, and a hash with named arguments as the second positional argument. In the latter case, the hash will have the arguments removed that the `rak` subroutine needed for its configuration and execution.
 
-It returns either a `Pair` (with an `Exception` as key, and the exception message as the value), or a `Seq` or `HyperSeq` that contains the source object as key (by default a `IO::Path` object of the file in which the pattern was found), and a `Slip` of key / value pairs, in which the key is the line-number where the pattern was found, and the value is the product of the search (which, by default, is the line in which the pattern was found).
+It returns either a `Pair` (with an `Exception` as key, and the exception message as the value), or an `Iterable` of `Pair`s which contain the source object as key (by default a `IO::Path` object of the file in which the pattern was found), and a `Slip` of key / value pairs, in which the key is the line-number where the pattern was found, and the value is the product of the search (which, by default, is the line in which the pattern was found).
 
 The following named arguments can be specified (in alphabetical order):
 
@@ -194,6 +194,10 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 
 If specified, indicates a list of objects that should be used as a source for the production of lines.
 
+### :stats
+
+Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument.
+
 PATTERN RETURN VALUES
 ---------------------
 
@@ -219,6 +223,13 @@ PHASERS
 -------
 
 Any `FIRST`, `NEXT` and `LAST` phaser that are specified in the pattern `Callable`, will be executed at the correct time.
+
+MATCHING LINES vs CONTEXT LINES
+-------------------------------
+
+The `Pair`s that contain the search result within an object, have an additional method mixed in: `matched`. This returns `True` for lines that matched, and `False` for lines that have been added because of a context specification (`:context`, `:before-context`, `:after-context` or `paragraph-context`).
+
+These `Pair`s can also be recognized by their class: `PairMatched` versus `PairContext`, which are also exported.
 
 AUTHOR
 ======

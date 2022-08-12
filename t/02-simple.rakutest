@@ -9,19 +9,31 @@ my %name2path = <zero one two three four five six seven eight nine>.map: {
 }
 my %path2name = %name2path.kv.reverse;
 
-# Line locations and their contents
-my \l0 =  1 => "zero";
-my \L0 =  1 => "ZERO";
-my \l1 =  2 => "one";
-my \l2 =  3 => "two";
-my \L2 =  3 => "TWO";
-my \l3 =  4 => "three";
-my \l4 =  5 => "four";
-my \l5 =  6 => "five";
-my \l6 =  7 => "six";
-my \l7 =  8 => "seven";
-my \l8 =  9 => "eight";
-my \l9 = 10 => "nine";
+# Line locations and their contents for matches
+my \l0 = PairMatched.new:  1, "zero";
+my \L0 = PairMatched.new:  1, "ZERO";
+my \l1 = PairMatched.new:  2, "one";
+my \l2 = PairMatched.new:  3, "two";
+my \L2 = PairMatched.new:  3, "TWO";
+my \l3 = PairMatched.new:  4, "three";
+my \l4 = PairMatched.new:  5, "four";
+my \l5 = PairMatched.new:  6, "five";
+my \l6 = PairMatched.new:  7, "six";
+my \l7 = PairMatched.new:  8, "seven";
+my \l8 = PairMatched.new:  9, "eight";
+my \l9 = PairMatched.new: 10, "nine";
+
+# Line locations and their contents for contexts
+my \c0 = PairContext.new:  1, "zero";
+my \c1 = PairContext.new:  2, "one";
+my \c2 = PairContext.new:  3, "two";
+my \c3 = PairContext.new:  4, "three";
+my \c4 = PairContext.new:  5, "four";
+my \c5 = PairContext.new:  6, "five";
+my \c6 = PairContext.new:  7, "six";
+my \c7 = PairContext.new:  8, "seven";
+my \c8 = PairContext.new:  9, "eight";
+my \c9 = PairContext.new: 10, "nine";
 
 my sub lookup(
   $pattern, *@expected, *%additional
@@ -99,19 +111,19 @@ lookup "/ zer /", :sources(%name2path<eight nine>),
 ;
 
 lookup "four", :sources(%name2path<nine>), :context(2),
-  "nine"  => (l2, l3, l4, l5, l6),
+  "nine"  => (c2, c3, l4, c5, c6),
 ;
 
 lookup "/ four /", :sources(%name2path<nine>), :before-context(2),
-  "nine"  => (l2, l3, l4),
+  "nine"  => (c2, c3, l4),
 ;
 
 lookup "/ fou /", :sources(%name2path<nine>), :after-context(2),
-  "nine"  => (l4, l5, l6),
+  "nine"  => (l4, c5, c6),
 ;
 
 lookup "/ our /", :sources(%name2path<nine>), :paragraph-context,
-  "nine"  => (l0, l1, l2, l3, l4, l5, l6, l7, l8, l9),
+  "nine"  => (c0, c1, c2, c3, l4, c5, c6, c7, c8, c9),
 ;
 
 # vim: expandtab shiftwidth=4
