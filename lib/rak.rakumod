@@ -2,73 +2,8 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
+use path-utils:ver<0.0.1>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
-
-# Pre-process literal strings looking like a regex
-my sub regexify($pattern, %_) {
-    my $i := %_<ignorecase>:delete ?? ':i' !! '';
-    my $m := %_<ignoremark>:delete ?? ':m' !! '';
-    "/$i$m $pattern.substr(1)".EVAL
-}
-
-# Return prelude from --repository and --module parameters
-my sub prelude(%_) {
-    my $prelude = "";
-    if %_<repository>:delete -> \libs {
-        $prelude = libs.map({"use lib '$_'; "}).join;
-    }
-    if %_<module>:delete -> \modules {
-        $prelude ~= modules.map({"use $_; "}).join;
-    }
-    $prelude
-}
-
-# Pre-process non literal string needles, return Callable if possible
-my sub codify(Str() $pattern, %_?) {
-
-    # Handle smartcase
-    %_<ignorecase> = !$pattern.contains(/ <:upper> /)
-      if (%_<ignorecase>:!exists) && (%_<smartcase>:delete);
-
-    $pattern.starts-with('/') && $pattern.ends-with('/')
-      ?? regexify($pattern, %_)
-      !! $pattern.starts-with('{') && $pattern.ends-with('}')
-        ?? (prelude(%_) ~ 'my $ := -> $_ ' ~ $pattern).EVAL
-        !! $pattern.starts-with('*.')
-          ?? (prelude(%_) ~ 'my $ := ' ~ $pattern).EVAL
-          !! $pattern
-}
-
-# Return Callable for a pattern that is not supposed to be code
-my sub needleify($pattern, $highlightable, %_) {
-    my $i := %_<ignorecase>:delete;
-    my $m := %_<ignoremark>:delete;
-    my $type := %_<type>:delete || 'contains';
-
-    if $type eq 'words' {
-        $highlightable() if $highlightable;
-        $i
-          ?? $m
-            ?? *.&has-word($pattern, :i, :m)
-            !! *.&has-word($pattern, :i)
-          !! $m
-            ?? *.&has-word($pattern, :m)
-            !! *.&has-word($pattern)
-    }
-    elsif $type eq 'contains' | 'starts-with' | 'ends-with' {
-        $highlightable() if $highlightable;
-        $i
-          ?? $m
-            ?? *."$type"($pattern, :i, :m)
-            !! *."$type"($pattern, :i)
-          !! $m
-            ?? *."$type"($pattern, :m)
-            !! *."$type"($pattern)
-    }
-    else {
-        die "Don't know how to handle type: $type";
-    }
-}
 
 # Return a Seq with ~ paths substituted for actual home directory paths
 my sub paths-from-file($from) {
@@ -176,23 +111,23 @@ my sub make-matcher(&needle, %_) {
 my sub make-paragraph-context-runner(&matcher) {
     my $after;
     my @before;
-    -> $haystack {
-        my $result := matcher($haystack);
+    -> $item {
+        my $result := matcher($item.value);
         if $result {
             $after = True;
-            @before.push($result).splice.Slip
+            @before.push(Pair.new: $item.key, $result).splice.Slip
         }
         elsif $after {
-            if $haystack {
-                $haystack
+            if $item.value {
+                $item
             }
             else {
                 $after = False;
                 Empty
             }
         }
-        elsif $haystack {
-            @before.push: $haystack;
+        elsif $item.value {
+            @before.push: $item;
             Empty
         }
         else {
@@ -205,43 +140,36 @@ my sub make-paragraph-context-runner(&matcher) {
 # Return a runner Callable for numeric context around lines
 my sub make-numeric-context-runner(&matcher, $before, $after) {
     if $before {
-        my $line-number = 0;
         my $todo;
         my @before;
-        -> $haystack {
-            ++$line-number;
-            my $result := matcher($haystack);
+        -> $item {
+            my $result := matcher($item.value);
             if $result {
                 $todo = $after;
-                $line-number = $line-number - @before.elems - 1;
-                @before.push($result).splice.map({
-                    Pair.new: ++$line-number, $_
-                }).Slip
+                @before.push(Pair.new: $item.key, $result).splice.Slip
             }
             elsif $todo {
                 --$todo;
-                Pair.new: $line-number, $haystack
+                $item
             }
             else {
                 @before.shift if @before.elems == $before;
-                @before.push: $haystack;
+                @before.push: $item;
                 Empty
             }
         }
     }
     else {
-        my $line-number = 0;
         my $todo;
-        -> $haystack {
-            ++$line-number;
-            my $result := matcher($haystack);
+        -> $item {
+            my $result := matcher($item.value);
             if $result {
                 $todo = $after;
-                Pair.new: $line-number, $result
+                Pair.new: $item.key, $result
             }
             elsif $todo {
                 --$todo;
-                Pair.new: $line-number, $haystack
+                $item
             }
             else {
                 Empty
@@ -252,11 +180,9 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
 
 # Base case of a runner from a matcher
 sub make-runner(&matcher) {
-    my $line-number = 0;
-    -> $haystack {
-        ++$line-number;
-        (my $result := matcher($haystack))
-          ?? Pair.new($line-number, $result)
+    -> $item {
+        (my $result := matcher($item.value))
+          ?? Pair.new($item.key, $result)
           !! Empty
     }
 }
@@ -294,8 +220,8 @@ multi sub rak(&needle, %n) {
             )
         }
     }
-    elsif %n<sources>:delete -> @sources {
-        @sources
+    elsif %n<sources>:delete -> $sources {
+        $sources
     }
     else {
         paths ".", |paths-arguments(%n)
@@ -306,9 +232,10 @@ multi sub rak(&needle, %n) {
         $per-file =:= True
           ?? -> $source {
                  CATCH { return Empty }
-                 Str.ACCEPTS($source)
+                 (Pair.new: 1, Str.ACCEPTS($source)
                    ?? $source.IO.slurp(:$enc)
-                   !! $source.slurp(:$enc)
+                   !! $source.slurp(:$enc),
+                 )
              }
           !! $per-file  # assume Callable
     }
@@ -316,28 +243,50 @@ multi sub rak(&needle, %n) {
         $per-line =:= True
           ?? -> $source {
                  CATCH { return Empty }
-                 Str.ACCEPTS($source)
+                 my $seq := Str.ACCEPTS($source)
                    ?? $source.IO.lines(:$enc)
-                   !! $source.lines(:$enc)
+                   !! $source.lines(:$enc);
+                 my $line-number = 0;
+                 $seq.map: { Pair.new: ++$line-number, $_ }
              }
           !! $per-line  # assume Callable
     }
     elsif %n<find>:delete {
         my $seq := $sources-seq<>;
         $sources-seq = ("<find>",);
-        -> $ { $seq }
+        my $line-number = 0;
+        -> $ { $seq.map: { Pair.new: ++$line-number, $_ } }
     }
     else {
         -> $source {
             CATCH { return Empty }
-            Str.ACCEPTS($source)
+            my $seq := Str.ACCEPTS($source)
               ?? $source.IO.lines(:$enc)
-              !! $source.lines(:$enc)
+              !! $source.lines(:$enc);
+            my $line-number = 0;
+            $seq.map: { Pair.new: ++$line-number, $_ }
         }
     }
 
     # Step 3: matching logic
-    my &matcher = make-matcher(&needle, %n);
+    my &matcher = make-matcher(
+      Regex.ACCEPTS(&needle) ?? *.contains(&needle) !! &needle,
+      %n
+    );
+
+    # Add any stats keeping if necessary
+    my $stats := %n<stats>:delete;
+    my atomicint $nr-lines;
+    my atomicint $nr-matches;
+    if $stats {
+        my &old-matcher = &matcher;
+        &matcher = -> $_ { 
+            ++⚛$nr-lines;
+            my $result := old-matcher($_);
+            ++⚛$nr-matches if $result;
+            $result
+        }
+    }
 
     # Step 4: contextualizing logic
     my &runner := do if %n<paragraph-context>:delete {
@@ -368,9 +317,11 @@ multi sub rak(&needle, %n) {
 
     # Set up result sequence
     first-phaser() if &first-phaser;
+    my atomicint $nr-files;
     my $result-seq := do if &next-phaser {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
+            ++⚛$nr-files;
             my \result :=
               Pair.new: $source, (producer($source).map: &runner).Slip;
             $lock.protect: &next-phaser;
@@ -379,12 +330,20 @@ multi sub rak(&needle, %n) {
     }
     else {
         $sources-seq.map: -> $source {
+            ++⚛$nr-files;
             Pair.new: $source, (producer($source).map: &runner).Slip
         }
     }
 
+    # If we want to have stats, we need to run all searches
+    if $stats {
+        my @result = $result-seq;
+        last-phaser() if &last-phaser;
+        (@result, Map.new: (:$nr-files, :$nr-lines))
+    }
+
     # With a LAST phaser, need to run all searches before firing
-    if &last-phaser {
+    elsif &last-phaser {
         my @result = $result-seq;
         last-phaser();
         @result
@@ -504,16 +463,16 @@ whatever the pattern matcher returned.
 
 =head2 rak
 
-The C<rak> subroutine takes a C<Callable> pattern as the only positional
-argument and quite a number of named arguments.  Or it takes a C<Callable>
-as the first positional argument for the pattern, and a hash with named
-arguments as the second positional argument.  In the latter case, the
-hash will have the arguments removed that the C<rak> subroutine needed
-for its configuration and execution.
+The C<rak> subroutine takes a C<Callable> (or C<Regex>) pattern as the only
+positional argument and quite a number of named arguments.  Or it takes a
+C<Callable> (or C<Regex>) as the first positional argument for the pattern,
+and a hash with named arguments as the second positional argument.  In the
+latter case, the hash will have the arguments removed that the C<rak>
+subroutine needed for its configuration and execution.
 
 It returns either a C<Pair> (with an C<Exception> as key, and the
-exception message as the value), or a C<Seq> or C<HyperSeq> that
-contains the source object as key (by default a C<IO::Path> object
+exception message as the value), or an C<Iterable> of C<Pair>s which
+contain the source object as key (by default a C<IO::Path> object
 of the file in which the pattern was found), and a C<Slip> of
 key / value pairs, in which the key is the line-number where the
 pattern was found, and the value is the product of the search
@@ -652,6 +611,14 @@ and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 
 If specified, indicates a list of objects that should be used
 as a source for the production of lines.
+
+=head3 :stats
+
+Flag.  If specified with a trueish value, will keep stats on number
+of files and number of lines seen.  And instead of just returning
+the results sequence, will then return a C<List> of the result
+sequence as the first argument, and a C<Map> with statistics as the
+second argument.
 
 =head2 PATTERN RETURN VALUES
 

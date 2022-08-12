@@ -1,0 +1,117 @@
+use Test;
+use rak;
+
+plan 11;
+
+my $dir := $?FILE.IO.sibling("target").absolute;
+my %name2path = <zero one two three four five six seven eight nine>.map: {
+    $_ => "$dir/$_"
+}
+my %path2name = %name2path.kv.reverse;
+
+# Line locations and their contents
+my \l0 =  1 => "zero";
+my \L0 =  1 => "ZERO";
+my \l1 =  2 => "one";
+my \l2 =  3 => "two";
+my \L2 =  3 => "TWO";
+my \l3 =  4 => "three";
+my \l4 =  5 => "four";
+my \l5 =  6 => "five";
+my \l6 =  7 => "six";
+my \l7 =  8 => "seven";
+my \l8 =  9 => "eight";
+my \l9 = 10 => "nine";
+
+my sub lookup(
+  $pattern, *@expected, *%additional
+) is test-assertion {
+    my $code   := try $pattern.EVAL;
+    my &needle := $code // *.contains($pattern);
+    my %expected = @expected.map: { %name2path{.key} => .value }
+
+    subtest "testing '$pattern'" => {
+        plan 2;
+        my %got = (rak &needle, :degree(1), |%additional).map: {
+            .key => .value.List if .value.elems
+        }
+
+        is %got.elems, %expected.elems, "did we get %expected.elems() results";
+        is-deeply %got, %expected, 'is the search result ok';
+    }
+}
+
+lookup "nine", :paths($dir),
+  "nine" => (l9,)
+;
+
+lookup "eight", :paths($dir),
+  "eight" => (l8,),
+  "nine"  => (l8,),
+;
+
+lookup "/ zero /", :paths($dir),
+  "zero"  => (l0,),
+  "one"   => (l0,),
+  "two"   => (l0,),
+  "three" => (l0,),
+  "four"  => (l0,),
+  "five"  => (l0,),
+  "six"   => (l0,),
+  "seven" => (l0,),
+  "eight" => (l0,),
+  "nine"  => (l0,),
+;
+
+lookup '*.ends-with("o")', :paths($dir),
+  "zero"  => (l0,),
+  "one"   => (l0,),
+  "two"   => (l0, l2),
+  "three" => (l0, l2),
+  "four"  => (l0, l2),
+  "five"  => (l0, l2),
+  "six"   => (l0, l2),
+  "seven" => (l0, l2),
+  "eight" => (l0, l2),
+  "nine"  => (l0, l2),
+;
+
+lookup '-> $_ { .ends-with("o") && .uc }', :paths($dir),
+  "zero"  => (L0,),
+  "one"   => (L0,),
+  "two"   => (L0, L2),
+  "three" => (L0, L2),
+  "four"  => (L0, L2),
+  "five"  => (L0, L2),
+  "six"   => (L0, L2),
+  "seven" => (L0, L2),
+  "eight" => (L0, L2),
+  "nine"  => (L0, L2),
+;
+
+lookup "/ er /", :sources(%name2path<nine>),
+  "nine"  => (l0,),
+;
+
+lookup "/ zer /", :sources(%name2path<eight nine>),
+  "eight" => (l0,),
+  "nine"  => (l0,),
+;
+
+lookup "four", :sources(%name2path<nine>), :context(2),
+  "nine"  => (l2, l3, l4, l5, l6),
+;
+
+lookup "/ four /", :sources(%name2path<nine>), :before-context(2),
+  "nine"  => (l2, l3, l4),
+;
+
+lookup "/ fou /", :sources(%name2path<nine>), :after-context(2),
+  "nine"  => (l4, l5, l6),
+;
+
+lookup "/ our /", :sources(%name2path<nine>), :paragraph-context,
+  "nine"  => (l0, l1, l2, l3, l4, l5, l6, l7, l8, l9),
+;
+
+# vim: expandtab shiftwidth=4
