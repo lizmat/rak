@@ -3,11 +3,16 @@ use rak;
 
 plan 11;
 
-my $dir := $?FILE.IO.sibling("target").absolute;
-my %name2path = <zero one two three four five six seven eight nine>.map: {
-    $_ => $dir.IO.add($_).absolute
-}
+my $dir := $*TMPDIR.add("rak");
+my @targets  := <zero one two three four five six seven eight nine>;
+my %name2path = @targets.map: { $_ => $dir.add($_).absolute }
 my %path2name = %name2path.kv.reverse;
+
+$dir.mkdir;
+for @targets.kv -> $n, $name {
+    %name2path{$name}.IO.spurt: @targets[0..$n].join("\n")
+}
+LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
 
 # Line locations and their contents for matches
 my \l0 = PairMatched.new:  1, "zero";
