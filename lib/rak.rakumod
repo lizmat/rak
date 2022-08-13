@@ -35,29 +35,15 @@ my sub paths-to-files($seq, $degree, %_) {
     }
 }
 
-# Return a Callable for matching an entry
-my sub make-matcher(&needle, %_) {
+# Return a matcher Callable for a given pattern.
+my sub make-matcher(&pattern, %_) {
     my &matcher := %_<invert-match>:delete
       ?? -> $haystack {
-             my $result := needle($haystack);
-             Bool.ACCEPTS($result)
-               ?? $result
-                 ?? Empty
-                 !! $haystack
-               !! $result =:= Empty
-                 ?? $haystack
-                 !! $result
+             Bool.ACCEPTS(my $result := pattern($haystack))
+               ?? !$result
+               !! $result
          }
-      !! -> $haystack {
-             my $result := needle($haystack);
-             Bool.ACCEPTS($result)
-               ?? $result
-                 ?? $haystack
-                 !! Empty
-               !! $result =:= Empty
-                 ?? $haystack
-                 !! $result
-         }
+      !! &pattern;
 
     my $silently := (%_<silently>:delete)<>;
     if %_<quietly>:delete {
@@ -111,31 +97,50 @@ my sub make-matcher(&needle, %_) {
 }
 
 # Return a runner Callable for paragrap context around lines
+my sub make-passthru-context-runner(&matcher) {
+    -> $item {
+        my $result := matcher($item.value);
+
+        $result =:= False
+          ?? $item
+          !! PairMatched.new:
+               $item.key,
+               $result =:= True ?? $item.value !! $result
+    }
+}
+
+# Return a runner Callable for paragrap context around lines
 my sub make-paragraph-context-runner(&matcher) {
     my $after;
     my @before;
     -> $item {
         my $result := matcher($item.value);
-        if $result {
-            $after = True;
-            @before.push(PairMatched.new: $item.key, $result).splice.Slip
-        }
-        elsif $after {
-            if $item.value {
-                $item
+
+        # no match
+        if $result =:= False || $result =:= Empty {
+            if $after {
+                if $item.value {
+                    $item
+                }
+                else {
+                    $after = False;
+                    Empty
+                }
             }
             else {
-                $after = False;
+                @before.push: $item;
                 Empty
             }
         }
-        elsif $item.value {
-            @before.push: $item;
-            Empty
-        }
+
+        # match or something else was produced from match
         else {
-            @before.splice;
-            Empty
+            $after = True;
+            @before.push(
+              PairMatched.new:
+                $item.key,
+                $result =:= True ?? $item.value !! $result
+            ).splice.Slip
         }
     }
 }
@@ -147,18 +152,28 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
         my @before;
         -> $item {
             my $result := matcher($item.value);
-            if $result {
-                $todo = $after;
-                @before.push(PairMatched.new: $item.key, $result).splice.Slip
+
+            # no match
+            if $result =:= False || $result =:= Empty {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    @before.shift if @before.elems == $before;
+                    @before.push: $item;
+                    Empty
+                }
             }
-            elsif $todo {
-                --$todo;
-                $item
-            }
+
+            # match or something was produced from match
             else {
-                @before.shift if @before.elems == $before;
-                @before.push: $item;
-                Empty
+                $todo = $after;
+                @before.push(
+                  PairMatched.new:
+                    $item.key,
+                    $result =:= True ?? $item.value !! $result
+                ).splice.Slip
             }
         }
     }
@@ -166,16 +181,24 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
         my $todo;
         -> $item {
             my $result := matcher($item.value);
-            if $result {
-                $todo = $after;
-                PairMatched.new: $item.key, $result
+
+            # no match
+            if $result =:= False || $result =:= Empty {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    Empty
+                }
             }
-            elsif $todo {
-                --$todo;
-                $item
-            }
+
+            # match or something was produced from match
             else {
-                Empty
+                $todo = $after;
+                PairMatched.new:
+                  $item.key,
+                  $result =:= True ?? $item.value !! $result
             }
         }
     }
@@ -184,17 +207,22 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
 # Base case of a runner from a matcher
 sub make-runner(&matcher) {
     -> $item {
-        (my $result := matcher($item.value))
-          ?? PairMatched.new($item.key, $result)
-          !! Empty
+        my $result := matcher($item.value);
+        $result =:= False
+          ?? Empty
+          !! $result =:= Empty
+            ?? $item
+            !! PairMatched.new:
+                 $item.key,
+                 $result =:= True ?? $item.value !! $result
     }
 }
 
 proto sub rak(|) is export {*}
-multi sub rak(&needle, *%n) {
-    rak &needle, %n
+multi sub rak(&pattern, *%n) {
+    rak &pattern, %n
 }
-multi sub rak(&needle, %n) {
+multi sub rak(&pattern, %n) {
     # any execution error will ne caught and become a return state
     CATCH { return $_ => .message }
 
@@ -272,8 +300,12 @@ multi sub rak(&needle, %n) {
     }
 
     # Step 3: matching logic
+    # The matcher Callable should take a haystack as the argument, and
+    # call the pattern with that.  And optionally do some massaging to make
+    # sure we get the right thing.  But in all other aspects, the matcher
+    # has the same API as the pattern.
     my &matcher = make-matcher(
-      Regex.ACCEPTS(&needle) ?? *.contains(&needle) !! &needle,
+      Regex.ACCEPTS(&pattern) ?? *.contains(&pattern) !! &pattern,
       %n
     );
 
@@ -283,7 +315,7 @@ multi sub rak(&needle, %n) {
     my atomicint $nr-matches;
     if $stats {
         my &old-matcher = &matcher;
-        &matcher = -> $_ { 
+        &matcher = -> $_ {
             ++⚛$nr-lines;
             my $result := old-matcher($_);
             ++⚛$nr-matches if $result;
@@ -292,10 +324,14 @@ multi sub rak(&needle, %n) {
     }
 
     # Step 4: contextualizing logic
-    my &runner := do if %n<paragraph-context>:delete {
-        make-paragraph-context-runner(&matcher)
-    }
-    elsif %n<context>:delete -> $context {
+    # The runner Callable should take a PairContext object as the argument,
+    # and call the matcher with that.  If the result is True, then it should
+    # produce that line as a PairMatched object with the original value, and
+    # any other lines as as PairContext objects.  If the result is False, it
+    # should produce Empty.  In any other case, it should produce a
+    # PairMatched object with the original key, and the value returned by
+    # the matcher as its value.
+    my &runner := do if %n<context>:delete -> $context {
         make-numeric-context-runner(&matcher, $context, $context)
     }
     elsif %n<before-context>:delete -> $before {
@@ -303,6 +339,12 @@ multi sub rak(&needle, %n) {
     }
     elsif %n<after-context>:delete -> $after {
         make-numeric-context-runner(&matcher, Any, $after)
+    }
+    elsif %n<paragraph-context>:delete {
+        make-paragraph-context-runner(&matcher)
+    }
+    elsif %n<passthru-context>:delete {
+        make-passthru-context-runner(&matcher)
     }
     else {
         make-runner(&matcher)
@@ -312,10 +354,10 @@ multi sub rak(&needle, %n) {
     my &first-phaser;
     my &next-phaser;
     my &last-phaser;
-    if &needle.has-loop-phasers {
-        &first-phaser = &needle.callable_for_phaser('FIRST');
-        &next-phaser  = &needle.callable_for_phaser('NEXT');
-        &last-phaser  = &needle.callable_for_phaser('LAST');
+    if &pattern.has-loop-phasers {
+        &first-phaser = &pattern.callable_for_phaser('FIRST');
+        &next-phaser  = &pattern.callable_for_phaser('NEXT');
+        &last-phaser  = &pattern.callable_for_phaser('LAST');
     }
 
     # Set up result sequence
@@ -437,12 +479,17 @@ Related named arguments are (in alphabetical order):
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
 
-=head3 4. Create logic for contextualizing
+=head3 4. Create logic for running
 
-Take the logic of the C<Callable> of step 3 and create a C<Callable>
-that will produce the items found and their possible context.  If
-no specific context setting is found, then it will just use the
-C<Callable> of step 3.
+Take the matcher logic of the C<Callable> of step 3 and create a runner
+C<Callable> that will produce the items found and their possible context
+(such as extra lines before or after).  Assuming no context, the runner
+changes a return value of C<False> from the matcher into C<Empty>, a
+return value of C<True> in the original line, and passes through any other
+value.
+
+Matching lines are C<PairMatched> objects, and lines that have been added
+because of context are C<PairContext> objects.
 
 Related named arguments are (in alphabetical order):
 
@@ -450,6 +497,7 @@ Related named arguments are (in alphabetical order):
 =item :before-context - number of lines to show before a match
 =item :context - number of lines to show around a match
 =item :paragraph-context - lines around match until empty line
+=item :passthru-context - pass on *all* lines
 
 =head3 5. Run the sequence(s)
 
@@ -553,6 +601,10 @@ C<False>.
 
 Flag. If specified with a trueish value, produce lines B<around>
 the line with a pattern match until an empty line is encountered.
+
+=head3 :passthru-context
+
+Flag. If specified with a trueish value, produces B<all> lines.
 
 =head3 :paths-from($filename)
 

@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 11;
+plan 12;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -48,13 +48,15 @@ my sub lookup(
     my %expected = @expected.map: { %name2path{.key} => .value }
 
     subtest "testing '$pattern'" => {
-        plan 2;
-        my %got = (rak &needle, :degree(1), |%additional).map: {
+        plan 3;
+        my %nameds = :degree(1), |%additional;
+        my %got = (rak &needle, %nameds).map: {
             .key => .value.List if .value.elems
         }
 
         is %got.elems, %expected.elems, "did we get %expected.elems() results";
         is-deeply %got, %expected, 'is the search result ok';
+        is %nameds.elems, 0, 'did all named arguments get removed';
     }
 }
 
@@ -109,7 +111,6 @@ lookup '-> $_ { .ends-with("o") && .uc }', :paths($dir),
 lookup "/ er /", :sources(%name2path<nine>),
   "nine"  => (l0,),
 ;
-
 lookup "/ zer /", :sources(%name2path<eight nine>),
   "eight" => (l0,),
   "nine"  => (l0,),
@@ -131,4 +132,8 @@ lookup "/ our /", :sources(%name2path<nine>), :paragraph-context,
   "nine"  => (c0, c1, c2, c3, l4, c5, c6, c7, c8, c9),
 ;
 
-# vim: expandtab shiftwidth=4
+lookup '*.ends-with("five")', :sources(%name2path<nine>), :passthru-context,
+  "nine"  => (c0, c1, c2, c3, c4, l5, c6, c7, c8, c9),
+;
+
+# vim: expandtab shiftwidth=3

@@ -78,9 +78,11 @@ Related named arguments are (in alphabetical order):
 
   * :silently - absorb any output done by the matcher
 
-### 4. Create logic for contextualizing
+### 4. Create logic for running
 
-Take the logic of the `Callable` of step 3 and create a `Callable` that will produce the items found and their possible context. If no specific context setting is found, then it will just use the `Callable` of step 3.
+Take the matcher logic of the `Callable` of step 3 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
+
+Matching lines are `PairMatched` objects, and lines that have been added because of context are `PairContext` objects.
 
 Related named arguments are (in alphabetical order):
 
@@ -91,6 +93,8 @@ Related named arguments are (in alphabetical order):
   * :context - number of lines to show around a match
 
   * :paragraph-context - lines around match until empty line
+
+  * :passthru-context - pass on *all* lines
 
 ### 5. Run the sequence(s)
 
@@ -155,6 +159,10 @@ Flag. If specified with a trueish value, will negate the return value of the pat
 ### :paragraph-context
 
 Flag. If specified with a trueish value, produce lines **around** the line with a pattern match until an empty line is encountered.
+
+### :passthru-context
+
+Flag. If specified with a trueish value, produces **all** lines.
 
 ### :paths-from($filename)
 
