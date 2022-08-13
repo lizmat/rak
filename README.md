@@ -27,7 +27,7 @@ The `rak` subroutine provides a mostly abstract core search functionality to be 
 THEORY OF OPERATION
 ===================
 
-The `rak` subroutine basically goes through 4 steps to produce a result.
+The `rak` subroutine basically goes through 6 steps to produce a result.
 
 1. Acquire sources
 ------------------
@@ -50,7 +50,56 @@ Related named arguments are (in alphabetical order):
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-### 2. Produce items to search in
+2. Filter applicable objects
+----------------------------
+
+Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created, are strings of absolute paths to be checked.
+
+  * :accessed - when was path last accessed
+
+  * :blocks- number of filesystem blocks
+
+  * :created - when was path created
+
+  * :device-number - device number on which path is located
+
+  * :executable - is path executable
+
+  * :filesize - size of the path in bytes
+
+  * :gid - numeric gid of the path
+
+  * :group-executable - is path executable by group
+
+  * :group-readable - is path readable by group
+
+  * :group-writable - is path writable 
+
+  * :hard-links - number of hard-links to path on filesystem
+
+  * :inode - inode of path on filesystem
+
+  * :meta-modified - when meta information of path was modified
+
+  * :mode - the mode of the path
+
+  * :modified - when path was last modified
+
+  * :readable - is path readable by current user
+
+  * :uid - numeric uid of path
+
+  * :world-executable - is path executable by any user
+
+  * :world-readable - is path readable by any user
+
+  * :world-writable - is path writable by any user
+
+  * :writable - is path writable by current user
+
+The result of this step, is a (potentially lazy and hyperable) sequence of objects.
+
+### 3. Produce items to search in
 
 The second step is to create the logic for creating items to search in from the objects in step 1. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
 
@@ -66,7 +115,7 @@ Related named arguments are (in alphabetical order):
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-### 3. Create logic for matching
+### 4. Create logic for matching
 
 Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 2.
 
@@ -78,7 +127,7 @@ Related named arguments are (in alphabetical order):
 
   * :silently - absorb any output done by the matcher
 
-### 4. Create logic for running
+### 5. Create logic for running
 
 Take the matcher logic of the `Callable` of step 3 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
 
@@ -96,7 +145,7 @@ Related named arguments are (in alphabetical order):
 
   * :passthru-context - pass on *all* lines
 
-### 5. Run the sequence(s)
+### 6. Run the sequence(s)
 
 The final step is to take the `Callable` of step 4 and run that repeatedly on the sequence of step 1, and for each item of that sequence, run the sequence of step 2 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. And produce a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
 
@@ -112,6 +161,10 @@ It returns either a `Pair` (with an `Exception` as key, and the exception messag
 
 The following named arguments can be specified (in alphabetical order):
 
+### :accessed(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **access** time of the path. The `Callable` is passed a `Num` value of the access time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
+
 ### :after-context(N)
 
 Indicate the number of lines that should also be returned **after** a line with a pattern match. Defaults to **0**.
@@ -124,13 +177,25 @@ When hypering over multiple cores, indicate how many items should be processed p
 
 Indicate the number of lines that should also be returned **before** a line with a pattern match. Defaults to **0**.
 
+### :blocks(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of blocks** used by the path on the filesystem on which the path is located. The `Callable` is passed the number of blocks of a path and is expected to return a trueish value to have the path be considered for further selection.
+
 ### :context(N)
 
 Indicate the number of lines that should also be returned around a line with a pattern match. Defaults to **0**.
 
+### :created(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **creation** time of the path. The `Callable` is passed a `Num` value of the creation time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
+
 ### :degree(N)
 
 When hypering over multiple cores, indicate the maximum number of threads that should be used. Defaults to whatever the system thinks is best (which **may** be sub-optimal).
+
+### :device-number(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **device number** of the path. The `Callable` is passed the device number of the device on which the path is located and is expected to return a trueish value to have the path be considered for further selection.
 
 ### :dir(&dir-matcher)
 
@@ -140,9 +205,17 @@ If specified, indicates the matcher that should be used to select acceptable dir
 
 When specified with a string, indicates the name of the encoding to be used to produce items to check (typically by calling `lines` or `slurp`). Defaults to `utf8-c8`, the UTF-8 encoding that is permissive of encoding issues.
 
+### :executable
+
+Flag. If specified, indicates only paths that are **executable** by the current **user**, are (not) acceptable for further selection.
+
 ### :file(&file-matcher)
 
 If specified, indicates the matcher that should be used to select acceptable files with the `paths` utility. Defaults to `True` indicating **all** files should be checked. Applicable for any situation where `paths` is used to create the list of files to check.
+
+### :filesize(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of bytes** of the path. The `Callable` is passed the number of bytes of a path and is expected to return a trueish value to have the path be considered for further selection.
 
 ### :files-from($filename)
 
@@ -152,9 +225,45 @@ If specified, indicates the name of the file from which a list of files to be us
 
 Flag. If specified, maps the sources of items into items to search.
 
+### :gid(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **gid** of the path. The `Callable` is passed the numeric gid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
+
+### :group-executable
+
+Flag. If specified, indicates only paths that are **executable** by the current **group**, are (not) acceptable for further selection.
+
+### :group-readable
+
+Flag. If specified, indicates only paths that are **readable** by the current **group**, are (not) acceptable for further selection.
+
+### :group-writable
+
+Flag. If specified, indicates only paths that are **writable** by the current **group**, are (not) acceptable for further selection.
+
+### :hard-links(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of hard-links** of the path. The `Callable` is passed the number of hard-links of a path and is expected to return a trueish value to have the path be considered for further selection.
+
+### :inode(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **inode** of the path. The `Callable` is passed the inode of a path and is expected to return a trueish value to have the path be considered for further selection.
+
 ### :invert-match
 
 Flag. If specified with a trueish value, will negate the return value of the pattern if a `Bool` was returned. Defaults to `False`.
+
+### :meta-modified(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
+
+### :mode(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **mode** of the path. The `Callable` is passed the mode of a path and is expected to return a trueish value to have the path be considered for further selection. This is really for advanced types of tests: it's probably easier to use any of the `readable`, `writeable` and `executable` filters.
+
+### :modified(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
 
 ### :paragraph-context
 
@@ -194,6 +303,10 @@ If specified with a `Callable`, it indicates the code to be executed from a give
 
 Flag. If specified with a trueish value, will absorb any warnings that may occur when looking for the pattern.
 
+### :readable
+
+Flag. If specified, indicates only paths that are **readable** by the current **user**, are (not) acceptable for further selection.
+
 ### :silently("out,err")
 
 When specified with `True`, will absorb any output on STDOUT and STDERR. Optionally can only absorb STDOUT ("out"), STDERR ("err") and both STDOUT and STDERR ("out,err").
@@ -205,6 +318,26 @@ If specified, indicates a list of objects that should be used as a source for th
 ### :stats
 
 Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument.
+
+### :uid(&filter)
+
+If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **uid** of the path. The `Callable` is passed the numeric uid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
+
+### :world-executable
+
+Flag. If specified, indicates only paths that are **executable** by any user or group, are (not) acceptable for further selection.
+
+### :world-readable
+
+Flag. If specified, indicates only paths that are **readable** by any user or group, are (not) acceptable for further selection.
+
+### :world-writeable
+
+Flag. If specified, indicates only paths that are **writable** by any user or group, are (not) acceptable for further selection.
+
+### :writable
+
+Flag. If specified, indicates only paths that are **writable** by the current **user**, are (not) acceptable for further selection.
 
 PATTERN RETURN VALUES
 ---------------------

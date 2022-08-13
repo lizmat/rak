@@ -2,7 +2,7 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.1>:auth<zef:lizmat>;
+use path-utils:ver<0.0.3>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 my class PairMatched is Pair is export { method matched(--> True)  { } }
@@ -20,9 +20,10 @@ my sub paths-from-file($from) {
 
 # Return a Map with named arguments for "paths"
 my sub paths-arguments(%_) {
-    my $dir  := (%_<dir>:delete)  // True;
-    my $file := (%_<file>:delete) // True;
-    Map.new: (:$dir, :$file)
+    my $dir             := (%_<dir>:delete)             // True;
+    my $file            := (%_<file>:delete)            // True;
+    my $follow-symlinks := (%_<follow-symlinks>:delete) // False;
+    Map.new: (:$dir, :$file, :$follow-symlinks)
 }
 
 # Convert a given seq producing paths to a seq producing files
@@ -33,6 +34,125 @@ my sub paths-to-files($seq, $degree, %_) {
           ?? $_
           !! paths($_, |%paths-arguments).Slip
     }
+}
+
+# Adapt a sources sequence to apply any property filters specified
+my sub make-property-filter($seq is copy, %_) {
+    if %_<modified>:delete -> &modified {
+        $seq = $seq.map: -> $path {
+            modified(path-modified($path)) ?? $path !! Empty
+        }
+    }
+    if %_<created>:delete -> &created {
+        $seq = $seq.map: -> $path {
+            created(path-created($path)) ?? $path !! Empty
+        }
+    }
+    if %_<accessed>:delete -> &accessed {
+        $seq = $seq.map: -> $path {
+            accessed(path-accessed($path)) ?? $path !! Empty
+        }
+    }
+    if %_<meta-modified>:delete -> &meta-modified {
+        $seq = $seq.map: -> $path {
+            meta-modified(path-meta-modified($path)) ?? $path !! Empty
+        }
+    }
+    if %_<filesize>:delete -> &filesize {
+        $seq = $seq.map: -> $path {
+            filesize(path-filesize($path)) ?? $path !! Empty
+        }
+    }
+
+    if %_<mode>:delete -> &mode {
+        $seq = $seq.map: -> $path { mode(path-mode($path)) ?? $path !! Empty }
+    }
+    if %_<uid>:delete -> &uid {
+        $seq = $seq.map: -> $path { uid(path-uid($path)) ?? $path !! Empty }
+    }
+    if %_<gid>:delete -> &gid {
+        $seq = $seq.map: -> $path { gid(path-gid($path)) ?? $path !! Empty }
+    }
+
+    if %_<device-number>:delete -> &device-number {
+        $seq = $seq.map: -> $path {
+            device-number(path-device-number($path)) ?? $path !! Empty
+        }
+    }
+    if %_<inode>:delete -> &inode {
+        $seq = $seq.map: -> $path {
+            inode(path-inode($path)) ?? $path !! Empty
+        }
+    }
+    if %_<hard-links>:delete -> &hard-links {
+        $seq = $seq.map: -> $path {
+            hard-links(path-hard-links($path)) ?? $path !! Empty
+        }
+    }
+    if %_<blocks>:delete -> &blocks {
+        $seq = $seq.map: -> $path {
+            blocks(path-blocks($path)) ?? $path !! Empty
+        }
+    }
+
+    if %_<readable>:exists {
+        $seq = $seq.map:
+          (%_<readable>:delete)
+            ?? -> $path { path-is-readable($path) ?? $path !! Empty }
+            !! -> $path { path-is-readable($path) ?? Empty !! $path }
+    }
+    if %_<writable>:exists {
+        $seq = $seq.map:
+          (%_<writable>:delete)
+            ?? -> $path { path-is-writable($path) ?? $path !! Empty }
+            !! -> $path { path-is-writable($path) ?? Empty !! $path }
+    }
+    if %_<executable>:exists {
+        $seq = $seq.map:
+          (%_<executable>:delete)
+            ?? -> $path { path-is-executable($path) ?? $path !! Empty }
+            !! -> $path { path-is-executable($path) ?? Empty !! $path }
+    }
+
+    if %_<group-readable>:exists {
+        $seq = $seq.map:
+          (%_<readable>:delete)
+            ?? -> $path { path-is-group-readable($path) ?? $path !! Empty }
+            !! -> $path { path-is-group-readable($path) ?? Empty !! $path }
+    }
+    if %_<group-writable>:exists {
+        $seq = $seq.map:
+          (%_<group-writable>:delete)
+            ?? -> $path { path-is-group-writable($path) ?? $path !! Empty }
+            !! -> $path { path-is-group-writable($path) ?? Empty !! $path }
+    }
+    if %_<group-executable>:exists {
+        $seq = $seq.map:
+          (%_<group-executable>:delete)
+            ?? -> $path { path-is-group-executable($path) ?? $path !! Empty }
+            !! -> $path { path-is-group-executable($path) ?? Empty !! $path }
+    }
+
+    if %_<world-readable>:exists {
+        $seq = $seq.map:
+          (%_<world-readable>:delete)
+            ?? -> $path { path-is-world-readable($path) ?? $path !! Empty }
+            !! -> $path { path-is-world-readable($path) ?? Empty !! $path }
+    }
+    if %_<world-writable>:exists {
+        $seq = $seq.map:
+          (%_<world-writable>:delete)
+            ?? -> $path { path-is-world-writable($path) ?? $path !! Empty }
+            !! -> $path { path-is-world-writable($path) ?? Empty !! $path }
+    }
+    if %_<world-executable>:exists {
+        $seq = $seq.map:
+          (%_<world-executable>:delete)
+            ?? -> $path { path-is-world-executable($path) ?? $path !! Empty }
+            !! -> $path { path-is-world-executable($path) ?? Empty !! $path }
+    }
+
+    $seq
 }
 
 # Return a matcher Callable for a given pattern.
@@ -258,7 +378,10 @@ multi sub rak(&pattern, %n) {
         paths ".", |paths-arguments(%n)
     }
 
-    # Step 2: producer Callable
+    # Step 2. filtering on properties
+    $sources-seq = make-property-filter($sources-seq, %n);
+
+    # Step 3: producer Callable
     my &producer := do if (%n<per-file>:delete)<> -> $per-file {
         $per-file =:= True
           ?? -> $source {
@@ -299,7 +422,7 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # Step 3: matching logic
+    # Step 4: matching logic
     # The matcher Callable should take a haystack as the argument, and
     # call the pattern with that.  And optionally do some massaging to make
     # sure we get the right thing.  But in all other aspects, the matcher
@@ -323,7 +446,7 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # Step 4: contextualizing logic
+    # Step 5: contextualizing logic
     # The runner Callable should take a PairContext object as the argument,
     # and call the matcher with that.  If the result is True, then it should
     # produce that line as a PairMatched object with the original value, and
@@ -350,7 +473,7 @@ multi sub rak(&pattern, %n) {
         make-runner(&matcher)
     }
 
-    # Step 5: run the sequences
+    # Step 6: run the sequences
     my &first-phaser;
     my &next-phaser;
     my &last-phaser;
@@ -428,7 +551,7 @@ functionality to be used by modules such as C<App::Rak>.
 
 =head1 THEORY OF OPERATION
 
-The C<rak> subroutine basically goes through 4 steps to produce a
+The C<rak> subroutine basically goes through 6 steps to produce a
 result.
 
 =head2 1. Acquire sources
@@ -450,7 +573,38 @@ Related named arguments are (in alphabetical order):
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
-=head3 2. Produce items to search in
+=head2 2. Filter applicable objects
+
+Filter down the list of sources from step 1 on any additional filesystem
+related properties.  This assumes that the list of objects created, are
+strings of absolute paths to be checked.
+
+=item :accessed - when was path last accessed
+=item :blocks- number of filesystem blocks
+=item :created - when was path created
+=item :device-number - device number on which path is located
+=item :executable - is path executable
+=item :filesize - size of the path in bytes
+=item :gid - numeric gid of the path
+=item :group-executable - is path executable by group
+=item :group-readable - is path readable by group
+=item :group-writable - is path writable 
+=item :hard-links - number of hard-links to path on filesystem
+=item :inode - inode of path on filesystem
+=item :meta-modified - when meta information of path was modified
+=item :mode - the mode of the path
+=item :modified - when path was last modified
+=item :readable - is path readable by current user
+=item :uid - numeric uid of path
+=item :world-executable - is path executable by any user
+=item :world-readable - is path readable by any user
+=item :world-writable - is path writable by any user
+=item :writable - is path writable by current user
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head3 3. Produce items to search in
 
 The second step is to create the logic for creating items to
 search in from the objects in step 1.  If search is to be done
@@ -468,7 +622,7 @@ Related named arguments are (in alphabetical order):
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
-=head3 3. Create logic for matching
+=head3 4. Create logic for matching
 
 Take the logic of the pattern C<Callable>, and create a C<Callable> to
 do the actual matching with the items produced in step 2.
@@ -479,7 +633,7 @@ Related named arguments are (in alphabetical order):
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
 
-=head3 4. Create logic for running
+=head3 5. Create logic for running
 
 Take the matcher logic of the C<Callable> of step 3 and create a runner
 C<Callable> that will produce the items found and their possible context
@@ -499,7 +653,7 @@ Related named arguments are (in alphabetical order):
 =item :paragraph-context - lines around match until empty line
 =item :passthru-context - pass on *all* lines
 
-=head3 5. Run the sequence(s)
+=head3 6. Run the sequence(s)
 
 The final step is to take the C<Callable> of step 4 and run that
 repeatedly on the sequence of step 1, and for each item of that
@@ -532,6 +686,14 @@ pattern was found, and the value is the product of the search
 The following named arguments can be specified (in alphabetical
 order):
 
+=head3 :accessed(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<access> time of the path.  The C<Callable> is
+passed a C<Num> value of the access time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
 =head3 :after-context(N)
 
 Indicate the number of lines that should also be returned B<after>
@@ -548,16 +710,40 @@ thinks is best (which B<may> be sub-optimal).
 Indicate the number of lines that should also be returned B<before>
 a line with a pattern match.  Defaults to B<0>.
 
+=head3 :blocks(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of blocks> used by the path on the filesystem
+on which the path is located.  The C<Callable> is passed the number of blocks
+of a path and is expected to return a trueish value to have the path be
+considered for further selection.
+
 =head3 :context(N)
 
 Indicate the number of lines that should also be returned around
 a line with a pattern match.  Defaults to B<0>.
+
+=head3 :created(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<creation> time of the path.  The C<Callable> is
+passed a C<Num> value of the creation time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
 
 =head3 :degree(N)
 
 When hypering over multiple cores, indicate the maximum number of
 threads that should be used.  Defaults to whatever the system
 thinks is best (which B<may> be sub-optimal).
+
+=head3 :device-number(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<device number> of the path.  The C<Callable> is
+passed the device number of the device on which the path is located and is
+expected to return a trueish value to have the path be considered for further
+selection.
 
 =head3 :dir(&dir-matcher)
 
@@ -574,6 +760,11 @@ to be used to produce items to check (typically by calling
 C<lines> or C<slurp>).  Defaults to C<utf8-c8>, the UTF-8
 encoding that is permissive of encoding issues.
 
+=head3 :executable
+
+Flag.  If specified, indicates only paths that are B<executable> by the current
+B<user>, are (not) acceptable for further selection.
+
 =head3 :file(&file-matcher)
 
 If specified, indicates the matcher that should be used to select
@@ -581,6 +772,13 @@ acceptable files with the C<paths> utility.  Defaults to C<True>
 indicating B<all> files should be checked.  Applicable for any
 situation where C<paths> is used to create the list of files to
 check.
+
+=head3 :filesize(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of bytes> of the path.  The C<Callable> is
+passed the number of bytes of a path and is expected to return a trueish
+value to have the path be considered for further selection.
 
 =head3 :files-from($filename)
 
@@ -591,11 +789,73 @@ of files to be used as sources will be read.
 
 Flag.  If specified, maps the sources of items into items to search.
 
+=head3 :gid(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<gid> of the path.  The C<Callable> is passed the
+numeric gid of a path and is expected to return a trueish value to have the
+path be considered for further selection.  See also C<owner> and C<group>
+filters.
+
+=head3 :group-executable
+
+Flag.  If specified, indicates only paths that are B<executable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :group-readable
+
+Flag.  If specified, indicates only paths that are B<readable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :group-writable
+
+Flag.  If specified, indicates only paths that are B<writable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :hard-links(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of hard-links> of the path.  The C<Callable>
+is passed the number of hard-links of a path and is expected to return a
+trueish value to have the path be considered for further selection.
+
+=head3 :inode(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<inode> of the path.  The C<Callable> is passed the
+inode of a path and is expected to return a trueish value to have the path be
+considered for further selection.
+
 =head3 :invert-match
 
 Flag. If specified with a trueish value, will negate the return
 value of the pattern if a C<Bool> was returned.  Defaults to
 C<False>.
+
+=head3 :meta-modified(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<modification> time of the path.  The C<Callable> is
+passed a C<Num> value of the modification time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
+=head3 :mode(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<mode> of the path.  The C<Callable> is passed the
+mode of a path and is expected to return a trueish value to have the path be
+considered for further selection.  This is really for advanced types of tests:
+it's probably easier to use any of the C<readable>, C<writeable> and
+C<executable> filters.
+
+=head3 :modified(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<modification> time of the path.  The C<Callable> is
+passed a C<Num> value of the modification time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
 
 =head3 :paragraph-context
 
@@ -656,6 +916,11 @@ for the pattern.
 Flag. If specified with a trueish value, will absorb any warnings
 that may occur when looking for the pattern.
 
+=head3 :readable
+
+Flag.  If specified, indicates only paths that are B<readable> by the current
+B<user>, are (not) acceptable for further selection.
+
 =head3 :silently("out,err")
 
 When specified with C<True>, will absorb any output on STDOUT
@@ -674,6 +939,34 @@ of files and number of lines seen.  And instead of just returning
 the results sequence, will then return a C<List> of the result
 sequence as the first argument, and a C<Map> with statistics as the
 second argument.
+
+=head3 :uid(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<uid> of the path.  The C<Callable> is passed the
+numeric uid of a path and is expected to return a trueish value to have the
+path be considered for further selection.  See also C<owner> and C<group>
+filters.
+
+=head3 :world-executable
+
+Flag.  If specified, indicates only paths that are B<executable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :world-readable
+
+Flag.  If specified, indicates only paths that are B<readable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :world-writeable
+
+Flag.  If specified, indicates only paths that are B<writable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :writable
+
+Flag.  If specified, indicates only paths that are B<writable> by the current
+B<user>, are (not) acceptable for further selection.
 
 =head2 PATTERN RETURN VALUES
 
