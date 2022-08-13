@@ -21,8 +21,8 @@ for rak *.contains("foo") -> (:key($path), :value(@found)) {
 
 =head1 DESCRIPTION
 
-The C<rak> subroutine provides a mostly abstract core search
-functionality to be used by modules such as C<App::Rak>.
+The C<rak> subroutine provides a mostly abstract core search (plumbing)
+functionality to be used by modules such as (porcelain) C<App::Rak>.
 
 =head1 THEORY OF OPERATION
 
@@ -81,7 +81,7 @@ strings of absolute paths to be checked.
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
-=head3 3. Produce items to search in
+=head2 3. Produce items to search in
 
 The second step is to create the logic for creating items to
 search in from the objects in step 1.  If search is to be done
@@ -99,7 +99,7 @@ Related named arguments are (in alphabetical order):
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
-=head3 4. Create logic for matching
+=head2 4. Create logic for matching
 
 Take the logic of the pattern C<Callable>, and create a C<Callable> to
 do the actual matching with the items produced in step 2.
@@ -110,7 +110,7 @@ Related named arguments are (in alphabetical order):
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
 
-=head3 5. Create logic for running
+=head2 5. Create logic for running
 
 Take the matcher logic of the C<Callable> of step 3 and create a runner
 C<Callable> that will produce the items found and their possible context
@@ -130,7 +130,7 @@ Related named arguments are (in alphabetical order):
 =item :paragraph-context - lines around match until empty line
 =item :passthru-context - pass on *all* lines
 
-=head3 6. Run the sequence(s)
+=head2 6. Run the sequence(s)
 
 The final step is to take the C<Callable> of step 4 and run that
 repeatedly on the sequence of step 1, and for each item of that
@@ -467,7 +467,7 @@ Produce the line unless C<:invert-match> was specified.
 
 =head3 False
 
-If the C<Bool>ean Fals value is returned, assume the pattern is B<not>
+If the C<Bool>ean False value is returned, assume the pattern is B<not>
 found.  Do B<not> produce the line unless C<:invert-match> was specified.
 
 =head3 Empty
