@@ -2,7 +2,7 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.3>:auth<zef:lizmat>;
+use path-utils:ver<0.0.4>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 my class PairMatched is Pair is export { method matched(--> True)  { } }
@@ -93,6 +93,19 @@ my sub make-property-filter($seq is copy, %_) {
         $seq = $seq.map: -> $path {
             blocks(path-blocks($path)) ?? $path !! Empty
         }
+    }
+
+    if %_<owned-by-user>:exists {
+        $seq = $seq.map:
+          (%_<owned-by-user>:delete)
+            ?? -> $path { path-is-owned-by-user($path) ?? $path !! Empty }
+            !! -> $path { path-is-owned-by-user($path) ?? Empty !! $path }
+    }
+    if %_<owned-by-group>:exists {
+        $seq = $seq.map:
+          (%_<owned-by-group>:delete)
+            ?? -> $path { path-is-owned-by-group($path) ?? $path !! Empty }
+            !! -> $path { path-is-owned-by-group($path) ?? Empty !! $path }
     }
 
     if %_<readable>:exists {
@@ -594,6 +607,8 @@ strings of absolute paths to be checked.
 =item :meta-modified - when meta information of path was modified
 =item :mode - the mode of the path
 =item :modified - when path was last modified
+=item :owned-by-group - is path owned by group of current user
+=item :owned-by-user - is path owned by current user
 =item :readable - is path readable by current user
 =item :uid - numeric uid of path
 =item :world-executable - is path executable by any user
@@ -919,6 +934,16 @@ that may occur when looking for the pattern.
 =head3 :readable
 
 Flag.  If specified, indicates only paths that are B<readable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :owned-by-group
+
+Flag.  If specified, indicates only paths that are B<owned> by the B<group>
+of the current user, are (not) acceptable for further selection.
+
+=head3 :owned-by-user
+
+Flag.  If specified, indicates only paths that are B<owned> by the current
 B<user>, are (not) acceptable for further selection.
 
 =head3 :silently("out,err")

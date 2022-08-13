@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 14;
+plan 16;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -142,6 +142,14 @@ lookup 'o', :paths($dir), :filesize(*>45),
 
 lookup 'ine', :paths($dir), :writable,
   "nine"  => (l9,),
+;
+
+lookup 'in', :paths($dir), :owned-by-user,
+  "nine"  => (l9,),
+;
+
+lookup 'zero', :paths($dir), :!owned-by-user,
+  ()
 ;
 
 # vim: expandtab shiftwidth=3

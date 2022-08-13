@@ -85,6 +85,10 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :modified - when path was last modified
 
+  * :owned-by-group - is path owned by group of current user
+
+  * :owned-by-user - is path owned by current user
+
   * :readable - is path readable by current user
 
   * :uid - numeric uid of path
@@ -306,6 +310,14 @@ Flag. If specified with a trueish value, will absorb any warnings that may occur
 ### :readable
 
 Flag. If specified, indicates only paths that are **readable** by the current **user**, are (not) acceptable for further selection.
+
+### :owned-by-group
+
+Flag. If specified, indicates only paths that are **owned** by the **group** of the current user, are (not) acceptable for further selection.
+
+### :owned-by-user
+
+Flag. If specified, indicates only paths that are **owned** by the current **user**, are (not) acceptable for further selection.
 
 ### :silently("out,err")
 

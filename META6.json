@@ -9,7 +9,7 @@
     "has-word:ver<0.0.3>:auth<zef:lizmat>",
     "hyperize:ver<0.0.2>:auth<zef:lizmat>",
     "paths:ver<10.0.7>:auth<zef:lizmat>",
-    "path-utils:ver<0.0.3>:auth<zef:lizmat>",
+    "path-utils:ver<0.0.4>:auth<zef:lizmat>",
     "Trap:ver<0.0.1>:auth<zef:lizmat>"
   ],
   "description": "look for clues in stuff",
