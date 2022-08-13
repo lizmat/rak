@@ -1,0 +1,517 @@
+=begin pod
+
+=head1 NAME
+
+rak - look for clues in stuff
+
+=head1 SYNOPSIS
+
+=begin code :lang<raku>
+
+use rak;
+
+for rak *.contains("foo") -> (:key($path), :value(@found)) {
+    if @found {
+        say "$path:";
+        say .key ~ ':' ~ .value for @found;
+    }
+}
+
+=end code
+
+=head1 DESCRIPTION
+
+The C<rak> subroutine provides a mostly abstract core search
+functionality to be used by modules such as C<App::Rak>.
+
+=head1 THEORY OF OPERATION
+
+The C<rak> subroutine basically goes through 6 steps to produce a
+result.
+
+=head2 1. Acquire sources
+
+The first step is determining the objects that should be searched
+for the specified pattern.  If an object is a C<Str>, it will be
+assume that it is a path specification of a file to be searched in
+some form and an C<IO::Path> object will be created for it.
+
+Related named arguments are (in alphabetical order):
+
+=item :dir - filter for directory basename check to include
+=item :file - filter for file basename check to include
+=item :files-from - file containing filenames as source
+=item :paths - paths to recurse into if directory
+=item :paths-from - file containing paths to recurse into
+=item :sources - list of objects to be considered as source
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head2 2. Filter applicable objects
+
+Filter down the list of sources from step 1 on any additional filesystem
+related properties.  This assumes that the list of objects created, are
+strings of absolute paths to be checked.
+
+=item :accessed - when was path last accessed
+=item :blocks- number of filesystem blocks
+=item :created - when was path created
+=item :device-number - device number on which path is located
+=item :executable - is path executable
+=item :filesize - size of the path in bytes
+=item :gid - numeric gid of the path
+=item :group-executable - is path executable by group
+=item :group-readable - is path readable by group
+=item :group-writable - is path writable 
+=item :hard-links - number of hard-links to path on filesystem
+=item :inode - inode of path on filesystem
+=item :meta-modified - when meta information of path was modified
+=item :mode - the mode of the path
+=item :modified - when path was last modified
+=item :owned-by-group - is path owned by group of current user
+=item :owned-by-user - is path owned by current user
+=item :readable - is path readable by current user
+=item :uid - numeric uid of path
+=item :world-executable - is path executable by any user
+=item :world-readable - is path readable by any user
+=item :world-writable - is path writable by any user
+=item :writable - is path writable by current user
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head3 3. Produce items to search in
+
+The second step is to create the logic for creating items to
+search in from the objects in step 1.  If search is to be done
+per object, then C<.slurp> is called on the object.  Otherwise
+C<.lines> is called on the object.  Unless one provides their
+own logic for producing items to search in.
+
+Related named arguments are (in alphabetical order):
+
+=item :encoding - encoding to be used when creating items
+=item :find - map sequence of step 1 to item producer
+=item :per-file - logic to create one item per object
+=item :per-line - logic to create one item per line in the object
+
+The result of this step, is a (potentially lazy and hyperable)
+sequence of objects.
+
+=head3 4. Create logic for matching
+
+Take the logic of the pattern C<Callable>, and create a C<Callable> to
+do the actual matching with the items produced in step 2.
+
+Related named arguments are (in alphabetical order):
+
+=item :invert-match - invert the logic of matching
+=item :quietly - absorb any warnings produced by the matcher
+=item :silently - absorb any output done by the matcher
+
+=head3 5. Create logic for running
+
+Take the matcher logic of the C<Callable> of step 3 and create a runner
+C<Callable> that will produce the items found and their possible context
+(such as extra lines before or after).  Assuming no context, the runner
+changes a return value of C<False> from the matcher into C<Empty>, a
+return value of C<True> in the original line, and passes through any other
+value.
+
+Matching lines are C<PairMatched> objects, and lines that have been added
+because of context are C<PairContext> objects.
+
+Related named arguments are (in alphabetical order):
+
+=item :after-context - number of lines to show after a match
+=item :before-context - number of lines to show before a match
+=item :context - number of lines to show around a match
+=item :paragraph-context - lines around match until empty line
+=item :passthru-context - pass on *all* lines
+
+=head3 6. Run the sequence(s)
+
+The final step is to take the C<Callable> of step 4 and run that
+repeatedly on the sequence of step 1, and for each item of that
+sequence, run the sequence of step 2 on that.  Make sure any
+phasers (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
+time in a thread-safe manner.  And produce a sequence in which the
+key is the source, and the value is a C<Slip> of C<Pair>s where the
+key is the line-number and the value is line with the match, or
+whatever the pattern matcher returned.
+
+=head1 EXPORTED SUBROUTINES
+
+=head2 rak
+
+The C<rak> subroutine takes a C<Callable> (or C<Regex>) pattern as the only
+positional argument and quite a number of named arguments.  Or it takes a
+C<Callable> (or C<Regex>) as the first positional argument for the pattern,
+and a hash with named arguments as the second positional argument.  In the
+latter case, the hash will have the arguments removed that the C<rak>
+subroutine needed for its configuration and execution.
+
+It returns either a C<Pair> (with an C<Exception> as key, and the
+exception message as the value), or an C<Iterable> of C<Pair>s which
+contain the source object as key (by default a C<IO::Path> object
+of the file in which the pattern was found), and a C<Slip> of
+key / value pairs, in which the key is the line-number where the
+pattern was found, and the value is the product of the search
+(which, by default, is the line in which the pattern was found).
+
+The following named arguments can be specified (in alphabetical
+order):
+
+=head3 :accessed(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<access> time of the path.  The C<Callable> is
+passed a C<Num> value of the access time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
+=head3 :after-context(N)
+
+Indicate the number of lines that should also be returned B<after>
+a line with a pattern match.  Defaults to B<0>.
+
+=head3 :batch(N)
+
+When hypering over multiple cores, indicate how many items should be
+processed per thread at a time.  Defaults to whatever the system
+thinks is best (which B<may> be sub-optimal).
+
+=head3 :before-context(N)
+
+Indicate the number of lines that should also be returned B<before>
+a line with a pattern match.  Defaults to B<0>.
+
+=head3 :blocks(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of blocks> used by the path on the filesystem
+on which the path is located.  The C<Callable> is passed the number of blocks
+of a path and is expected to return a trueish value to have the path be
+considered for further selection.
+
+=head3 :context(N)
+
+Indicate the number of lines that should also be returned around
+a line with a pattern match.  Defaults to B<0>.
+
+=head3 :created(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<creation> time of the path.  The C<Callable> is
+passed a C<Num> value of the creation time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
+=head3 :degree(N)
+
+When hypering over multiple cores, indicate the maximum number of
+threads that should be used.  Defaults to whatever the system
+thinks is best (which B<may> be sub-optimal).
+
+=head3 :device-number(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<device number> of the path.  The C<Callable> is
+passed the device number of the device on which the path is located and is
+expected to return a trueish value to have the path be considered for further
+selection.
+
+=head3 :dir(&dir-matcher)
+
+If specified, indicates the matcher that should be used to select
+acceptable directories with the C<paths> utility.  Defaults to C<True>
+indicating B<all> directories should be recursed into.  Applicable
+for any situation where C<paths> is used to create the list of files
+to check.
+
+=head3 :encoding("utf8-c8")
+
+When specified with a string, indicates the name of the encoding
+to be used to produce items to check (typically by calling
+C<lines> or C<slurp>).  Defaults to C<utf8-c8>, the UTF-8
+encoding that is permissive of encoding issues.
+
+=head3 :executable
+
+Flag.  If specified, indicates only paths that are B<executable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :file(&file-matcher)
+
+If specified, indicates the matcher that should be used to select
+acceptable files with the C<paths> utility.  Defaults to C<True>
+indicating B<all> files should be checked.  Applicable for any
+situation where C<paths> is used to create the list of files to
+check.
+
+=head3 :filesize(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of bytes> of the path.  The C<Callable> is
+passed the number of bytes of a path and is expected to return a trueish
+value to have the path be considered for further selection.
+
+=head3 :files-from($filename)
+
+If specified, indicates the name of the file from which a list
+of files to be used as sources will be read.
+
+=head3 :find
+
+Flag.  If specified, maps the sources of items into items to search.
+
+=head3 :gid(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<gid> of the path.  The C<Callable> is passed the
+numeric gid of a path and is expected to return a trueish value to have the
+path be considered for further selection.  See also C<owner> and C<group>
+filters.
+
+=head3 :group-executable
+
+Flag.  If specified, indicates only paths that are B<executable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :group-readable
+
+Flag.  If specified, indicates only paths that are B<readable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :group-writable
+
+Flag.  If specified, indicates only paths that are B<writable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :hard-links(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<number of hard-links> of the path.  The C<Callable>
+is passed the number of hard-links of a path and is expected to return a
+trueish value to have the path be considered for further selection.
+
+=head3 :inode(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<inode> of the path.  The C<Callable> is passed the
+inode of a path and is expected to return a trueish value to have the path be
+considered for further selection.
+
+=head3 :invert-match
+
+Flag. If specified with a trueish value, will negate the return
+value of the pattern if a C<Bool> was returned.  Defaults to
+C<False>.
+
+=head3 :meta-modified(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<modification> time of the path.  The C<Callable> is
+passed a C<Num> value of the modification time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
+=head3 :mode(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<mode> of the path.  The C<Callable> is passed the
+mode of a path and is expected to return a trueish value to have the path be
+considered for further selection.  This is really for advanced types of tests:
+it's probably easier to use any of the C<readable>, C<writeable> and
+C<executable> filters.
+
+=head3 :modified(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<modification> time of the path.  The C<Callable> is
+passed a C<Num> value of the modification time (number of seconds since epoch)
+and is expected to return a trueish value to have the path be considered
+for further selection.
+
+=head3 :paragraph-context
+
+Flag. If specified with a trueish value, produce lines B<around>
+the line with a pattern match until an empty line is encountered.
+
+=head3 :passthru-context
+
+Flag. If specified with a trueish value, produces B<all> lines.
+
+=head3 :paths-from($filename)
+
+If specified, indicates the name of the file from which a list
+of paths to be used as the base of the production of filename
+with a C<paths> search.
+
+=head3 :paths(@paths)
+
+If specified, indicates a list of paths that should be used
+as the base of the production of filename with a C<paths>
+search.  If there is no other sources specification (from
+either the C<:files-from>, C<paths-from> or C<sources>) then
+the current directory (aka ".") will be assumed.
+
+If a single hyphen is specified as the path, then STDIN will be
+assumed as the source.
+
+=head3 :per-file(&producer)
+
+If specified, indicates that searches should be done on a per-file
+basis.  Defaults to doing searches on a per-line basis.
+
+If specified with a C<True> value, indicates that the C<slurp>
+method will be called on each source before being checked with
+pattern.  If the source is a C<Str>, then it will be assumed to
+be a path name to read from.
+
+If specified with a C<Callable>, it indicates the code to be
+executed from a given source to produce the single item to be
+checked for the pattern.
+
+=head3 :per-line(&producer)
+
+If specified, indicates that searches should be done on a per-line
+basis.
+
+If specified with a C<True> value (which is also the default),
+indicates that the C<lines> method will be called on each source
+before being checked with pattern.  If the source is a C<Str>,
+then it will be assumed to be a path name to read lines from.
+
+If specified with a C<Callable>, it indicates the code to be
+executed from a given source to produce the  itemi to be checked
+for the pattern.
+
+=head3 :quietly
+
+Flag. If specified with a trueish value, will absorb any warnings
+that may occur when looking for the pattern.
+
+=head3 :readable
+
+Flag.  If specified, indicates only paths that are B<readable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :owned-by-group
+
+Flag.  If specified, indicates only paths that are B<owned> by the B<group>
+of the current user, are (not) acceptable for further selection.
+
+=head3 :owned-by-user
+
+Flag.  If specified, indicates only paths that are B<owned> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :silently("out,err")
+
+When specified with C<True>, will absorb any output on STDOUT
+and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
+("err") and both STDOUT and STDERR ("out,err").
+
+=head3 :sources(@objects)
+
+If specified, indicates a list of objects that should be used
+as a source for the production of lines.
+
+=head3 :stats
+
+Flag.  If specified with a trueish value, will keep stats on number
+of files and number of lines seen.  And instead of just returning
+the results sequence, will then return a C<List> of the result
+sequence as the first argument, and a C<Map> with statistics as the
+second argument.
+
+=head3 :uid(&filter)
+
+If specified, indicates the C<Callable> filter that should be used to select
+acceptable paths by the B<uid> of the path.  The C<Callable> is passed the
+numeric uid of a path and is expected to return a trueish value to have the
+path be considered for further selection.  See also C<owner> and C<group>
+filters.
+
+=head3 :world-executable
+
+Flag.  If specified, indicates only paths that are B<executable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :world-readable
+
+Flag.  If specified, indicates only paths that are B<readable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :world-writeable
+
+Flag.  If specified, indicates only paths that are B<writable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :writable
+
+Flag.  If specified, indicates only paths that are B<writable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head2 PATTERN RETURN VALUES
+
+The return value of the pattern C<Callable> is interpreted in the
+following ways:
+
+=head3 True
+
+If the C<Bool>ean True value is returned, assume the pattern is found.
+Produce the line unless C<:invert-match> was specified.
+
+=head3 False
+
+If the C<Bool>ean Fals value is returned, assume the pattern is B<not>
+found.  Do B<not> produce the line unless C<:invert-match> was specified.
+
+=head3 Empty
+
+Always produce the line.  Even if C<:invert-match> was specified.
+
+=head3 any other value
+
+Produce that value.
+
+=head2 PHASERS
+
+Any C<FIRST>, C<NEXT> and C<LAST> phaser that are specified in the
+pattern C<Callable>, will be executed at the correct time.
+
+=head2 MATCHING LINES vs CONTEXT LINES
+
+The C<Pair>s that contain the search result within an object, have
+an additional method mixed in: C<matched>.  This returns C<True> for
+lines that matched, and C<False> for lines that have been added because
+of a context specification (C<:context>, C<:before-context>, C<:after-context>
+or C<paragraph-context>).
+
+These C<Pair>s can also be recognized by their class: C<PairMatched> versus
+C<PairContext>, which are also exported.
+
+=head1 AUTHOR
+
+Elizabeth Mattijsen <liz@raku.rocks>
+
+Source can be located at: https://github.com/lizmat/rak .
+Comments and Pull Requests are welcome.
+
+If you like this module, or what I’m doing more generally, committing to a
+L<small sponsorship|https://github.com/sponsors/lizmat/>  would mean a great
+deal to me!
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2022 Elizabeth Mattijsen
+
+This library is free software; you can redistribute it and/or modify it under
+the Artistic License 2.0.
+
+=end pod
+
+# vim: expandtab shiftwidth=4
