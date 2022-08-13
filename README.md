@@ -22,15 +22,14 @@ for rak *.contains("foo") -> (:key($path), :value(@found)) {
 DESCRIPTION
 ===========
 
-The `rak` subroutine provides a mostly abstract core search functionality to be used by modules such as `App::Rak`.
+The `rak` subroutine provides a mostly abstract core search (plumbing) functionality to be used by modules such as (porcelain) `App::Rak`.
 
 THEORY OF OPERATION
 ===================
 
 The `rak` subroutine basically goes through 6 steps to produce a result.
 
-1. Acquire sources
-------------------
+### 1. Acquire sources
 
 The first step is determining the objects that should be searched for the specified pattern. If an object is a `Str`, it will be assume that it is a path specification of a file to be searched in some form and an `IO::Path` object will be created for it.
 
@@ -50,8 +49,7 @@ Related named arguments are (in alphabetical order):
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-2. Filter applicable objects
-----------------------------
+### 2. Filter applicable objects
 
 Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created, are strings of absolute paths to be checked.
 
@@ -103,8 +101,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-3. Produce items to search in
------------------------------
+### 3. Produce items to search in
 
 The second step is to create the logic for creating items to search in from the objects in step 1. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
 
@@ -120,8 +117,7 @@ Related named arguments are (in alphabetical order):
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-4. Create logic for matching
-----------------------------
+### 4. Create logic for matching
 
 Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 2.
 
@@ -133,8 +129,7 @@ Related named arguments are (in alphabetical order):
 
   * :silently - absorb any output done by the matcher
 
-5. Create logic for running
----------------------------
+### 5. Create logic for running
 
 Take the matcher logic of the `Callable` of step 3 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
 
@@ -152,8 +147,7 @@ Related named arguments are (in alphabetical order):
 
   * :passthru-context - pass on *all* lines
 
-6. Run the sequence(s)
-----------------------
+### 6. Run the sequence(s)
 
 The final step is to take the `Callable` of step 4 and run that repeatedly on the sequence of step 1, and for each item of that sequence, run the sequence of step 2 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. And produce a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
 
@@ -366,7 +360,7 @@ If the `Bool`ean True value is returned, assume the pattern is found. Produce th
 
 ### False
 
-If the `Bool`ean Fals value is returned, assume the pattern is **not** found. Do **not** produce the line unless `:invert-match` was specified.
+If the `Bool`ean False value is returned, assume the pattern is **not** found. Do **not** produce the line unless `:invert-match` was specified.
 
 ### Empty
 
