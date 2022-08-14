@@ -5,6 +5,8 @@ use paths:ver<10.0.7>:auth<zef:lizmat>;
 use path-utils:ver<0.0.5>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
+# The classes for matching and not-matching lines (that have been added
+# because of some context argument having been specified).
 my class PairMatched is Pair is export { method matched(--> True)  { } }
 my class PairContext is Pair is export { method matched(--> False) { } }
 
@@ -512,12 +514,14 @@ multi sub rak(&pattern, %n) {
     # Set up any mapper
     my &mapper;
     my &next-mapper-phaser;
+    my &last-mapper-phaser;
     my $map-all := %n<map-all>;
     if %n<mapper>:exists {
         &mapper = %n<mapper>:delete;
         if &mapper.has-loop-phasers {
             $_() with &mapper.callable_for_phaser('FIRST');
             &next-mapper-phaser = $_ with &mapper.callable_for_phaser('NEXT');
+            &last-mapper-phaser = $_ with &mapper.callable_for_phaser('LAST');
         }
     }
 
@@ -561,12 +565,10 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
-    if $stats || &mapper || &last-phaser {
+    if $stats || &last-mapper-phaser || &last-phaser {
         $result-seq.iterator.push-all(my $buffer := IterationBuffer.new);
-        last-phaser() if &last-phaser;
-        if &mapper && &mapper.has-loop-phasers {
-            $_() with &mapper.callable_for_phaser('LAST');
-        }
+        last-phaser()        if &last-phaser;
+        last-mapper-phaser() if &last-mapper-phaser;
 
         $stats
           ?? ($buffer.Seq, Map.new: (:$nr-files, :$nr-lines, :$nr-matches))
