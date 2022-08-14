@@ -11,7 +11,8 @@ SYNOPSIS
 ```raku
 use rak;
 
-for rak *.contains("foo") -> (:key($path), :value(@found)) {
+# look for "foo" in all .txt files from current directory
+for rak / foo /, :file(/ \.txt $/) -> (:key($path), :value(@found)) {
     if @found {
         say "$path:";
         say .key ~ ':' ~ .value for @found;
@@ -51,7 +52,7 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 ### 2. Filter applicable objects
 
-Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created, are strings of absolute paths to be checked.
+Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked.
 
   * :accessed - when was path last accessed
 
@@ -103,7 +104,7 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 ### 3. Produce items to search in
 
-The second step is to create the logic for creating items to search in from the objects in step 1. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
+The second step is to create the logic for creating items to search in from the objects in step 2. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
 
 Related named arguments are (in alphabetical order):
 
@@ -119,7 +120,7 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 ### 4. Create logic for matching
 
-Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 2.
+Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 3.
 
 Related named arguments are (in alphabetical order):
 
@@ -131,9 +132,7 @@ Related named arguments are (in alphabetical order):
 
 ### 5. Create logic for running
 
-Take the matcher logic of the `Callable` of step 3 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
-
-Matching lines are `PairMatched` objects, and lines that have been added because of context are `PairContext` objects.
+Take the matcher logic of the `Callable` of step 4 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
 
 Related named arguments are (in alphabetical order):
 
@@ -147,9 +146,21 @@ Related named arguments are (in alphabetical order):
 
   * :passthru-context - pass on *all* lines
 
+Matching lines are represented by `PairMatched` objects, and lines that have been added because of the above context arguments, are represented by `PairContext` objects.
+
 ### 6. Run the sequence(s)
 
-The final step is to take the `Callable` of step 4 and run that repeatedly on the sequence of step 1, and for each item of that sequence, run the sequence of step 2 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. And produce a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
+The final step is to take the `Callable` of step 5 and run that repeatedly on the sequence of step 2, and for each item of that sequence, run the sequence of step 5 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner.
+
+Either produces a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
+
+Or, produces sequence of whatever a specified mapper returned.
+
+Related named arguments are (in alphabetical order):
+
+  * :mapper - code to map results of a single source
+
+  * :map-all - also call mapper if a source has no matches
 
 EXPORTED SUBROUTINES
 ====================
@@ -209,7 +220,7 @@ When specified with a string, indicates the name of the encoding to be used to p
 
 ### :executable
 
-Flag. If specified, indicates only paths that are **executable** by the current **user**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **executable** by the current **user**, are (not) acceptable for further selection.
 
 ### :file(&file-matcher)
 
@@ -233,15 +244,15 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 ### :group-executable
 
-Flag. If specified, indicates only paths that are **executable** by the current **group**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **executable** by the current **group**, are (not) acceptable for further selection.
 
 ### :group-readable
 
-Flag. If specified, indicates only paths that are **readable** by the current **group**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **readable** by the current **group**, are (not) acceptable for further selection.
 
 ### :group-writable
 
-Flag. If specified, indicates only paths that are **writable** by the current **group**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **writable** by the current **group**, are (not) acceptable for further selection.
 
 ### :hard-links(&filter)
 
@@ -254,6 +265,16 @@ If specified, indicates the `Callable` filter that should be used to select acce
 ### :invert-match
 
 Flag. If specified with a trueish value, will negate the return value of the pattern if a `Bool` was returned. Defaults to `False`.
+
+### :mapper(&mapper)
+
+If specified, indicates the `Callable` that will be called (in a thread-safe manner) for each source, with the matches of that source. The `Callable` is passed the source object, and a list of matches, if there were any matches. If you want the `Callable` to be called for every source, then you must also specify `:map-all`.
+
+Whatever the mapper `Callable` returns, will become the result of the call to the `rak` subroutine. If you don't want any result to be returned, you can return `Empty` from the mapper `Callable`.
+
+### :map-all
+
+Flag. If specified with a trueish value, will call the mapper logic, as specified with `:mapper`, even if a source has no matches. Defaults to `False`: 
 
 ### :meta-modified(&filter)
 
@@ -307,7 +328,7 @@ Flag. If specified with a trueish value, will absorb any warnings that may occur
 
 ### :readable
 
-Flag. If specified, indicates only paths that are **readable** by the current **user**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **readable** by the current **user**, are (not) acceptable for further selection.
 
 ### :owned-by-group
 
@@ -335,19 +356,19 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 ### :world-executable
 
-Flag. If specified, indicates only paths that are **executable** by any user or group, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **executable** by any user or group, are (not) acceptable for further selection.
 
 ### :world-readable
 
-Flag. If specified, indicates only paths that are **readable** by any user or group, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **readable** by any user or group, are (not) acceptable for further selection.
 
 ### :world-writeable
 
-Flag. If specified, indicates only paths that are **writable** by any user or group, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **writable** by any user or group, are (not) acceptable for further selection.
 
 ### :writable
 
-Flag. If specified, indicates only paths that are **writable** by the current **user**, are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are **writable** by the current **user**, are (not) acceptable for further selection.
 
 PATTERN RETURN VALUES
 ---------------------

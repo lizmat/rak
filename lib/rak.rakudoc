@@ -10,7 +10,8 @@ rak - look for clues in stuff
 
 use rak;
 
-for rak *.contains("foo") -> (:key($path), :value(@found)) {
+# look for "foo" in all .txt files from current directory
+for rak / foo /, :file(/ \.txt $/) -> (:key($path), :value(@found)) {
     if @found {
         say "$path:";
         say .key ~ ':' ~ .value for @found;
@@ -51,7 +52,7 @@ sequence of objects.
 =head3 2. Filter applicable objects
 
 Filter down the list of sources from step 1 on any additional filesystem
-related properties.  This assumes that the list of objects created, are
+related properties.  This assumes that the list of objects created are
 strings of absolute paths to be checked.
 
 =item :accessed - when was path last accessed
@@ -84,7 +85,7 @@ sequence of objects.
 =head3 3. Produce items to search in
 
 The second step is to create the logic for creating items to
-search in from the objects in step 1.  If search is to be done
+search in from the objects in step 2.  If search is to be done
 per object, then C<.slurp> is called on the object.  Otherwise
 C<.lines> is called on the object.  Unless one provides their
 own logic for producing items to search in.
@@ -102,7 +103,7 @@ sequence of objects.
 =head3 4. Create logic for matching
 
 Take the logic of the pattern C<Callable>, and create a C<Callable> to
-do the actual matching with the items produced in step 2.
+do the actual matching with the items produced in step 3.
 
 Related named arguments are (in alphabetical order):
 
@@ -112,15 +113,12 @@ Related named arguments are (in alphabetical order):
 
 =head3 5. Create logic for running
 
-Take the matcher logic of the C<Callable> of step 3 and create a runner
+Take the matcher logic of the C<Callable> of step 4 and create a runner
 C<Callable> that will produce the items found and their possible context
 (such as extra lines before or after).  Assuming no context, the runner
 changes a return value of C<False> from the matcher into C<Empty>, a
 return value of C<True> in the original line, and passes through any other
 value.
-
-Matching lines are C<PairMatched> objects, and lines that have been added
-because of context are C<PairContext> objects.
 
 Related named arguments are (in alphabetical order):
 
@@ -130,16 +128,29 @@ Related named arguments are (in alphabetical order):
 =item :paragraph-context - lines around match until empty line
 =item :passthru-context - pass on *all* lines
 
+Matching lines are represented by C<PairMatched> objects, and lines that
+have been added because of the above context arguments, are represented by
+C<PairContext> objects.
+
 =head3 6. Run the sequence(s)
 
-The final step is to take the C<Callable> of step 4 and run that
-repeatedly on the sequence of step 1, and for each item of that
-sequence, run the sequence of step 2 on that.  Make sure any
+The final step is to take the C<Callable> of step 5 and run that
+repeatedly on the sequence of step 2, and for each item of that
+sequence, run the sequence of step 5 on that.  Make sure any
 phasers (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
-time in a thread-safe manner.  And produce a sequence in which the
-key is the source, and the value is a C<Slip> of C<Pair>s where the
-key is the line-number and the value is line with the match, or
-whatever the pattern matcher returned.
+time in a thread-safe manner.
+
+Either produces a sequence in which the key is the source, and the
+value is a C<Slip> of C<Pair>s where the key is the line-number and
+the value is line with the match, or whatever the pattern matcher
+returned.
+
+Or, produces sequence of whatever a specified mapper returned.
+
+Related named arguments are (in alphabetical order):
+
+=item :mapper - code to map results of a single source
+=item :map-all - also call mapper if a source has no matches
 
 =head1 EXPORTED SUBROUTINES
 
@@ -239,7 +250,7 @@ encoding that is permissive of encoding issues.
 
 =head3 :executable
 
-Flag.  If specified, indicates only paths that are B<executable> by the current
+Flag.  If specified, indicates paths, that are B<executable> by the current
 B<user>, are (not) acceptable for further selection.
 
 =head3 :file(&file-matcher)
@@ -276,17 +287,17 @@ filters.
 
 =head3 :group-executable
 
-Flag.  If specified, indicates only paths that are B<executable> by the current
+Flag.  If specified, indicates paths, that are B<executable> by the current
 B<group>, are (not) acceptable for further selection.
 
 =head3 :group-readable
 
-Flag.  If specified, indicates only paths that are B<readable> by the current
+Flag.  If specified, indicates paths, that are B<readable> by the current
 B<group>, are (not) acceptable for further selection.
 
 =head3 :group-writable
 
-Flag.  If specified, indicates only paths that are B<writable> by the current
+Flag.  If specified, indicates paths, that are B<writable> by the current
 B<group>, are (not) acceptable for further selection.
 
 =head3 :hard-links(&filter)
@@ -308,6 +319,24 @@ considered for further selection.
 Flag. If specified with a trueish value, will negate the return
 value of the pattern if a C<Bool> was returned.  Defaults to
 C<False>.
+
+=head3 :mapper(&mapper)
+
+If specified, indicates the C<Callable> that will be called (in a
+thread-safe manner) for each source, with the matches of that source.
+The C<Callable> is passed the source object, and a list of matches,
+if there were any matches.  If you want the C<Callable> to be called
+for every source, then you must also specify C<:map-all>.
+
+Whatever the mapper C<Callable> returns, will become the result of the
+call to the C<rak> subroutine.  If you don't want any result to be
+returned, you can return C<Empty> from the mapper C<Callable>.
+
+=head3 :map-all
+
+Flag.  If specified with a trueish value, will call the mapper logic, as
+specified with C<:mapper>, even if a source has no matches.  Defaults to
+C<False>: 
 
 =head3 :meta-modified(&filter)
 
@@ -395,7 +424,7 @@ that may occur when looking for the pattern.
 
 =head3 :readable
 
-Flag.  If specified, indicates only paths that are B<readable> by the current
+Flag.  If specified, indicates paths, that are B<readable> by the current
 B<user>, are (not) acceptable for further selection.
 
 =head3 :owned-by-group
@@ -437,22 +466,22 @@ filters.
 
 =head3 :world-executable
 
-Flag.  If specified, indicates only paths that are B<executable> by any user
+Flag.  If specified, indicates paths, that are B<executable> by any user
 or group, are (not) acceptable for further selection.
 
 =head3 :world-readable
 
-Flag.  If specified, indicates only paths that are B<readable> by any user
+Flag.  If specified, indicates paths, that are B<readable> by any user
 or group, are (not) acceptable for further selection.
 
 =head3 :world-writeable
 
-Flag.  If specified, indicates only paths that are B<writable> by any user
+Flag.  If specified, indicates paths, that are B<writable> by any user
 or group, are (not) acceptable for further selection.
 
 =head3 :writable
 
-Flag.  If specified, indicates only paths that are B<writable> by the current
+Flag.  If specified, indicates paths, that are B<writable> by the current
 B<user>, are (not) acceptable for further selection.
 
 =head2 PATTERN RETURN VALUES

@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 16;
+plan 24;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -41,9 +41,16 @@ my \c8 = PairContext.new:  9, "eight";
 my \c9 = PairContext.new: 10, "nine";
 
 my sub lookup(
-  $pattern, *@expected, *%additional
+  $pattern is copy, *@expected, *%additional
 ) is test-assertion {
-    my $code   := try $pattern.EVAL;
+    my $code;
+    if Callable.ACCEPTS($pattern) {
+        $code    = $pattern;
+        $pattern = %additional<name>:delete;
+    }
+    else {
+        $code = try $pattern.EVAL;
+    }
     my &needle := $code // *.contains($pattern);
     my %expected = @expected.map: { %name2path{.key} => .value }
 
@@ -151,5 +158,39 @@ lookup 'in', :paths($dir), :owned-by-user,
 lookup 'zero', :paths($dir), :!owned-by-user,
   ()
 ;
+
+my %b is BagHash;
+my $FIRST-matcher-fired;
+my $LAST-matcher-fired;
+my $FIRST-mapper-fired;
+my $LAST-mapper-fired;
+
+my int $NEXT-matcher-count;
+my int $NEXT-mapper-count;
+
+lookup -> $ {
+    FIRST $FIRST-matcher-fired = True;
+    NEXT  ++$NEXT-matcher-count;
+    LAST  $LAST-matcher-fired  = True;
+    True  # accept all lines
+}, :name<bagtest>, :paths($dir), :mapper(-> $source, @lines {
+    FIRST $FIRST-mapper-fired = True;
+    NEXT  ++$NEXT-mapper-count;
+    LAST  $LAST-mapper-fired  = True;
+    %b.add(@lines.map(*.value));
+    Empty
+}), 
+  ()
+;
+is-deeply %b, (:10zero, :9one, :8two,   :7three, :6four,
+                :5five, :4six, :3seven, :2eight, :1nine).BagHash,
+  'did the mapper create the correct bag';
+ok $FIRST-matcher-fired, "FIRST phaser fired in matcher";
+ok $LAST-matcher-fired,  "LAST phaser fired in matcher";
+ok $FIRST-mapper-fired,  "FIRST phaser fired in mapper";
+ok $LAST-mapper-fired,   "LAST phaser fired in mapper";
+
+is $NEXT-matcher-count, 10, 'was NEXT phaser in matcher fired ok';
+is $NEXT-mapper-count,  10, 'was NEXT phaser in mapper fired ok';
 
 # vim: expandtab shiftwidth=3

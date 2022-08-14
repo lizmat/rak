@@ -357,7 +357,8 @@ multi sub rak(&pattern, *%n) {
 }
 multi sub rak(&pattern, %n) {
     # any execution error will ne caught and become a return state
-    CATCH { return $_ => .message }
+    my $debug := %n<debug> // True;
+    CATCH { return $_ => .message unless $debug }
 
     # Some settings we always need
     my $batch  := %n<batch>:delete;
@@ -496,10 +497,41 @@ multi sub rak(&pattern, %n) {
         &last-phaser  = &pattern.callable_for_phaser('LAST');
     }
 
+    # Set up any mapper
+    my &mapper;
+    my &next-mapper-phaser;
+    my $map-all := %n<map-all>;
+    if %n<mapper>:exists {
+        &mapper = %n<mapper>:delete;
+        if &mapper.has-loop-phasers {
+            $_() with &mapper.callable_for_phaser('FIRST');
+            &next-mapper-phaser = $_ with &mapper.callable_for_phaser('NEXT');
+        }
+    }
+
     # Set up result sequence
     first-phaser() if &first-phaser;
     my atomicint $nr-files;
-    my $result-seq := do if &next-phaser {
+    my $result-seq := do if &mapper {
+        my $lock := Lock.new;
+        $sources-seq.map: -> $source {
+            ++⚛$nr-files;
+            producer($source).map(&runner).iterator.push-all(
+              my $buffer := IterationBuffer.new
+            );
+
+            if $map-all || $buffer.elems {
+                # thread-safely run mapper and associated phasers
+                $lock.protect: {
+                    my \result := mapper($source, $buffer.List);
+                    next-phaser()        if &next-phaser;
+                    next-mapper-phaser() if &next-mapper-phaser;
+                    result
+                }
+            }
+        }
+    }
+    elsif &next-phaser {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
             ++⚛$nr-files;
@@ -516,21 +548,20 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # If we want to have stats, we need to run all searches
-    if $stats {
-        my @result = $result-seq;
+    # Need to run all searches before returning
+    if $stats || &mapper || &last-phaser {
+        $result-seq.iterator.push-all(my $buffer := IterationBuffer.new);
         last-phaser() if &last-phaser;
-        (@result, Map.new: (:$nr-files, :$nr-lines))
+        if &mapper && &mapper.has-loop-phasers {
+            $_() with &mapper.callable_for_phaser('LAST');
+        }
+
+        $stats
+          ?? ($buffer.Seq, Map.new: (:$nr-files, :$nr-lines, :$nr-matches))
+          !! $buffer.Seq
     }
 
-    # With a LAST phaser, need to run all searches before firing
-    elsif &last-phaser {
-        my @result = $result-seq;
-        last-phaser();
-        @result
-    }
-
-    # No LAST phaser, let the caller handle laziness
+    # We can be lazy
     else {
         $result-seq
     }
