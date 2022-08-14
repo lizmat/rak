@@ -528,6 +528,8 @@ multi sub rak(&pattern, %n) {
     # Set up result sequence
     first-phaser() if &first-phaser;
     my atomicint $nr-files;
+
+    # A mapper was specified
     my $result-seq := do if &mapper {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
@@ -547,6 +549,8 @@ multi sub rak(&pattern, %n) {
             }
         }
     }
+
+    # The matcher has a NEXT phaser
     elsif &next-phaser {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
@@ -557,10 +561,29 @@ multi sub rak(&pattern, %n) {
             result
         }
     }
+
+    # Nothing special to do for each source
     else {
         $sources-seq.map: -> $source {
             ++⚛$nr-files;
             Pair.new: $source, (producer($source).map: &runner).Slip
+        }
+    }
+
+    # Only want unique matches
+    if %n<unique>:delete {
+        my %seen;
+        $result-seq := $result-seq.map: {
+            my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
+            if List.ACCEPTS($outer) {
+                $outer.map({
+                    my $inner := Pair.ACCEPTS($_) ?? .value !! $_;
+                    $inner unless %seen{$inner.WHICH}++
+                }).Slip
+            }
+            else {
+                $outer unless %seen{$outer.WHICH}++
+            }
         }
     }
 

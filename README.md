@@ -160,13 +160,15 @@ The final step is to take the `Callable` of step 5 and run that repeatedly on th
 
 Either produces a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the line-number and the value is line with the match, or whatever the pattern matcher returned.
 
-Or, produces sequence of whatever a specified mapper returned.
+Or, produces sequence of whatever a specified mapper returned and/or with uniqueifying enabled.
 
 Related named arguments are (in alphabetical order):
 
   * :mapper - code to map results of a single source
 
   * :map-all - also call mapper if a source has no matches
+
+  * :unique - only return unique matches
 
 EXPORTED SUBROUTINES
 ====================
@@ -371,6 +373,10 @@ Flag. If specified, indicates only paths that are symbolic links, are (not) acce
 ### :uid(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **uid** of the path. The `Callable` is passed the numeric uid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
+
+### :unique
+
+Flag. If specified, indicates that only unique matches will be returned, instead of the normal sequence of source => result pairs.
 
 ### :world-executable
 

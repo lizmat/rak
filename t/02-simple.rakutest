@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 25;
+plan 26;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -196,5 +196,8 @@ ok $LAST-mapper-fired,   "LAST phaser fired in mapper";
 
 is $NEXT-matcher-count, 10, 'was NEXT phaser in matcher fired ok';
 is $NEXT-mapper-count,  10, 'was NEXT phaser in mapper fired ok';
+
+my @matches = rak -> $ --> True { }, :paths($dir), :unique;
+is-deeply @matches.sort, @targets.sort, 'did we get all unique strings';
 
 # vim: expandtab shiftwidth=3

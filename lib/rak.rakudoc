@@ -148,12 +148,14 @@ value is a C<Slip> of C<Pair>s where the key is the line-number and
 the value is line with the match, or whatever the pattern matcher
 returned.
 
-Or, produces sequence of whatever a specified mapper returned.
+Or, produces sequence of whatever a specified mapper returned
+and/or with uniqueifying enabled.
 
 Related named arguments are (in alphabetical order):
 
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
+=item :unique - only return unique matches
 
 =head1 EXPORTED SUBROUTINES
 
@@ -482,6 +484,11 @@ acceptable paths by the B<uid> of the path.  The C<Callable> is passed the
 numeric uid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
+
+=head3 :unique
+
+Flag.  If specified, indicates that only unique matches will be returned,
+instead of the normal sequence of source => result pairs.
 
 =head3 :world-executable
 

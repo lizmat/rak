@@ -1,8 +1,11 @@
 Revision history for rak
 
 {{$NEXT}}
-    - Change undocumented 'follow-symlinks' flag into documented
+
+0.0.2  2022-08-14T16:53:38+02:00
+    - Change undocumented :follow-symlinks flag into documented
       'recurse-symlink' flag.
+    - Add support for :unique flag
 
 0.0.1  2022-08-14T14:23:56+02:00
     - Re-implementation of core of App::Rak 0.47 as plumbing
