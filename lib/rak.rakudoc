@@ -59,6 +59,7 @@ strings of absolute paths to be checked.
 =item :blocks- number of filesystem blocks
 =item :created - when was path created
 =item :device-number - device number on which path is located
+=item :empty - is path empty (filesize == 0)
 =item :executable - is path executable
 =item :filesize - size of the path in bytes
 =item :gid - numeric gid of the path
@@ -248,6 +249,11 @@ When specified with a string, indicates the name of the encoding
 to be used to produce items to check (typically by calling
 C<lines> or C<slurp>).  Defaults to C<utf8-c8>, the UTF-8
 encoding that is permissive of encoding issues.
+
+=head3 :empty
+
+Flag.  If specified, indicates paths, that are empty (aka: have a filesize
+of 0 bytes), are (not) acceptable for further selection.
 
 =head3 :executable
 

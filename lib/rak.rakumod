@@ -2,7 +2,7 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.4>:auth<zef:lizmat>;
+use path-utils:ver<0.0.5>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 my class PairMatched is Pair is export { method matched(--> True)  { } }
@@ -62,6 +62,12 @@ my sub make-property-filter($seq is copy, %_) {
         $seq = $seq.map: -> $path {
             filesize(path-filesize($path)) ?? $path !! Empty
         }
+    }
+    if %_<empty>:exists {
+        $seq = $seq.map:
+          (%_<empty>:delete)
+            ?? -> $path { path-is-empty($path) ?? $path !! Empty }
+            !! -> $path { path-is-empty($path) ?? Empty !! $path }
     }
 
     if %_<mode>:delete -> &mode {

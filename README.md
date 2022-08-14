@@ -62,6 +62,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :device-number - device number on which path is located
 
+  * :empty - is path empty (filesize == 0)
+
   * :executable - is path executable
 
   * :filesize - size of the path in bytes
@@ -219,6 +221,10 @@ If specified, indicates the matcher that should be used to select acceptable dir
 ### :encoding("utf8-c8")
 
 When specified with a string, indicates the name of the encoding to be used to produce items to check (typically by calling `lines` or `slurp`). Defaults to `utf8-c8`, the UTF-8 encoding that is permissive of encoding issues.
+
+### :empty
+
+Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 bytes), are (not) acceptable for further selection.
 
 ### :executable
 
