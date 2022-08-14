@@ -92,6 +92,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :uid - numeric uid of path
 
+  * :symbolic-link - is path a symbolic link
+
   * :world-executable - is path executable by any user
 
   * :world-readable - is path readable by any user
@@ -349,6 +351,10 @@ If specified, indicates a list of objects that should be used as a source for th
 ### :stats
 
 Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument.
+
+### :symbolic-link
+
+Flag. If specified, indicates only paths that are symbolic links, are (not) acceptable for further selection.
 
 ### :uid(&filter)
 

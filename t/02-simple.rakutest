@@ -147,11 +147,11 @@ lookup 'o', :paths($dir), :filesize(*>45),
   "nine"  => (l0,l1,l2,l4),
 ;
 
-lookup 'ine', :paths($dir), :writable,
+lookup 'ine', :paths($dir), :writable, :readable,
   "nine"  => (l9,),
 ;
 
-lookup 'in', :paths($dir), :owned-by-user,
+lookup 'in', :paths($dir), :owned-by-user, :!symbolic-link,
   "nine"  => (l9,),
 ;
 

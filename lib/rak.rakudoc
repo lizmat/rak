@@ -74,6 +74,7 @@ strings of absolute paths to be checked.
 =item :owned-by-user - is path owned by current user
 =item :readable - is path readable by current user
 =item :uid - numeric uid of path
+=item :symbolic-link - is path a symbolic link
 =item :world-executable - is path executable by any user
 =item :world-readable - is path readable by any user
 =item :world-writable - is path writable by any user
@@ -455,6 +456,11 @@ of files and number of lines seen.  And instead of just returning
 the results sequence, will then return a C<List> of the result
 sequence as the first argument, and a C<Map> with statistics as the
 second argument.
+
+=head3 :symbolic-link
+
+Flag.  If specified, indicates only paths that are symbolic links,
+are (not) acceptable for further selection.
 
 =head3 :uid(&filter)
 

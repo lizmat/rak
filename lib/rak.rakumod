@@ -145,6 +145,12 @@ my sub make-property-filter($seq is copy, %_) {
             ?? -> $path { path-is-group-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-executable($path) ?? Empty !! $path }
     }
+    if %_<symbolic-link>:exists {
+        $seq = $seq.map:
+          (%_<symbolic-link>:delete)
+            ?? -> $path { path-is-symbolic-link($path) ?? $path !! Empty }
+            !! -> $path { path-is-symbolic-link($path) ?? Empty !! $path }
+    }
 
     if %_<world-readable>:exists {
         $seq = $seq.map:
