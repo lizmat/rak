@@ -1,4 +1,11 @@
 Revision history for rak
 
 {{$NEXT}}
-    - Re-implementation of core of App::Rak 0.47
+
+0.0.1  2022-08-14T14:23:56+02:00
+    - Re-implementation of core of App::Rak 0.47 as plumbing
+    - Added features:
+      - many file property filters
+      - support for mapping functionality
+      - abstract sources
+      - generic "per-file" logic
