@@ -46,6 +46,8 @@ Related named arguments are (in alphabetical order):
 
   * :paths-from - file containing paths to recurse into
 
+  * :recurse-symlink - recurse into symlinked directories
+
   * :sources - list of objects to be considered as source
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
@@ -329,6 +331,10 @@ If specified, indicates that searches should be done on a per-line basis.
 If specified with a `True` value (which is also the default), indicates that the `lines` method will be called on each source before being checked with pattern. If the source is a `Str`, then it will be assumed to be a path name to read lines from.
 
 If specified with a `Callable`, it indicates the code to be executed from a given source to produce the itemi to be checked for the pattern.
+
+### :recurse-symlink
+
+Flag. If specified with a trueish value, will recurse into directories that are actually symbolic links. The default is `False`: do **not** recurse into symlinked directories.
 
 ### :quietly
 

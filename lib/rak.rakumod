@@ -22,7 +22,7 @@ my sub paths-from-file($from) {
 my sub paths-arguments(%_) {
     my $dir             := (%_<dir>:delete)             // True;
     my $file            := (%_<file>:delete)            // True;
-    my $follow-symlinks := (%_<follow-symlinks>:delete) // False;
+    my $follow-symlinks := (%_<recurse-symlink>:delete) // False;
     Map.new: (:$dir, :$file, :$follow-symlinks)
 }
 
