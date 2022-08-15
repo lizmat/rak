@@ -3,7 +3,7 @@
 NAME
 ====
 
-rak - look for clues in stuff
+rak - plumbing to be able to look for stuff
 
 SYNOPSIS
 ========

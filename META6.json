@@ -12,7 +12,7 @@
     "path-utils:ver<0.0.6>:auth<zef:lizmat>",
     "Trap:ver<0.0.1>:auth<zef:lizmat>"
   ],
-  "description": "look for clues in stuff",
+  "description": "Plumbing to be able to look for stuff",
   "license": "Artistic-2.0",
   "name": "rak",
   "perl": "6.d",
