@@ -64,6 +64,8 @@ strings of absolute paths to be checked.
 =item :executable - is path executable
 =item :filesize - size of the path in bytes
 =item :gid - numeric gid of the path
+=item :git-repo - is path top directory of a Git repository
+=item :github-repo - is path top directory of a GitHub repository
 =item :group-executable - is path executable by group
 =item :group-readable - is path readable by group
 =item :group-writable - is path writable 
@@ -294,6 +296,18 @@ acceptable paths by the B<gid> of the path.  The C<Callable> is passed the
 numeric gid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
+
+=head3 :git-repo
+
+Flag.  If specified, indicates paths, look like they're the top directory
+in a Git repository (because they have a C<.git> directory in it), are
+(not) acceptable for further selection.
+
+=head3 :github-repo
+
+Flag.  If specified, indicates paths, look like they're the top directory
+in a GitHub repository (because they have a C<.github> directory in it),
+are (not) acceptable for further selection.
 
 =head3 :group-executable
 

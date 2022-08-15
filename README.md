@@ -72,6 +72,10 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :gid - numeric gid of the path
 
+  * :git-repo - is path top directory of a Git repository
+
+  * :github-repo - is path top directory of a GitHub repository
+
   * :group-executable - is path executable by group
 
   * :group-readable - is path readable by group
@@ -253,6 +257,14 @@ Flag. If specified, maps the sources of items into items to search.
 ### :gid(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **gid** of the path. The `Callable` is passed the numeric gid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
+
+### :git-repo
+
+Flag. If specified, indicates paths, look like they're the top directory in a Git repository (because they have a `.git` directory in it), are (not) acceptable for further selection.
+
+### :github-repo
+
+Flag. If specified, indicates paths, look like they're the top directory in a GitHub repository (because they have a `.github` directory in it), are (not) acceptable for further selection.
 
 ### :group-executable
 

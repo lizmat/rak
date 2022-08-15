@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.3  2022-08-15T10:55:39+02:00
+    - Add support for :git-repo and :github-repo path selection options
+    - Actually make :group-readable work correctly
+
 0.0.2  2022-08-14T16:53:38+02:00
     - Change undocumented :follow-symlinks flag into documented
       'recurse-symlink' flag.

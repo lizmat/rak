@@ -2,7 +2,7 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.5>:auth<zef:lizmat>;
+use path-utils:ver<0.0.6>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 # The classes for matching and not-matching lines (that have been added
@@ -135,9 +135,22 @@ my sub make-property-filter($seq is copy, %_) {
             !! -> $path { path-is-executable($path) ?? Empty !! $path }
     }
 
+    if %_<git-repo>:exists {
+        $seq = $seq.map:
+          (%_<git-repo>:delete)
+            ?? -> $path { path-is-git-repo($path) ?? $path !! Empty }
+            !! -> $path { path-is-git-repo($path) ?? Empty !! $path }
+    }
+    if %_<github-repo>:exists {
+        $seq = $seq.map:
+          (%_<github-repo>:delete)
+            ?? -> $path { path-is-github-repo($path) ?? $path !! Empty }
+            !! -> $path { path-is-github-repo($path) ?? Empty !! $path }
+    }
+
     if %_<group-readable>:exists {
         $seq = $seq.map:
-          (%_<readable>:delete)
+          (%_<group-readable>:delete)
             ?? -> $path { path-is-group-readable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-readable($path) ?? Empty !! $path }
     }
