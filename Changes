@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.4  2022-08-15T22:30:44+02:00
+    - Add support for :count-only
+    - Fix issue with laziness of match list of a source
+
 0.0.3  2022-08-15T10:55:39+02:00
     - Add support for :git-repo and :github-repo path selection options
     - Actually make :group-readable work correctly

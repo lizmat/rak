@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 26;
+plan 28;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -199,5 +199,39 @@ is $NEXT-mapper-count,  10, 'was NEXT phaser in mapper fired ok';
 
 my @matches = rak -> $ --> True { }, :paths($dir), :unique;
 is-deeply @matches.sort, @targets.sort, 'did we get all unique strings';
+
+is-deeply rak( -> $_ {
+    if $_ eq "five" {
+        "seven"
+    }
+    elsif $_ eq "seven" {
+        Empty
+    }
+    else {
+        True
+    }
+}, :paths($dir), :stats)[1],
+  Map.new((
+    :nr-changes(5), :nr-items(55), :nr-matches(47),
+    :nr-passthrus(3), :nr-sources(10)
+  )),
+  "did stats work out?";
+
+is-deeply rak( -> $_ {
+    if $_ eq "five" {
+        "seven"
+    }
+    elsif $_ eq "seven" {
+        Empty
+    }
+    else {
+        True
+    }
+}, :paths($dir), :count-only),
+  Map.new((
+    :nr-changes(5), :nr-items(55), :nr-matches(47),
+    :nr-passthrus(3), :nr-sources(10)
+  )),
+  "did count-only work out?";
 
 # vim: expandtab shiftwidth=3

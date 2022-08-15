@@ -10,6 +10,12 @@ use Trap:ver<0.0.1>:auth<zef:lizmat>;
 my class PairMatched is Pair is export { method matched(--> True)  { } }
 my class PairContext is Pair is export { method matched(--> False) { } }
 
+# Create an eager slip for a given Seq
+my sub eagerSlip($seq) {
+    $seq.iterator.push-all(my $buffer := IterationBuffer.new);
+    $buffer.Slip
+}
+
 # Return a Seq with ~ paths substituted for actual home directory paths
 my sub paths-from-file($from) {
     my $home := $*HOME.absolute ~ '/';
@@ -383,9 +389,9 @@ multi sub rak(&pattern, *%n) {
     rak &pattern, %n
 }
 multi sub rak(&pattern, %n) {
-    # any execution error will ne caught and become a return state
-    my $debug := %n<debug> // True;
-    CATCH { return $_ => .message unless $debug }
+    # any execution error will be caught and become a return state
+    my $CATCH := !(%n<dont-catch>:delete);
+    CATCH { return $_ => .message if $CATCH }
 
     # Some settings we always need
     my $batch  := %n<batch>:delete;
@@ -432,7 +438,7 @@ multi sub rak(&pattern, %n) {
                    !! $source.slurp(:$enc),
                  )
              }
-          !! $per-file  # assume Callable
+          !! $per-file  # assume already Callable
     }
     elsif (%n<per-line>:delete)<> -> $per-line {
         $per-line =:= True
@@ -444,7 +450,7 @@ multi sub rak(&pattern, %n) {
                  my $line-number = 0;
                  $seq.map: { PairContext.new: ++$line-number, $_ }
              }
-          !! $per-line  # assume Callable
+          !! $per-line  # assume already Callable
     }
     elsif %n<find>:delete {
         my $seq := $sources-seq<>;
@@ -473,16 +479,54 @@ multi sub rak(&pattern, %n) {
       %n
     );
 
-    # Add any stats keeping if necessary
-    my $stats := %n<stats>:delete;
-    my atomicint $nr-lines;
+    # Stats keeping stuff
+    my $stats;
+    my $count-only;
+    my atomicint $nr-sources;
+    my atomicint $nr-items;
     my atomicint $nr-matches;
-    if $stats {
+    my atomicint $nr-passthrus;
+    my atomicint $nr-changes;
+
+    sub map-stats() {
+        Map.new: (:$nr-sources, :$nr-items,
+          :$nr-matches, :$nr-passthrus, :$nr-changes)
+    }
+
+    # Only interested in counts, so update counters and remove result
+    if $count-only := %n<count-only>:delete {
         my &old-matcher = &matcher;
         &matcher = -> $_ {
-            ++⚛$nr-lines;
+            ++⚛$nr-items;
             my $result := old-matcher($_);
-            ++⚛$nr-matches if $result;
+            if $result =:= Empty {
+                ++$nr-passthrus;
+            }
+            elsif Bool.ACCEPTS($result) {
+                ++⚛$nr-matches if $result;
+            }
+            else {
+                ++⚛$nr-changes unless $result eqv $_;
+            }
+            Empty
+        }
+    }
+
+    # Add any stats keeping if necessary
+    elsif $stats := %n<stats>:delete {
+        my &old-matcher = &matcher;
+        &matcher = -> $_ {
+            ++⚛$nr-items;
+            my $result := old-matcher($_);
+            if $result =:= Empty {
+                ++$nr-passthrus;
+            }
+            elsif Bool.ACCEPTS($result) {
+                ++⚛$nr-matches if $result;
+            }
+            else {
+                ++⚛$nr-changes unless $result eqv $_;
+            }
             $result
         }
     }
@@ -495,7 +539,10 @@ multi sub rak(&pattern, %n) {
     # should produce Empty.  In any other case, it should produce a
     # PairMatched object with the original key, and the value returned by
     # the matcher as its value.
-    my &runner := do if %n<context>:delete -> $context {
+    my &runner := do if $count-only {
+        make-runner(&matcher)  # simplest runner for just counting
+    }
+    elsif %n<context>:delete -> $context {
         make-numeric-context-runner(&matcher, $context, $context)
     }
     elsif %n<before-context>:delete -> $before {
@@ -524,13 +571,14 @@ multi sub rak(&pattern, %n) {
         &last-phaser  = &pattern.callable_for_phaser('LAST');
     }
 
-    # Set up any mapper
+    # Set up any mapper if not just counting
     my &mapper;
+    my $map-all;
     my &next-mapper-phaser;
     my &last-mapper-phaser;
-    my $map-all := %n<map-all>;
-    if %n<mapper>:exists {
-        &mapper = %n<mapper>:delete;
+    if !$count-only && (%n<mapper>:exists) {
+        $map-all := %n<map-all>:delete;
+        &mapper   = %n<mapper>:delete;
         if &mapper.has-loop-phasers {
             $_() with &mapper.callable_for_phaser('FIRST');
             &next-mapper-phaser = $_ with &mapper.callable_for_phaser('NEXT');
@@ -540,13 +588,12 @@ multi sub rak(&pattern, %n) {
 
     # Set up result sequence
     first-phaser() if &first-phaser;
-    my atomicint $nr-files;
 
     # A mapper was specified
     my $result-seq := do if &mapper {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
-            ++⚛$nr-files;
+            ++⚛$nr-sources;
             producer($source).map(&runner).iterator.push-all(
               my $buffer := IterationBuffer.new
             );
@@ -567,9 +614,9 @@ multi sub rak(&pattern, %n) {
     elsif &next-phaser {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
-            ++⚛$nr-files;
+            ++⚛$nr-sources;
             my \result :=
-              Pair.new: $source, (producer($source).map: &runner).Slip;
+              Pair.new: $source, eagerSlip producer($source).map: &runner;
             $lock.protect: &next-phaser;
             result
         }
@@ -578,13 +625,13 @@ multi sub rak(&pattern, %n) {
     # Nothing special to do for each source
     else {
         $sources-seq.map: -> $source {
-            ++⚛$nr-files;
-            Pair.new: $source, (producer($source).map: &runner).Slip
+            ++⚛$nr-sources;
+            Pair.new: $source, eagerSlip producer($source).map: &runner
         }
     }
 
-    # Only want unique matches
-    if %n<unique>:delete {
+    # Only want unique matches if we're not counting
+    if !$count-only && (%n<unique>:delete) {
         my %seen;
         $result-seq := $result-seq.map: {
             my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
@@ -601,14 +648,16 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
-    if $stats || &last-mapper-phaser || &last-phaser {
+    if $count-only || $stats || &last-mapper-phaser || &last-phaser {
         $result-seq.iterator.push-all(my $buffer := IterationBuffer.new);
         last-phaser()        if &last-phaser;
         last-mapper-phaser() if &last-mapper-phaser;
 
-        $stats
-          ?? ($buffer.Seq, Map.new: (:$nr-files, :$nr-lines, :$nr-matches))
-          !! $buffer.Seq
+        $count-only
+          ?? map-stats()
+          !! $stats
+            ?? ($buffer.Seq, map-stats)
+            !! $buffer.Seq
     }
 
     # We can be lazy

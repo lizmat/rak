@@ -87,7 +87,7 @@ strings of absolute paths to be checked.
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
-=head3 3. Produce items to search in
+=head3 3. Produce items to search in (apply transformers)
 
 The second step is to create the logic for creating items to
 search in from the objects in step 2.  If search is to be done
@@ -112,6 +112,7 @@ do the actual matching with the items produced in step 3.
 
 Related named arguments are (in alphabetical order):
 
+=item :count-only - don't produce results, just count
 =item :invert-match - invert the logic of matching
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
@@ -218,6 +219,18 @@ considered for further selection.
 Indicate the number of lines that should also be returned around
 a line with a pattern match.  Defaults to B<0>.
 
+=head3 :count-only
+
+Flag.  If specified with a trueish value, will perform all searching, but
+only update counters and not produce any results other than a C<Map> with
+the following keys:
+
+=item nr-sources - number of sources seen
+=item nr-items - number of items inspected
+=item nr-matches - number of items that matched
+=item nr-passthrus - number of items that have passed through
+=item nr-changes - number of items that would have been changed
+
 =head3 :created(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
@@ -248,6 +261,12 @@ indicating B<all> directories should be recursed into.  Applicable
 for any situation where C<paths> is used to create the list of files
 to check.
 
+=head3 dont-catch
+
+Flag.  If specified with a trueish value, will B<not> catch any error
+during processing, but will throw any error again.  Defaults to C<False>,
+making sure that errors B<will> be caught.
+
 =head3 :encoding("utf8-c8")
 
 When specified with a string, indicates the name of the encoding
@@ -258,7 +277,8 @@ encoding that is permissive of encoding issues.
 =head3 :empty
 
 Flag.  If specified, indicates paths, that are empty (aka: have a filesize
-of 0 bytes), are (not) acceptable for further selection.
+of 0 bytes), are (not) acceptable for further selection.  Usually only
+makes sense when uses together with C<:find>.
 
 =head3 :executable
 

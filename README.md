@@ -112,7 +112,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
-### 3. Produce items to search in
+### 3. Produce items to search in (apply transformers)
 
 The second step is to create the logic for creating items to search in from the objects in step 2. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
 
@@ -133,6 +133,8 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 Take the logic of the pattern `Callable`, and create a `Callable` to do the actual matching with the items produced in step 3.
 
 Related named arguments are (in alphabetical order):
+
+  * :count-only - don't produce results, just count
 
   * :invert-match - invert the logic of matching
 
@@ -210,6 +212,20 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 Indicate the number of lines that should also be returned around a line with a pattern match. Defaults to **0**.
 
+### :count-only
+
+Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any results other than a `Map` with the following keys:
+
+  * nr-sources - number of sources seen
+
+  * nr-items - number of items inspected
+
+  * nr-matches - number of items that matched
+
+  * nr-passthrus - number of items that have passed through
+
+  * nr-changes - number of items that would have been changed
+
 ### :created(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **creation** time of the path. The `Callable` is passed a `Num` value of the creation time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
@@ -226,13 +242,17 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 If specified, indicates the matcher that should be used to select acceptable directories with the `paths` utility. Defaults to `True` indicating **all** directories should be recursed into. Applicable for any situation where `paths` is used to create the list of files to check.
 
+### dont-catch
+
+Flag. If specified with a trueish value, will **not** catch any error during processing, but will throw any error again. Defaults to `False`, making sure that errors **will** be caught.
+
 ### :encoding("utf8-c8")
 
 When specified with a string, indicates the name of the encoding to be used to produce items to check (typically by calling `lines` or `slurp`). Defaults to `utf8-c8`, the UTF-8 encoding that is permissive of encoding issues.
 
 ### :empty
 
-Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 bytes), are (not) acceptable for further selection.
+Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 bytes), are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
 
 ### :executable
 
