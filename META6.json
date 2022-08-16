@@ -24,9 +24,10 @@
   "source-url": "https://github.com/lizmat/rak.git",
   "tags": [
     "RAK",
-    "SEARCH"
+    "SEARCH",
+    "PLUMBING"
   ],
   "test-depends": [
   ],
-  "version": "0.0.5"
+  "version": "0.0.6"
 }

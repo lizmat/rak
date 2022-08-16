@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Rename :recurse-symlink to :recurse-symlinked-dir for clarity
+    - Add support for :recurse-unmatched-dir 
 
 0.0.5  2022-08-16T11:03:40+02:00
     - Add support for :with-line-endings

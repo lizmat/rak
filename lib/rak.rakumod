@@ -28,10 +28,11 @@ my sub paths-from-file($from) {
 
 # Return a Map with named arguments for "paths"
 my sub paths-arguments(%_) {
-    my $dir             := (%_<dir>:delete)             // True;
-    my $file            := (%_<file>:delete)            // True;
-    my $follow-symlinks := (%_<recurse-symlink>:delete) // False;
-    Map.new: (:$dir, :$file, :$follow-symlinks)
+    my $dir             := (%_<dir>:delete)                   // True;
+    my $file            := (%_<file>:delete)                  // True;
+    my $follow-symlinks := (%_<recurse-symlinked-dir>:delete) // False;
+    my $recurse         := (%_<recurse-unmatched-dir>:delete) // False;
+    Map.new: (:$dir, :$file, :$follow-symlinks, :$recurse)
 }
 
 # Convert a given seq producing paths to a seq producing files

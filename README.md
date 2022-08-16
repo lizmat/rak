@@ -46,7 +46,9 @@ Related named arguments are (in alphabetical order):
 
   * :paths-from - file containing paths to recurse into
 
-  * :recurse-symlink - recurse into symlinked directories
+  * :recurse-symlinked-dir - recurse into symlinked directories
+
+  * :recurse-unmatched-dir - recurse into directories not matching :dir
 
   * :sources - list of objects to be considered as source
 
@@ -370,9 +372,13 @@ If specified with a `True` value (which is also the default), indicates that the
 
 If specified with a `Callable`, it indicates the code to be executed from a given source to produce the itemi to be checked for the pattern.
 
-### :recurse-symlink
+### :recurse-symlinked-dir
 
 Flag. If specified with a trueish value, will recurse into directories that are actually symbolic links. The default is `False`: do **not** recurse into symlinked directories.
+
+### :recurse-unmatched-dir
+
+Flag. If specified with a trueish value, will recurse into directories that did **not** pass the :<dir>. No files will ever be produced from such directories, but further recursion will be done if directories are encountered. The default is `False`: do **not** recurse into directories that didn't match the `:dir` specification.
 
 ### :quietly
 
