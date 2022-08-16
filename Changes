@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.5  2022-08-16T11:03:40+02:00
+    - Add support for :with-line-endings
+
 0.0.4  2022-08-15T22:30:44+02:00
     - Add support for :count-only
     - Fix issue with laziness of match list of a source
