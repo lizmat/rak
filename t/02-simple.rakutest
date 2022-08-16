@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 28;
+plan 29;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -10,7 +10,7 @@ my %path2name = %name2path.kv.reverse;
 
 $dir.mkdir;
 for @targets.kv -> $n, $name {
-    %name2path{$name}.IO.spurt: @targets[0..$n].join("\n")
+    %name2path{$name}.IO.spurt: @targets[0..$n].join("\n") ~ "\n";
 }
 LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
 
@@ -56,7 +56,7 @@ my sub lookup(
 
     subtest "testing '$pattern'" => {
         plan 3;
-        my %nameds = :degree(1), |%additional;
+        my %nameds = :degree(1), :dont-catch, |%additional;
         my %got = (rak &needle, %nameds).map: {
             .key => .value.List if .value.elems
         }
@@ -156,6 +156,10 @@ lookup 'in', :paths($dir), :owned-by-user, :!symbolic-link,
 ;
 
 lookup 'zero', :paths($dir), :!owned-by-user,
+  ()
+;
+
+lookup '-> $_ { $_ eq "zero" }', :paths($dir), :with-line-endings,
   ()
 ;
 

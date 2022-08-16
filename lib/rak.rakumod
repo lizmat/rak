@@ -441,12 +441,13 @@ multi sub rak(&pattern, %n) {
           !! $per-file  # assume already Callable
     }
     elsif (%n<per-line>:delete)<> -> $per-line {
+        my $chomp := !(%n<with-line-endings>:delete);
         $per-line =:= True
           ?? -> $source {
                  CATCH { return Empty }
                  my $seq := Str.ACCEPTS($source)
-                   ?? $source.IO.lines(:$enc)
-                   !! $source.lines(:$enc);
+                   ?? $source.IO.lines(:$chomp, :$enc)
+                   !! $source.lines(:$chomp, :$enc);
                  my $line-number = 0;
                  $seq.map: { PairContext.new: ++$line-number, $_ }
              }
@@ -459,11 +460,12 @@ multi sub rak(&pattern, %n) {
         -> $ { $seq.map: { PairContext.new: ++$line-number, $_ } }
     }
     else {
+        my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
             CATCH { return Empty }
             my $seq := Str.ACCEPTS($source)
-              ?? $source.IO.lines(:$enc)
-              !! $source.lines(:$enc);
+              ?? $source.IO.lines(:$chomp, :$enc)
+              !! $source.lines(:$chomp, :$enc);
             my $line-number = 0;
             $seq.map: { PairContext.new: ++$line-number, $_ }
         }

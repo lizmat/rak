@@ -126,6 +126,8 @@ Related named arguments are (in alphabetical order):
 
   * :per-line - logic to create one item per line in the object
 
+  * :with-line-endings - keep line endings
+
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
 ### 4. Create logic for matching
@@ -141,6 +143,8 @@ Related named arguments are (in alphabetical order):
   * :quietly - absorb any warnings produced by the matcher
 
   * :silently - absorb any output done by the matcher
+
+  * :stats - produce results, but also count
 
 ### 5. Create logic for running
 
@@ -396,7 +400,7 @@ If specified, indicates a list of objects that should be used as a source for th
 
 ### :stats
 
-Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument.
+Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument, with the same keys as with the `:count-only` flag.
 
 ### :symbolic-link
 
@@ -409,6 +413,10 @@ If specified, indicates the `Callable` filter that should be used to select acce
 ### :unique
 
 Flag. If specified, indicates that only unique matches will be returned, instead of the normal sequence of source => result pairs.
+
+### :with-line-endings
+
+Flag. If specified, indicates line endings are to be kept when producing items to check. Defaults to `False`, meaning that line endings are removed from items to check. Only applicable with line-based checking.
 
 ### :world-executable
 
@@ -441,7 +449,7 @@ If the `Bool`ean False value is returned, assume the pattern is **not** found. D
 
 ### Empty
 
-Always produce the line. Even if `:invert-match` was specified.
+Always produce the line. Even if `:invert-match` was specified. Shown in stats as a `passthru`.
 
 ### any other value
 

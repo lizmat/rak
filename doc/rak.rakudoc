@@ -101,6 +101,7 @@ Related named arguments are (in alphabetical order):
 =item :find - map sequence of step 1 to item producer
 =item :per-file - logic to create one item per object
 =item :per-line - logic to create one item per line in the object
+=item :with-line-endings - keep line endings
 
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
@@ -116,6 +117,7 @@ Related named arguments are (in alphabetical order):
 =item :invert-match - invert the logic of matching
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
+=item :stats - produce results, but also count
 
 =head3 5. Create logic for running
 
@@ -504,7 +506,7 @@ Flag.  If specified with a trueish value, will keep stats on number
 of files and number of lines seen.  And instead of just returning
 the results sequence, will then return a C<List> of the result
 sequence as the first argument, and a C<Map> with statistics as the
-second argument.
+second argument, with the same keys as with the C<:count-only> flag.
 
 =head3 :symbolic-link
 
@@ -523,6 +525,12 @@ filters.
 
 Flag.  If specified, indicates that only unique matches will be returned,
 instead of the normal sequence of source => result pairs.
+
+=head3 :with-line-endings
+
+Flag.  If specified, indicates line endings are to be kept when producing
+items to check.  Defaults to C<False>, meaning that line endings are
+removed from items to check.  Only applicable with line-based checking.
 
 =head3 :world-executable
 
@@ -561,7 +569,8 @@ found.  Do B<not> produce the line unless C<:invert-match> was specified.
 
 =head3 Empty
 
-Always produce the line.  Even if C<:invert-match> was specified.
+Always produce the line.  Even if C<:invert-match> was specified.  Shown
+in stats as a C<passthru>.
 
 =head3 any other value
 
