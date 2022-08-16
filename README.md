@@ -66,27 +66,43 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :device-number - device number on which path is located
 
-  * :empty - is path empty (filesize == 0)
-
-  * :executable - is path executable
-
   * :filesize - size of the path in bytes
 
   * :gid - numeric gid of the path
 
-  * :git-repo - is path top directory of a Git repository
-
-  * :github-repo - is path top directory of a GitHub repository
-
-  * :group-executable - is path executable by group
-
-  * :group-readable - is path readable by group
-
-  * :group-writable - is path writable 
-
   * :hard-links - number of hard-links to path on filesystem
 
   * :inode - inode of path on filesystem
+
+  * :is-empty - is path empty (filesize == 0)
+
+  * :is-executable - is path executable
+
+  * :is-git-repo - is path top directory of a Git repository
+
+  * :is-github-repo - is path top directory of a GitHub repository
+
+  * :is-group-executable - is path executable by group
+
+  * :is-group-readable - is path readable by group
+
+  * :is-group-writable - is path writable 
+
+  * :is-owned-by-group - is path owned by group of current user
+
+  * :is-owned-by-user - is path owned by current user
+
+  * :is-readable - is path readable by current user
+
+  * :is-symbolic-link - is path a symbolic link
+
+  * :is-world-executable - is path executable by any user
+
+  * :is-world-readable - is path readable by any user
+
+  * :is-world-writable - is path writable by any user
+
+  * :is-writable - is path writable by current user
 
   * :meta-modified - when meta information of path was modified
 
@@ -94,23 +110,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :modified - when path was last modified
 
-  * :owned-by-group - is path owned by group of current user
-
-  * :owned-by-user - is path owned by current user
-
-  * :readable - is path readable by current user
-
   * :uid - numeric uid of path
-
-  * :symbolic-link - is path a symbolic link
-
-  * :world-executable - is path executable by any user
-
-  * :world-readable - is path readable by any user
-
-  * :world-writable - is path writable by any user
-
-  * :writable - is path writable by current user
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
@@ -124,11 +124,9 @@ Related named arguments are (in alphabetical order):
 
   * :find - map sequence of step 1 to item producer
 
-  * :per-file - logic to create one item per object
+  * :producer - producer of items by a given source
 
-  * :per-line - logic to create one item per line in the object
-
-  * :with-line-endings - keep line endings
+  * :with-line-ending - produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
@@ -256,14 +254,6 @@ Flag. If specified with a trueish value, will **not** catch any error during pro
 
 When specified with a string, indicates the name of the encoding to be used to produce items to check (typically by calling `lines` or `slurp`). Defaults to `utf8-c8`, the UTF-8 encoding that is permissive of encoding issues.
 
-### :empty
-
-Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 bytes), are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
-
-### :executable
-
-Flag. If specified, indicates paths, that are **executable** by the current **user**, are (not) acceptable for further selection.
-
 ### :file(&file-matcher)
 
 If specified, indicates the matcher that should be used to select acceptable files with the `paths` utility. Defaults to `True` indicating **all** files should be checked. Applicable for any situation where `paths` is used to create the list of files to check.
@@ -284,26 +274,6 @@ Flag. If specified, maps the sources of items into items to search.
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **gid** of the path. The `Callable` is passed the numeric gid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
 
-### :git-repo
-
-Flag. If specified, indicates paths, look like they're the top directory in a Git repository (because they have a `.git` directory in it), are (not) acceptable for further selection.
-
-### :github-repo
-
-Flag. If specified, indicates paths, look like they're the top directory in a GitHub repository (because they have a `.github` directory in it), are (not) acceptable for further selection.
-
-### :group-executable
-
-Flag. If specified, indicates paths, that are **executable** by the current **group**, are (not) acceptable for further selection.
-
-### :group-readable
-
-Flag. If specified, indicates paths, that are **readable** by the current **group**, are (not) acceptable for further selection.
-
-### :group-writable
-
-Flag. If specified, indicates paths, that are **writable** by the current **group**, are (not) acceptable for further selection.
-
 ### :hard-links(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of hard-links** of the path. The `Callable` is passed the number of hard-links of a path and is expected to return a trueish value to have the path be considered for further selection.
@@ -315,6 +285,66 @@ If specified, indicates the `Callable` filter that should be used to select acce
 ### :invert-match
 
 Flag. If specified with a trueish value, will negate the return value of the pattern if a `Bool` was returned. Defaults to `False`.
+
+### :is-empty
+
+Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 bytes), are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
+
+### :is-executable
+
+Flag. If specified, indicates paths, that are **executable** by the current **user**, are (not) acceptable for further selection.
+
+### :is-git-repo
+
+Flag. If specified, indicates paths, look like they're the top directory in a Git repository (because they have a `.git` directory in it), are (not) acceptable for further selection.
+
+### :is-github-repo
+
+Flag. If specified, indicates paths, look like they're the top directory in a GitHub repository (because they have a `.github` directory in it), are (not) acceptable for further selection.
+
+### :is-group-executable
+
+Flag. If specified, indicates paths, that are **executable** by the current **group**, are (not) acceptable for further selection.
+
+### :is-group-readable
+
+Flag. If specified, indicates paths, that are **readable** by the current **group**, are (not) acceptable for further selection.
+
+### :is-group-writable
+
+Flag. If specified, indicates paths, that are **writable** by the current **group**, are (not) acceptable for further selection.
+
+### :is-readable
+
+Flag. If specified, indicates paths, that are **readable** by the current **user**, are (not) acceptable for further selection.
+
+### :is-owned-by-group
+
+Flag. If specified, indicates only paths that are **owned** by the **group** of the current user, are (not) acceptable for further selection.
+
+### :is-owned-by-user
+
+Flag. If specified, indicates only paths that are **owned** by the current **user**, are (not) acceptable for further selection.
+
+### :is-symbolic-link
+
+Flag. If specified, indicates only paths that are symbolic links, are (not) acceptable for further selection.
+
+### :is-world-executable
+
+Flag. If specified, indicates paths, that are **executable** by any user or group, are (not) acceptable for further selection.
+
+### :is-world-readable
+
+Flag. If specified, indicates paths, that are **readable** by any user or group, are (not) acceptable for further selection.
+
+### :is-world-writeable
+
+Flag. If specified, indicates paths, that are **writable** by any user or group, are (not) acceptable for further selection.
+
+### :is-writable
+
+Flag. If specified, indicates paths, that are **writable** by the current **user**, are (not) acceptable for further selection.
 
 ### :mapper(&mapper)
 
@@ -356,21 +386,9 @@ If specified, indicates a list of paths that should be used as the base of the p
 
 If a single hyphen is specified as the path, then STDIN will be assumed as the source.
 
-### :per-file(&producer)
+### :producer(&producer)
 
-If specified, indicates that searches should be done on a per-file basis. Defaults to doing searches on a per-line basis.
-
-If specified with a `True` value, indicates that the `slurp` method will be called on each source before being checked with pattern. If the source is a `Str`, then it will be assumed to be a path name to read from.
-
-If specified with a `Callable`, it indicates the code to be executed from a given source to produce the single item to be checked for the pattern.
-
-### :per-line(&producer)
-
-If specified, indicates that searches should be done on a per-line basis.
-
-If specified with a `True` value (which is also the default), indicates that the `lines` method will be called on each source before being checked with pattern. If the source is a `Str`, then it will be assumed to be a path name to read lines from.
-
-If specified with a `Callable`, it indicates the code to be executed from a given source to produce the itemi to be checked for the pattern.
+If specified, indicates a `Callable` that will be called given a source, and is expected to produce items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
 
 ### :recurse-symlinked-dir
 
@@ -384,18 +402,6 @@ Flag. If specified with a trueish value, will recurse into directories that did 
 
 Flag. If specified with a trueish value, will absorb any warnings that may occur when looking for the pattern.
 
-### :readable
-
-Flag. If specified, indicates paths, that are **readable** by the current **user**, are (not) acceptable for further selection.
-
-### :owned-by-group
-
-Flag. If specified, indicates only paths that are **owned** by the **group** of the current user, are (not) acceptable for further selection.
-
-### :owned-by-user
-
-Flag. If specified, indicates only paths that are **owned** by the current **user**, are (not) acceptable for further selection.
-
 ### :silently("out,err")
 
 When specified with `True`, will absorb any output on STDOUT and STDERR. Optionally can only absorb STDOUT ("out"), STDERR ("err") and both STDOUT and STDERR ("out,err").
@@ -408,10 +414,6 @@ If specified, indicates a list of objects that should be used as a source for th
 
 Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument, with the same keys as with the `:count-only` flag.
 
-### :symbolic-link
-
-Flag. If specified, indicates only paths that are symbolic links, are (not) acceptable for further selection.
-
 ### :uid(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **uid** of the path. The `Callable` is passed the numeric uid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
@@ -420,25 +422,9 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 Flag. If specified, indicates that only unique matches will be returned, instead of the normal sequence of source => result pairs.
 
-### :with-line-endings
+### :with-line-ending
 
 Flag. If specified, indicates line endings are to be kept when producing items to check. Defaults to `False`, meaning that line endings are removed from items to check. Only applicable with line-based checking.
-
-### :world-executable
-
-Flag. If specified, indicates paths, that are **executable** by any user or group, are (not) acceptable for further selection.
-
-### :world-readable
-
-Flag. If specified, indicates paths, that are **readable** by any user or group, are (not) acceptable for further selection.
-
-### :world-writeable
-
-Flag. If specified, indicates paths, that are **writable** by any user or group, are (not) acceptable for further selection.
-
-### :writable
-
-Flag. If specified, indicates paths, that are **writable** by the current **user**, are (not) acceptable for further selection.
 
 PATTERN RETURN VALUES
 ---------------------

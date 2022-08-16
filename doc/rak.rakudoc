@@ -61,29 +61,29 @@ strings of absolute paths to be checked.
 =item :blocks- number of filesystem blocks
 =item :created - when was path created
 =item :device-number - device number on which path is located
-=item :empty - is path empty (filesize == 0)
-=item :executable - is path executable
 =item :filesize - size of the path in bytes
 =item :gid - numeric gid of the path
-=item :git-repo - is path top directory of a Git repository
-=item :github-repo - is path top directory of a GitHub repository
-=item :group-executable - is path executable by group
-=item :group-readable - is path readable by group
-=item :group-writable - is path writable 
 =item :hard-links - number of hard-links to path on filesystem
 =item :inode - inode of path on filesystem
+=item :is-empty - is path empty (filesize == 0)
+=item :is-executable - is path executable
+=item :is-git-repo - is path top directory of a Git repository
+=item :is-github-repo - is path top directory of a GitHub repository
+=item :is-group-executable - is path executable by group
+=item :is-group-readable - is path readable by group
+=item :is-group-writable - is path writable 
+=item :is-owned-by-group - is path owned by group of current user
+=item :is-owned-by-user - is path owned by current user
+=item :is-readable - is path readable by current user
+=item :is-symbolic-link - is path a symbolic link
+=item :is-world-executable - is path executable by any user
+=item :is-world-readable - is path readable by any user
+=item :is-world-writable - is path writable by any user
+=item :is-writable - is path writable by current user
 =item :meta-modified - when meta information of path was modified
 =item :mode - the mode of the path
 =item :modified - when path was last modified
-=item :owned-by-group - is path owned by group of current user
-=item :owned-by-user - is path owned by current user
-=item :readable - is path readable by current user
 =item :uid - numeric uid of path
-=item :symbolic-link - is path a symbolic link
-=item :world-executable - is path executable by any user
-=item :world-readable - is path readable by any user
-=item :world-writable - is path writable by any user
-=item :writable - is path writable by current user
 
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
@@ -100,9 +100,8 @@ Related named arguments are (in alphabetical order):
 
 =item :encoding - encoding to be used when creating items
 =item :find - map sequence of step 1 to item producer
-=item :per-file - logic to create one item per object
-=item :per-line - logic to create one item per line in the object
-=item :with-line-endings - keep line endings
+=item :producer - producer of items by a given source
+=item :with-line-ending - produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
@@ -277,17 +276,6 @@ to be used to produce items to check (typically by calling
 C<lines> or C<slurp>).  Defaults to C<utf8-c8>, the UTF-8
 encoding that is permissive of encoding issues.
 
-=head3 :empty
-
-Flag.  If specified, indicates paths, that are empty (aka: have a filesize
-of 0 bytes), are (not) acceptable for further selection.  Usually only
-makes sense when uses together with C<:find>.
-
-=head3 :executable
-
-Flag.  If specified, indicates paths, that are B<executable> by the current
-B<user>, are (not) acceptable for further selection.
-
 =head3 :file(&file-matcher)
 
 If specified, indicates the matcher that should be used to select
@@ -320,33 +308,6 @@ numeric gid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
 
-=head3 :git-repo
-
-Flag.  If specified, indicates paths, look like they're the top directory
-in a Git repository (because they have a C<.git> directory in it), are
-(not) acceptable for further selection.
-
-=head3 :github-repo
-
-Flag.  If specified, indicates paths, look like they're the top directory
-in a GitHub repository (because they have a C<.github> directory in it),
-are (not) acceptable for further selection.
-
-=head3 :group-executable
-
-Flag.  If specified, indicates paths, that are B<executable> by the current
-B<group>, are (not) acceptable for further selection.
-
-=head3 :group-readable
-
-Flag.  If specified, indicates paths, that are B<readable> by the current
-B<group>, are (not) acceptable for further selection.
-
-=head3 :group-writable
-
-Flag.  If specified, indicates paths, that are B<writable> by the current
-B<group>, are (not) acceptable for further selection.
-
 =head3 :hard-links(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
@@ -366,6 +327,84 @@ considered for further selection.
 Flag. If specified with a trueish value, will negate the return
 value of the pattern if a C<Bool> was returned.  Defaults to
 C<False>.
+
+=head3 :is-empty
+
+Flag.  If specified, indicates paths, that are empty (aka: have a filesize
+of 0 bytes), are (not) acceptable for further selection.  Usually only
+makes sense when uses together with C<:find>.
+
+=head3 :is-executable
+
+Flag.  If specified, indicates paths, that are B<executable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :is-git-repo
+
+Flag.  If specified, indicates paths, look like they're the top directory
+in a Git repository (because they have a C<.git> directory in it), are
+(not) acceptable for further selection.
+
+=head3 :is-github-repo
+
+Flag.  If specified, indicates paths, look like they're the top directory
+in a GitHub repository (because they have a C<.github> directory in it),
+are (not) acceptable for further selection.
+
+=head3 :is-group-executable
+
+Flag.  If specified, indicates paths, that are B<executable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :is-group-readable
+
+Flag.  If specified, indicates paths, that are B<readable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :is-group-writable
+
+Flag.  If specified, indicates paths, that are B<writable> by the current
+B<group>, are (not) acceptable for further selection.
+
+=head3 :is-readable
+
+Flag.  If specified, indicates paths, that are B<readable> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :is-owned-by-group
+
+Flag.  If specified, indicates only paths that are B<owned> by the B<group>
+of the current user, are (not) acceptable for further selection.
+
+=head3 :is-owned-by-user
+
+Flag.  If specified, indicates only paths that are B<owned> by the current
+B<user>, are (not) acceptable for further selection.
+
+=head3 :is-symbolic-link
+
+Flag.  If specified, indicates only paths that are symbolic links,
+are (not) acceptable for further selection.
+
+=head3 :is-world-executable
+
+Flag.  If specified, indicates paths, that are B<executable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :is-world-readable
+
+Flag.  If specified, indicates paths, that are B<readable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :is-world-writeable
+
+Flag.  If specified, indicates paths, that are B<writable> by any user
+or group, are (not) acceptable for further selection.
+
+=head3 :is-writable
+
+Flag.  If specified, indicates paths, that are B<writable> by the current
+B<user>, are (not) acceptable for further selection.
 
 =head3 :mapper(&mapper)
 
@@ -436,33 +475,13 @@ the current directory (aka ".") will be assumed.
 If a single hyphen is specified as the path, then STDIN will be
 assumed as the source.
 
-=head3 :per-file(&producer)
+=head3 :producer(&producer)
 
-If specified, indicates that searches should be done on a per-file
-basis.  Defaults to doing searches on a per-line basis.
-
-If specified with a C<True> value, indicates that the C<slurp>
-method will be called on each source before being checked with
-pattern.  If the source is a C<Str>, then it will be assumed to
-be a path name to read from.
-
-If specified with a C<Callable>, it indicates the code to be
-executed from a given source to produce the single item to be
-checked for the pattern.
-
-=head3 :per-line(&producer)
-
-If specified, indicates that searches should be done on a per-line
-basis.
-
-If specified with a C<True> value (which is also the default),
-indicates that the C<lines> method will be called on each source
-before being checked with pattern.  If the source is a C<Str>,
-then it will be assumed to be a path name to read lines from.
-
-If specified with a C<Callable>, it indicates the code to be
-executed from a given source to produce the  itemi to be checked
-for the pattern.
+If specified, indicates a C<Callable> that will be called given
+a source, and is expected to produce items to be inspected.
+Defaults to a producer that calles the C<lines> method on a
+given source, with the C<:encoding> and C<:with-line-ending>
+arguments.
 
 =head3 :recurse-symlinked-dir
 
@@ -483,21 +502,6 @@ directories that didn't match the C<:dir> specification.
 Flag. If specified with a trueish value, will absorb any warnings
 that may occur when looking for the pattern.
 
-=head3 :readable
-
-Flag.  If specified, indicates paths, that are B<readable> by the current
-B<user>, are (not) acceptable for further selection.
-
-=head3 :owned-by-group
-
-Flag.  If specified, indicates only paths that are B<owned> by the B<group>
-of the current user, are (not) acceptable for further selection.
-
-=head3 :owned-by-user
-
-Flag.  If specified, indicates only paths that are B<owned> by the current
-B<user>, are (not) acceptable for further selection.
-
 =head3 :silently("out,err")
 
 When specified with C<True>, will absorb any output on STDOUT
@@ -517,11 +521,6 @@ the results sequence, will then return a C<List> of the result
 sequence as the first argument, and a C<Map> with statistics as the
 second argument, with the same keys as with the C<:count-only> flag.
 
-=head3 :symbolic-link
-
-Flag.  If specified, indicates only paths that are symbolic links,
-are (not) acceptable for further selection.
-
 =head3 :uid(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
@@ -535,31 +534,11 @@ filters.
 Flag.  If specified, indicates that only unique matches will be returned,
 instead of the normal sequence of source => result pairs.
 
-=head3 :with-line-endings
+=head3 :with-line-ending
 
 Flag.  If specified, indicates line endings are to be kept when producing
 items to check.  Defaults to C<False>, meaning that line endings are
 removed from items to check.  Only applicable with line-based checking.
-
-=head3 :world-executable
-
-Flag.  If specified, indicates paths, that are B<executable> by any user
-or group, are (not) acceptable for further selection.
-
-=head3 :world-readable
-
-Flag.  If specified, indicates paths, that are B<readable> by any user
-or group, are (not) acceptable for further selection.
-
-=head3 :world-writeable
-
-Flag.  If specified, indicates paths, that are B<writable> by any user
-or group, are (not) acceptable for further selection.
-
-=head3 :writable
-
-Flag.  If specified, indicates paths, that are B<writable> by the current
-B<user>, are (not) acceptable for further selection.
 
 =head2 PATTERN RETURN VALUES
 

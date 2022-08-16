@@ -16,9 +16,16 @@ my sub eagerSlip($seq) {
     $buffer.Slip
 }
 
+# Message for humans on STDERR
+my sub warn-if-human-on-stdin(--> Nil) {
+    note "Reading from STDIN, please enter source and ^D when done:"
+      if $*IO.t;
+}
+
 # Return a Seq with ~ paths substituted for actual home directory paths
 my sub paths-from-file($from) {
     my $home := $*HOME.absolute ~ '/';
+    warn-if-human-on-stdin if $from eq '-';
     ($from eq '-'
       ?? $*IN.lines
       !! $from.subst(/^ '~' '/'? /, $home).IO.lines
@@ -72,9 +79,9 @@ my sub make-property-filter($seq is copy, %_) {
             filesize(path-filesize($path)) ?? $path !! Empty
         }
     }
-    if %_<empty>:exists {
+    if %_<is-empty>:exists {
         $seq = $seq.map:
-          (%_<empty>:delete)
+          (%_<is-empty>:delete)
             ?? -> $path { path-is-empty($path) ?? $path !! Empty }
             !! -> $path { path-is-empty($path) ?? Empty !! $path }
     }
@@ -110,91 +117,91 @@ my sub make-property-filter($seq is copy, %_) {
         }
     }
 
-    if %_<owned-by-user>:exists {
+    if %_<is-owned-by-user>:exists {
         $seq = $seq.map:
-          (%_<owned-by-user>:delete)
+          (%_<is-owned-by-user>:delete)
             ?? -> $path { path-is-owned-by-user($path) ?? $path !! Empty }
             !! -> $path { path-is-owned-by-user($path) ?? Empty !! $path }
     }
-    if %_<owned-by-group>:exists {
+    if %_<is-owned-by-group>:exists {
         $seq = $seq.map:
-          (%_<owned-by-group>:delete)
+          (%_<is-owned-by-group>:delete)
             ?? -> $path { path-is-owned-by-group($path) ?? $path !! Empty }
             !! -> $path { path-is-owned-by-group($path) ?? Empty !! $path }
     }
 
-    if %_<readable>:exists {
+    if %_<is-readable>:exists {
         $seq = $seq.map:
-          (%_<readable>:delete)
+          (%_<is-readable>:delete)
             ?? -> $path { path-is-readable($path) ?? $path !! Empty }
             !! -> $path { path-is-readable($path) ?? Empty !! $path }
     }
-    if %_<writable>:exists {
+    if %_<is-writable>:exists {
         $seq = $seq.map:
-          (%_<writable>:delete)
+          (%_<is-writable>:delete)
             ?? -> $path { path-is-writable($path) ?? $path !! Empty }
             !! -> $path { path-is-writable($path) ?? Empty !! $path }
     }
-    if %_<executable>:exists {
+    if %_<is-executable>:exists {
         $seq = $seq.map:
-          (%_<executable>:delete)
+          (%_<is-executable>:delete)
             ?? -> $path { path-is-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-executable($path) ?? Empty !! $path }
     }
 
-    if %_<git-repo>:exists {
+    if %_<is-git-repo>:exists {
         $seq = $seq.map:
-          (%_<git-repo>:delete)
+          (%_<is-git-repo>:delete)
             ?? -> $path { path-is-git-repo($path) ?? $path !! Empty }
             !! -> $path { path-is-git-repo($path) ?? Empty !! $path }
     }
-    if %_<github-repo>:exists {
+    if %_<is-github-repo>:exists {
         $seq = $seq.map:
-          (%_<github-repo>:delete)
+          (%_<is-github-repo>:delete)
             ?? -> $path { path-is-github-repo($path) ?? $path !! Empty }
             !! -> $path { path-is-github-repo($path) ?? Empty !! $path }
     }
 
-    if %_<group-readable>:exists {
+    if %_<is-group-readable>:exists {
         $seq = $seq.map:
-          (%_<group-readable>:delete)
+          (%_<is-group-readable>:delete)
             ?? -> $path { path-is-group-readable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-readable($path) ?? Empty !! $path }
     }
-    if %_<group-writable>:exists {
+    if %_<is-group-writable>:exists {
         $seq = $seq.map:
-          (%_<group-writable>:delete)
+          (%_<is-group-writable>:delete)
             ?? -> $path { path-is-group-writable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-writable($path) ?? Empty !! $path }
     }
-    if %_<group-executable>:exists {
+    if %_<is-group-executable>:exists {
         $seq = $seq.map:
-          (%_<group-executable>:delete)
+          (%_<is-group-executable>:delete)
             ?? -> $path { path-is-group-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-executable($path) ?? Empty !! $path }
     }
-    if %_<symbolic-link>:exists {
+    if %_<is-symbolic-link>:exists {
         $seq = $seq.map:
-          (%_<symbolic-link>:delete)
+          (%_<is-symbolic-link>:delete)
             ?? -> $path { path-is-symbolic-link($path) ?? $path !! Empty }
             !! -> $path { path-is-symbolic-link($path) ?? Empty !! $path }
     }
 
-    if %_<world-readable>:exists {
+    if %_<is-world-readable>:exists {
         $seq = $seq.map:
-          (%_<world-readable>:delete)
+          (%_<is-world-readable>:delete)
             ?? -> $path { path-is-world-readable($path) ?? $path !! Empty }
             !! -> $path { path-is-world-readable($path) ?? Empty !! $path }
     }
-    if %_<world-writable>:exists {
+    if %_<is-world-writable>:exists {
         $seq = $seq.map:
-          (%_<world-writable>:delete)
+          (%_<is-world-writable>:delete)
             ?? -> $path { path-is-world-writable($path) ?? $path !! Empty }
             !! -> $path { path-is-world-writable($path) ?? Empty !! $path }
     }
-    if %_<world-executable>:exists {
+    if %_<is-world-executable>:exists {
         $seq = $seq.map:
-          (%_<world-executable>:delete)
+          (%_<is-world-executable>:delete)
             ?? -> $path { path-is-world-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-world-executable($path) ?? Empty !! $path }
     }
@@ -408,6 +415,7 @@ multi sub rak(&pattern, %n) {
     }
     elsif %n<paths>:delete -> $paths {
         if $paths eq '-' {
+            warn-if-human-on-stdin;
             $*IN
         }
         else {
@@ -430,29 +438,12 @@ multi sub rak(&pattern, %n) {
     $sources-seq = make-property-filter($sources-seq, %n);
 
     # Step 3: producer Callable
-    my &producer := do if (%n<per-file>:delete)<> -> $per-file {
-        $per-file =:= True
-          ?? -> $source {
-                 CATCH { return Empty }
-                 (PairContext.new: 1, Str.ACCEPTS($source)
-                   ?? $source.IO.slurp(:$enc)
-                   !! $source.slurp(:$enc),
-                 )
-             }
-          !! $per-file  # assume already Callable
-    }
-    elsif (%n<per-line>:delete)<> -> $per-line {
-        my $chomp := !(%n<with-line-endings>:delete);
-        $per-line =:= True
-          ?? -> $source {
-                 CATCH { return Empty }
-                 my $seq := Str.ACCEPTS($source)
-                   ?? $source.IO.lines(:$chomp, :$enc)
-                   !! $source.lines(:$chomp, :$enc);
-                 my $line-number = 0;
-                 $seq.map: { PairContext.new: ++$line-number, $_ }
-             }
-          !! $per-line  # assume already Callable
+    my &producer := do if (%n<producer>:delete)<> -> $producer {
+          -> $source {
+              CATCH { return Empty if $CATCH }
+              my $line-number = 0;
+              $producer($source).map: { PairContext.new: ++$line-number, $_ }
+          }
     }
     elsif %n<find>:delete {
         my $seq := $sources-seq<>;
@@ -463,7 +454,7 @@ multi sub rak(&pattern, %n) {
     else {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
-            CATCH { return Empty }
+            CATCH { return Empty if $CATCH }
             my $seq := Str.ACCEPTS($source)
               ?? $source.IO.lines(:$chomp, :$enc)
               !! $source.lines(:$chomp, :$enc);

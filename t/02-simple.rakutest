@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 29;
+plan 30;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -27,6 +27,7 @@ my \l6 = PairMatched.new:  7, "six";
 my \l7 = PairMatched.new:  8, "seven";
 my \l8 = PairMatched.new:  9, "eight";
 my \l9 = PairMatched.new: 10, "nine";
+my \L9 = PairMatched.new: 10, "NINE";
 
 # Line locations and their contents for contexts
 my \c0 = PairContext.new:  1, "zero";
@@ -71,7 +72,7 @@ lookup "nine", :paths($dir),
   "nine" => (l9,)
 ;
 
-lookup "eight", :paths($dir),
+lookup "eight", :paths(($dir,)),
   "eight" => (l8,),
   "nine"  => (l8,),
 ;
@@ -147,15 +148,15 @@ lookup 'o', :paths($dir), :filesize(*>45),
   "nine"  => (l0,l1,l2,l4),
 ;
 
-lookup 'ine', :paths($dir), :writable, :readable,
+lookup 'ine', :paths($dir), :is-writable, :is-readable,
   "nine"  => (l9,),
 ;
 
-lookup 'in', :paths($dir), :owned-by-user, :!symbolic-link,
+lookup 'in', :paths($dir), :is-owned-by-user, :!is-symbolic-link,
   "nine"  => (l9,),
 ;
 
-lookup 'zero', :paths($dir), :!owned-by-user,
+lookup 'zero', :paths($dir), :!is-owned-by-user,
   ()
 ;
 
@@ -163,8 +164,12 @@ lookup '-> $_ { $_ eq "zero" }', :paths($dir), :with-line-endings,
   ()
 ;
 
-lookup 'one', :paths($dir), :empty,
+lookup 'one', :paths($dir), :is-empty,
   ()
+;
+
+lookup 'NINE', :paths($dir), :producer(*.IO.lines.map: *.uc),
+  "nine"  => (L9,),
 ;
 
 my %b is BagHash;

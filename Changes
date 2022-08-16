@@ -1,8 +1,14 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.6  2022-08-16T22:14:26+02:00
     - Rename :recurse-symlink to :recurse-symlinked-dir for clarity
+    - Rename :with-line-endings to :with-line-ending for consistency
     - Add support for :recurse-unmatched-dir 
+    - Add warning when reading from STDIN and there's a human attached
+    - Prefixed all boolean path filters with "is-" for clarity
+    - Removed :per-file and :per-line, we only need a :producer semantics
 
 0.0.5  2022-08-16T11:03:40+02:00
     - Add support for :with-line-endings
