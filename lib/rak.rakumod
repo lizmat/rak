@@ -9,6 +9,7 @@ use Trap:ver<0.0.1>:auth<zef:lizmat>;
 # because of some context argument having been specified).
 my class PairMatched is Pair is export { method matched(--> True)  { } }
 my class PairContext is Pair is export { method matched(--> False) { } }
+my constant EmptyMap = Map.new;
 
 # Create an eager slip for a given Seq
 my sub eagerSlip($seq) {
@@ -19,7 +20,7 @@ my sub eagerSlip($seq) {
 # Message for humans on STDERR
 my sub warn-if-human-on-stdin(--> Nil) {
     note "Reading from STDIN, please enter source and ^D when done:"
-      if $*IO.t;
+      if $*IN.t;
 }
 
 # Return a Seq with ~ paths substituted for actual home directory paths
@@ -518,7 +519,7 @@ my multi sub make-numeric-context-runner(&matcher, $before, $after) {
     }
 }
 
-# Base case of a runner from a matcher
+# Base case of a runner from a matcher without any context
 my multi sub make-runner(&matcher, int $max-matches) {
     my int $matches-seen;
     -> $item {
@@ -529,9 +530,13 @@ my multi sub make-runner(&matcher, int $max-matches) {
             ?? $item
             !! ++$matches-seen > $max-matches
               ?? (last)
-              !! PairMatched.new:
-                   $item.key,
-                   $result =:= True ?? $item.value !! $result
+              !! (my $item-nr := $item.key)
+                ?? PairMatched.new:
+                     $item-nr,
+                     $result =:= True ?? $item.value !! $result
+                !! $result =:= True
+                  ?? $item.value
+                  !! $result
     }
 }
 my multi sub make-runner(&matcher) {
@@ -541,9 +546,13 @@ my multi sub make-runner(&matcher) {
           ?? Empty
           !! $result =:= Empty
             ?? $item
-            !! PairMatched.new:
-                 $item.key,
-                 $result =:= True ?? $item.value !! $result
+            !! (my $item-nr := $item.key)
+              ?? PairMatched.new:
+                   $item-nr,
+                   $result =:= True ?? $item.value !! $result
+              !! $result =:= True
+                ?? $item.value
+                !! $result
     }
 }
 
@@ -554,7 +563,7 @@ multi sub rak(&pattern, *%n) {
 multi sub rak(&pattern, %n) {
     # any execution error will be caught and become a return state
     my $CATCH := !(%n<dont-catch>:delete);
-    CATCH { return $_ => .message if $CATCH }
+    CATCH { return $_ => Empty if $CATCH }
 
     # Some settings we always need
     my $batch  := %n<batch>:delete;
@@ -585,6 +594,9 @@ multi sub rak(&pattern, %n) {
     elsif %n<sources>:delete -> $sources {
         $sources
     }
+    elsif !($*IN.t) {
+        $*IN
+    }
     else {
         paths ".", |paths-arguments(%n)
     }
@@ -593,17 +605,22 @@ multi sub rak(&pattern, %n) {
     $sources-seq = make-property-filter($sources-seq, %n);
 
     # Step 3: producer Callable
-    my &producer := do if (%n<produce-one>:delete) -> $producer {
+    my &producer := do if (%n<produce-one>:delete) -> $produce-one {
           -> $source {
               CATCH { return Empty if $CATCH }
-              PairContext.new(1, $producer($source)).Seq
+              PairContext.new(
+                Nil,
+                $produce-one(Str.ACCEPTS($source) ?? $source.IO !! $source)
+              ).Seq
           }
     }
-    elsif (%n<produce-many>:delete)<> -> $producer {
+    elsif (%n<produce-many>:delete)<> -> $produce-many {
           -> $source {
               CATCH { return Empty if $CATCH }
               my $line-number = 0;
-              $producer($source).map: { PairContext.new: ++$line-number, $_ }
+              $produce-many(
+                Str.ACCEPTS($source) ?? $source.IO !! $source
+              ).map: { PairContext.new: ++$line-number, $_ }
           }
     }
     elsif %n<find>:delete {
@@ -636,7 +653,7 @@ multi sub rak(&pattern, %n) {
 
     # Stats keeping stuff
     my $stats;
-    my $count-only;
+    my $stats-only;
     my atomicint $nr-sources;
     my atomicint $nr-items;
     my atomicint $nr-matches;
@@ -649,7 +666,7 @@ multi sub rak(&pattern, %n) {
     }
 
     # Only interested in counts, so update counters and remove result
-    if $count-only := %n<count-only>:delete {
+    if $stats-only := %n<stats-only>:delete {
         my &old-matcher = &matcher;
         &matcher = -> $_ {
             ++⚛$nr-items;
@@ -696,7 +713,7 @@ multi sub rak(&pattern, %n) {
     # the matcher as its value.  To make sure each source gets its own
     # closure clone, the runner is actually a Callable returning the actual
     # runner code.
-    my &runner := do if $count-only {
+    my &runner := do if $stats-only {
         -> { make-runner &matcher }  # simplest runner for just counting
     }
     elsif %n<max-matches-per-source>:delete -> int $max {
@@ -756,7 +773,7 @@ multi sub rak(&pattern, %n) {
     my $map-all;
     my &next-mapper-phaser;
     my &last-mapper-phaser;
-    if !$count-only && (%n<mapper>:exists) {
+    if !$stats-only && (%n<mapper>:exists) {
         $map-all := %n<map-all>:delete;
         &mapper   = %n<mapper>:delete;
         if &mapper.has-loop-phasers {
@@ -811,7 +828,7 @@ multi sub rak(&pattern, %n) {
     }
 
     # Only want unique matches if we're not counting
-    if !$count-only && (%n<unique>:delete) {
+    if !$stats-only && (%n<unique>:delete) {
         my %seen;
         $result-seq := $result-seq.map: {
             my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
@@ -828,21 +845,19 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
-    if $count-only || $stats || &last-mapper-phaser || &last-phaser {
+    if $stats-only || $stats || &last-mapper-phaser || &last-phaser {
         $result-seq.iterator.push-all(my $buffer := IterationBuffer.new);
         last-phaser()        if &last-phaser;
         last-mapper-phaser() if &last-mapper-phaser;
 
-        $count-only
-          ?? map-stats()
-          !! $stats
-            ?? ($buffer.Seq, map-stats)
-            !! $buffer.Seq
+        Pair.new:
+          $stats-only || $stats ?? map-stats() !! EmptyMap,
+          $stats-only           ?? Empty      !! $buffer.Seq
     }
 
     # We can be lazy
     else {
-        $result-seq
+        Pair.new: EmptyMap, $result-seq<>
     }
 }
 

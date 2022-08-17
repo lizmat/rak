@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 32;
+plan 33;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -56,9 +56,12 @@ my sub lookup(
     my %expected = @expected.map: { %name2path{.key} => .value }
 
     subtest "testing '$pattern'" => {
-        plan 3;
+        plan 4;
         my %nameds = :degree(1), :dont-catch, |%additional;
-        my %got = (rak &needle, %nameds).map: {
+        my (:$key, :value(@matches)) := rak &needle, %nameds;
+        is-deeply $key, Map.new, 'did we get an empty Map for stats';
+
+        my %got = @matches.map: {
             .key => .value.List if .value.elems
         }
 
@@ -225,7 +228,7 @@ ok $LAST-mapper-fired,   "LAST phaser fired in mapper";
 is $NEXT-matcher-count, 10, 'was NEXT phaser in matcher fired ok';
 is $NEXT-mapper-count,  10, 'was NEXT phaser in mapper fired ok';
 
-my @matches = rak -> $ --> True { }, :paths($dir), :unique;
+my (:$key, :value(@matches)) := rak -> $ --> True { }, :paths($dir), :unique;
 is-deeply @matches.sort, @targets.sort, 'did we get all unique strings';
 
 is-deeply rak( -> $_ {
@@ -238,14 +241,14 @@ is-deeply rak( -> $_ {
     else {
         True
     }
-}, :paths($dir), :stats)[1],
+}, :paths($dir), :stats).key,
   Map.new((
     :nr-changes(5), :nr-items(55), :nr-matches(47),
     :nr-passthrus(3), :nr-sources(10)
   )),
-  "did stats work out?";
+  "did stats work out for key?";
 
-is-deeply rak( -> $_ {
+my $result := rak( -> $_ {
     if $_ eq "five" {
         "seven"
     }
@@ -255,11 +258,14 @@ is-deeply rak( -> $_ {
     else {
         True
     }
-}, :paths($dir), :count-only),
-  Map.new((
+}, :paths($dir), :stats-only);
+is-deeply $result.key, 
+   Map.new((
     :nr-changes(5), :nr-items(55), :nr-matches(47),
     :nr-passthrus(3), :nr-sources(10)
   )),
-  "did count-only work out?";
+  "did stats-only work out for key?";
+is-deeply $result.value, Empty,
+  "did stats-only work out for value?";
 
 # vim: expandtab shiftwidth=3

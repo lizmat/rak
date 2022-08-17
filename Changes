@@ -1,6 +1,11 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Changed return value of rak to always be a Pair, with
+      either an Exception / Map with stats as key, and a potentially
+      empty Iterable as value
+    - Change :count-only to :stats-only
+    - Make sure explicit producer get an IO::Path instead of a string
 
 0.0.7  2022-08-17T13:25:56+02:00
     - Split :producer into :produce-one and :produce-many

@@ -71,7 +71,7 @@ strings of absolute paths to be checked.
 =item :is-github-repo - is path top directory of a GitHub repository
 =item :is-group-executable - is path executable by group
 =item :is-group-readable - is path readable by group
-=item :is-group-writable - is path writable 
+=item :is-group-writable - is path writable by group
 =item :is-owned-by-group - is path owned by group of current user
 =item :is-owned-by-user - is path owned by current user
 =item :is-readable - is path readable by current user
@@ -114,11 +114,11 @@ do the actual matching with the items produced in step 3.
 
 Related named arguments are (in alphabetical order):
 
-=item :count-only - don't produce results, just count
 =item :invert-match - invert the logic of matching
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
-=item :stats - produce results, but also count
+=item :stats - produce results and statistics
+=item :stats-only - don't produce results, just statistics
 
 =head3 5. Create logic for running
 
@@ -126,7 +126,7 @@ Take the matcher logic of the C<Callable> of step 4 and create a runner
 C<Callable> that will produce the items found and their possible context
 (such as extra items before or after).  Assuming no context, the runner
 changes a return value of C<False> from the matcher into C<Empty>, a
-return value of C<True> in the original line, and passes through any other
+return value of C<True> in the original item, and passes through any other
 value.
 
 Related named arguments are (in alphabetical order):
@@ -134,7 +134,7 @@ Related named arguments are (in alphabetical order):
 =item :after-context - number of items to show after a match
 =item :before-context - number of items to show before a match
 =item :context - number of items to show around a match
-=item :paragraph-context - items around match until empty line
+=item :paragraph-context - items around match until false item
 =item :passthru-context - pass on *all* items
 =item :max-matches-per-source - max # of matches per source
 
@@ -151,8 +151,8 @@ phasers (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
 time in a thread-safe manner.
 
 Either produces a sequence in which the key is the source, and the
-value is a C<Slip> of C<Pair>s where the key is the line-number and
-the value is line with the match, or whatever the pattern matcher
+value is a C<Slip> of C<Pair>s where the key is the item-number and
+the value is item with the match, or whatever the pattern matcher
 returned.
 
 Or, produces sequence of whatever a specified mapper returned
@@ -175,18 +175,76 @@ and a hash with named arguments as the second positional argument.  In the
 latter case, the hash will have the arguments removed that the C<rak>
 subroutine needed for its configuration and execution.
 
-It returns either a C<Pair> (with an C<Exception> as key, and the
-exception message as the value), or an C<Iterable> of C<Pair>s which
-contain the source object as key (by default a C<IO::Path> object
-of the file in which the pattern was found), and a C<Slip> of
-key / value pairs, in which the key is the line-number where the
-pattern was found, and the value is the product of the search
-(which, by default, is the line in which the pattern was found).
+=head3 Return value
+
+A C<Pair> is always returned: if the key is an C<Exception> then that means
+that somehow that Exception was thrown during processing, In that case the
+value contains the exception's message.
+
+Or the key is a C<Map>, in which case that C<Map> contains the statistics
+of the search (if activated with C<:stats> or C<:stats-only>, or else an
+empty C<Map>), and the value contains C<Nil> (if :stats-only was specified)
+or the result C<Iterable> of the search.
+
+=head4 Result Iterable
+
+If the C<:unique> argument was specified with a trueish value, then
+the result C<Iterable> will just produce the unique values that were
+either explicitely returned by the matcher, or the unique items that
+matched.
+
+Otherwise the value is an C<Iterable> of C<Pair>s which contain the
+source object as key (by default the absolute path of the file in
+which the pattern was found).
+
+If there was only one item produced per source, then the value will
+be that value, or whatever was produced by the matching logic.
+
+Otherwise the value will be a C<Slip>.  If no item numbers were
+requested, each element contains the result of matching.  If
+item-numbers were requested, each element is a C<Pair>, of which
+the key is the item-number where the pattern was found, and the value
+is the product of the search (which, by default, is the item in which
+the pattern was found).
+
+Possible result structures in a graph:
+
+=begin code
+
+rak
+ |- Pair
+     |- key: Exception object
+     |- value: exception message
+     or
+     |- key: - empty Map
+     |      or
+     |       - Map with statistics
+     |
+     |- value: - Nil
+              or
+               - result Iterable
+                  |- Pair
+                  |   |- key: source object
+                  |   |- value:
+                  |        |- Slip
+                  |        |   |- PairMatched|PairContext
+                  |        |   |   |- key: item-number
+                  |        |   |   \- value: match result
+                  |        |   or
+                  |        |   \- match result
+                  |        or
+                  |        \- single item match result
+                  or
+                  \- unique match result
+
+=end code
+
+=head3 Named Arguments
 
 The following named arguments can be specified (in alphabetical
 order):
 
-=head3 :accessed(&filter)
+=head4 :accessed(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<access> time of the path.  The C<Callable> is
@@ -194,23 +252,23 @@ passed a C<Num> value of the access time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
-=head3 :after-context(N)
+=head4 :after-context(N)
 
 Indicate the number of items that should also be returned B<after>
-a line with a pattern match.  Defaults to B<0>.
+an item with a pattern match.  Defaults to B<0>.
 
-=head3 :batch(N)
+=head4 :batch(N)
 
 When hypering over multiple cores, indicate how many items should be
 processed per thread at a time.  Defaults to whatever the system
 thinks is best (which B<may> be sub-optimal).
 
-=head3 :before-context(N)
+=head4 :before-context(N)
 
 Indicate the number of items that should also be returned B<before>
-a line with a pattern match.  Defaults to B<0>.
+an item with a pattern match.  Defaults to B<0>.
 
-=head3 :blocks(&filter)
+=head4 :blocks(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<number of blocks> used by the path on the filesystem
@@ -218,24 +276,12 @@ on which the path is located.  The C<Callable> is passed the number of blocks
 of a path and is expected to return a trueish value to have the path be
 considered for further selection.
 
-=head3 :context(N)
+=head4 :context(N)
 
 Indicate the number of items that should also be returned around
-a line with a pattern match.  Defaults to B<0>.
+an item with a pattern match.  Defaults to B<0>.
 
-=head3 :count-only
-
-Flag.  If specified with a trueish value, will perform all searching, but
-only update counters and not produce any results other than a C<Map> with
-the following keys:
-
-=item nr-sources - number of sources seen
-=item nr-items - number of items inspected
-=item nr-matches - number of items that matched
-=item nr-passthrus - number of items that have passed through
-=item nr-changes - number of items that would have been changed
-
-=head3 :created(&filter)
+=head4 :created(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<creation> time of the path.  The C<Callable> is
@@ -243,13 +289,13 @@ passed a C<Num> value of the creation time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
-=head3 :degree(N)
+=head4 :degree(N)
 
 When hypering over multiple cores, indicate the maximum number of
 threads that should be used.  Defaults to whatever the system
 thinks is best (which B<may> be sub-optimal).
 
-=head3 :device-number(&filter)
+=head4 :device-number(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<device number> of the path.  The C<Callable> is
@@ -257,7 +303,7 @@ passed the device number of the device on which the path is located and is
 expected to return a trueish value to have the path be considered for further
 selection.
 
-=head3 :dir(&dir-matcher)
+=head4 :dir(&dir-matcher)
 
 If specified, indicates the matcher that should be used to select
 acceptable directories with the C<paths> utility.  Defaults to C<True>
@@ -265,20 +311,20 @@ indicating B<all> directories should be recursed into.  Applicable
 for any situation where C<paths> is used to create the list of files
 to check.
 
-=head3 dont-catch
+=head4 dont-catch
 
 Flag.  If specified with a trueish value, will B<not> catch any error
 during processing, but will throw any error again.  Defaults to C<False>,
 making sure that errors B<will> be caught.
 
-=head3 :encoding("utf8-c8")
+=head4 :encoding("utf8-c8")
 
 When specified with a string, indicates the name of the encoding
 to be used to produce items to check (typically by calling
 C<lines> or C<slurp>).  Defaults to C<utf8-c8>, the UTF-8
 encoding that is permissive of encoding issues.
 
-=head3 :file(&file-matcher)
+=head4 :file(&file-matcher)
 
 If specified, indicates the matcher that should be used to select
 acceptable files with the C<paths> utility.  Defaults to C<True>
@@ -286,23 +332,23 @@ indicating B<all> files should be checked.  Applicable for any
 situation where C<paths> is used to create the list of files to
 check.
 
-=head3 :filesize(&filter)
+=head4 :filesize(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<number of bytes> of the path.  The C<Callable> is
 passed the number of bytes of a path and is expected to return a trueish
 value to have the path be considered for further selection.
 
-=head3 :files-from($filename)
+=head4 :files-from($filename)
 
 If specified, indicates the name of the file from which a list
 of files to be used as sources will be read.
 
-=head3 :find
+=head4 :find
 
 Flag.  If specified, maps the sources of items into items to search.
 
-=head3 :gid(&filter)
+=head4 :gid(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<gid> of the path.  The C<Callable> is passed the
@@ -310,105 +356,105 @@ numeric gid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
 
-=head3 :hard-links(&filter)
+=head4 :hard-links(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<number of hard-links> of the path.  The C<Callable>
 is passed the number of hard-links of a path and is expected to return a
 trueish value to have the path be considered for further selection.
 
-=head3 :inode(&filter)
+=head4 :inode(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<inode> of the path.  The C<Callable> is passed the
 inode of a path and is expected to return a trueish value to have the path be
 considered for further selection.
 
-=head3 :invert-match
+=head4 :invert-match
 
 Flag. If specified with a trueish value, will negate the return
 value of the pattern if a C<Bool> was returned.  Defaults to
 C<False>.
 
-=head3 :is-empty
+=head4 :is-empty
 
 Flag.  If specified, indicates paths, that are empty (aka: have a filesize
 of 0 bytes), are (not) acceptable for further selection.  Usually only
 makes sense when uses together with C<:find>.
 
-=head3 :is-executable
+=head4 :is-executable
 
 Flag.  If specified, indicates paths, that are B<executable> by the current
 B<user>, are (not) acceptable for further selection.
 
-=head3 :is-git-repo
+=head4 :is-git-repo
 
 Flag.  If specified, indicates paths, look like they're the top directory
 in a Git repository (because they have a C<.git> directory in it), are
 (not) acceptable for further selection.
 
-=head3 :is-github-repo
+=head4 :is-github-repo
 
 Flag.  If specified, indicates paths, look like they're the top directory
 in a GitHub repository (because they have a C<.github> directory in it),
 are (not) acceptable for further selection.
 
-=head3 :is-group-executable
+=head4 :is-group-executable
 
 Flag.  If specified, indicates paths, that are B<executable> by the current
 B<group>, are (not) acceptable for further selection.
 
-=head3 :is-group-readable
+=head4 :is-group-readable
 
 Flag.  If specified, indicates paths, that are B<readable> by the current
 B<group>, are (not) acceptable for further selection.
 
-=head3 :is-group-writable
+=head4 :is-group-writable
 
 Flag.  If specified, indicates paths, that are B<writable> by the current
 B<group>, are (not) acceptable for further selection.
 
-=head3 :is-readable
+=head4 :is-readable
 
 Flag.  If specified, indicates paths, that are B<readable> by the current
 B<user>, are (not) acceptable for further selection.
 
-=head3 :is-owned-by-group
+=head4 :is-owned-by-group
 
 Flag.  If specified, indicates only paths that are B<owned> by the B<group>
 of the current user, are (not) acceptable for further selection.
 
-=head3 :is-owned-by-user
+=head4 :is-owned-by-user
 
 Flag.  If specified, indicates only paths that are B<owned> by the current
 B<user>, are (not) acceptable for further selection.
 
-=head3 :is-symbolic-link
+=head4 :is-symbolic-link
 
 Flag.  If specified, indicates only paths that are symbolic links,
 are (not) acceptable for further selection.
 
-=head3 :is-world-executable
+=head4 :is-world-executable
 
 Flag.  If specified, indicates paths, that are B<executable> by any user
 or group, are (not) acceptable for further selection.
 
-=head3 :is-world-readable
+=head4 :is-world-readable
 
 Flag.  If specified, indicates paths, that are B<readable> by any user
 or group, are (not) acceptable for further selection.
 
-=head3 :is-world-writeable
+=head4 :is-world-writeable
 
 Flag.  If specified, indicates paths, that are B<writable> by any user
 or group, are (not) acceptable for further selection.
 
-=head3 :is-writable
+=head4 :is-writable
 
 Flag.  If specified, indicates paths, that are B<writable> by the current
 B<user>, are (not) acceptable for further selection.
 
-=head3 :mapper(&mapper)
+=head4 :mapper(&mapper)
 
 If specified, indicates the C<Callable> that will be called (in a
 thread-safe manner) for each source, with the matches of that source.
@@ -420,18 +466,18 @@ Whatever the mapper C<Callable> returns, will become the result of the
 call to the C<rak> subroutine.  If you don't want any result to be
 returned, you can return C<Empty> from the mapper C<Callable>.
 
-=head3 :map-all
+=head4 :map-all
 
 Flag.  If specified with a trueish value, will call the mapper logic, as
 specified with C<:mapper>, even if a source has no matches.  Defaults to
-C<False>: 
+C<False>.
 
-=head3 :max-matches-per-source(N)
+=head4 :max-matches-per-source(N)
 
 Indicate the maximum number of items that may be produce per source.
 Defaults to B<all> (which can also be specified by an falsish value).
 
-=head3 :meta-modified(&filter)
+=head4 :meta-modified(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<modification> time of the path.  The C<Callable> is
@@ -439,7 +485,7 @@ passed a C<Num> value of the modification time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
-=head3 :mode(&filter)
+=head4 :mode(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<mode> of the path.  The C<Callable> is passed the
@@ -448,7 +494,7 @@ considered for further selection.  This is really for advanced types of tests:
 it's probably easier to use any of the C<readable>, C<writeable> and
 C<executable> filters.
 
-=head3 :modified(&filter)
+=head4 :modified(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<modification> time of the path.  The C<Callable> is
@@ -456,22 +502,22 @@ passed a C<Num> value of the modification time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
-=head3 :paragraph-context
+=head4 :paragraph-context
 
 Flag. If specified with a trueish value, produce items B<around>
-the line with a pattern match until an empty line is encountered.
+the empty with a pattern match until a falsish item is encountered.
 
-=head3 :passthru-context
+=head4 :passthru-context
 
 Flag. If specified with a trueish value, produces B<all> items.
 
-=head3 :paths-from($filename)
+=head4 :paths-from($filename)
 
 If specified, indicates the name of the file from which a list
 of paths to be used as the base of the production of filename
 with a C<paths> search.
 
-=head3 :paths(@paths)
+=head4 :paths(@paths)
 
 If specified, indicates a list of paths that should be used
 as the base of the production of filename with a C<paths>
@@ -482,7 +528,7 @@ the current directory (aka ".") will be assumed.
 If a single hyphen is specified as the path, then STDIN will be
 assumed as the source.
 
-=head3 :produce-many(&producer)
+=head4 :produce-many(&producer)
 
 If specified, indicates a C<Callable> that will be called given
 a source, and is expected to produce zero or more items to be
@@ -490,17 +536,17 @@ inspected.  Defaults to a producer that calles the C<lines> method
 on a given source, with the C<:encoding> and C<:with-line-ending>
 arguments.
 
-=head3 :produce-one(&producer)
+=head4 :produce-one(&producer)
 If specified, indicates a C<Callable> that will be called given
 a source, and is expected to produce one items to be inspected.
 
-=head3 :recurse-symlinked-dir
+=head4 :recurse-symlinked-dir
 
 Flag. If specified with a trueish value, will recurse into directories
 that are actually symbolic links.  The default is C<False>: do B<not>
 recurse into symlinked directories.
 
-=head3 :recurse-unmatched-dir
+=head4 :recurse-unmatched-dir
 
 Flag. If specified with a trueish value, will recurse into directories
 that did B<not> pass the :<dir>.  No files will ever be produced from
@@ -508,31 +554,43 @@ such directories, but further recursion will be done if directories
 are encountered.  The default is C<False>: do B<not> recurse into
 directories that didn't match the C<:dir> specification.
 
-=head3 :quietly
+=head4 :quietly
 
 Flag. If specified with a trueish value, will absorb any warnings
 that may occur when looking for the pattern.
 
-=head3 :silently("out,err")
+=head4 :silently("out,err")
 
 When specified with C<True>, will absorb any output on STDOUT
 and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 ("err") and both STDOUT and STDERR ("out,err").
 
-=head3 :sources(@objects)
+=head4 :sources(@objects)
 
 If specified, indicates a list of objects that should be used
 as a source for the production of items.
 
-=head3 :stats
+=head4 :stats
 
 Flag.  If specified with a trueish value, will keep stats on number
 of files and number of items seen.  And instead of just returning
 the results sequence, will then return a C<List> of the result
 sequence as the first argument, and a C<Map> with statistics as the
-second argument, with the same keys as with the C<:count-only> flag.
+second argument, with the following keys:
 
-=head3 :uid(&filter)
+=item nr-sources - number of sources seen
+=item nr-items - number of items inspected
+=item nr-matches - number of items that matched
+=item nr-passthrus - number of items that have passed through
+=item nr-changes - number of items that would have been changed
+
+=head4 :stats-only
+
+Flag.  If specified with a trueish value, will perform all searching, but
+only update counters and not produce any results other than a C<Map> with
+the same keys as with the C<:stats-only> flag.
+
+=head4 :uid(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
 acceptable paths by the B<uid> of the path.  The C<Callable> is passed the
@@ -540,12 +598,12 @@ numeric uid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
 
-=head3 :unique
+=head4 :unique
 
 Flag.  If specified, indicates that only unique matches will be returned,
 instead of the normal sequence of source => result pairs.
 
-=head3 :with-line-ending
+=head4 :with-line-ending
 
 Flag.  If specified, indicates line endings are to be kept when producing
 items to check.  Defaults to C<False>, meaning that line endings are
@@ -553,22 +611,22 @@ removed from items to check.  Only applicable with line-based checking.
 
 =head2 PATTERN RETURN VALUES
 
-The return value of the pattern C<Callable> is interpreted in the
+The return value of the pattern C<Callable> match is interpreted in the
 following ways:
 
 =head3 True
 
 If the C<Bool>ean True value is returned, assume the pattern is found.
-Produce the line unless C<:invert-match> was specified.
+Produce the item unless C<:invert-match> was specified.
 
 =head3 False
 
 If the C<Bool>ean False value is returned, assume the pattern is B<not>
-found.  Do B<not> produce the line unless C<:invert-match> was specified.
+found.  Do B<not> produce the item unless C<:invert-match> was specified.
 
 =head3 Empty
 
-Always produce the line.  Even if C<:invert-match> was specified.  Shown
+Always produce the item.  Even if C<:invert-match> was specified.  Shown
 in stats as a C<passthru>.
 
 =head3 any other value
