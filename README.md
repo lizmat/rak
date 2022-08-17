@@ -124,7 +124,9 @@ Related named arguments are (in alphabetical order):
 
   * :find - map sequence of step 1 to item producer
 
-  * :producer - producer of items by a given source
+  * :produce-one - produce one item per given source
+
+  * :produce-many - produce zero or more items by given source
 
   * :with-line-ending - produce lines with line endings
 
@@ -386,9 +388,11 @@ If specified, indicates a list of paths that should be used as the base of the p
 
 If a single hyphen is specified as the path, then STDIN will be assumed as the source.
 
-### :producer(&producer)
+### :produce-many(&producer)
 
-If specified, indicates a `Callable` that will be called given a source, and is expected to produce items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
+If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
+
+### :produce-one(&producer) If specified, indicates a `Callable` that will be called given a source, and is expected to produce one items to be inspected.
 
 ### :recurse-symlinked-dir
 

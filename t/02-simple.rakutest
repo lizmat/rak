@@ -68,6 +68,12 @@ my sub lookup(
     }
 }
 
+#lookup '/ i /', :paths($dir), :max-matches-per-source(10),
+#  "eight"  => (l5,l6),
+#;
+#
+#=finish
+
 lookup "nine", :paths($dir),
   "nine" => (l9,)
 ;
@@ -168,7 +174,7 @@ lookup 'one', :paths($dir), :is-empty,
   ()
 ;
 
-lookup 'NINE', :paths($dir), :producer(*.IO.lines.map: *.uc),
+lookup 'NINE', :paths($dir), :produce-many(*.IO.lines.map: *.uc),
   "nine"  => (L9,),
 ;
 

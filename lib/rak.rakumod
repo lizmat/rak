@@ -275,7 +275,7 @@ my sub make-passthru-context-runner(&matcher) {
     -> $item {
         my $result := matcher($item.value);
 
-        $result =:= False
+        $result =:= False || $result =:= Empty
           ?? $item
           !! PairMatched.new:
                $item.key,
@@ -438,7 +438,13 @@ multi sub rak(&pattern, %n) {
     $sources-seq = make-property-filter($sources-seq, %n);
 
     # Step 3: producer Callable
-    my &producer := do if (%n<producer>:delete)<> -> $producer {
+    my &producer := do if (%n<produce-one>:delete) -> $producer {
+          -> $source {
+              CATCH { return Empty if $CATCH }
+              PairContext.new(1, $producer($source)).Seq
+          }
+    }
+    elsif (%n<produce-many>:delete)<> -> $producer {
           -> $source {
               CATCH { return Empty if $CATCH }
               my $line-number = 0;
