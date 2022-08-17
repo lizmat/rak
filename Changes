@@ -4,6 +4,10 @@ Revision history for rak
 
 0.0.7  2022-08-17T13:25:56+02:00
     - Split :producer into :produce-one and :produce-many
+    - Add support for :max-matches-per-source
+    - Fixed thread-safety issue with generation of context items
+    - Only use "lines" in docs if really about lines of text, else
+      use the more generic "items" mnemonic.
 
 0.0.6  2022-08-16T22:14:26+02:00
     - Rename :recurse-symlink to :recurse-symlinked-dir for clarity
