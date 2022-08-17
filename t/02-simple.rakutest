@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 33;
+plan 43;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -11,6 +11,8 @@ my %path2name = %name2path.kv.reverse;
 $dir.mkdir;
 for @targets.kv -> $n, $name {
     %name2path{$name}.IO.spurt: @targets[0..$n].join("\n") ~ "\n";
+    is %name2path{$name}.IO.slurp, @targets[0..$n].join("\n") ~ "\n",
+      "is the file for $name ok?";
 }
 LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
 
