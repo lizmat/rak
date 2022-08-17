@@ -5,7 +5,7 @@ use paths:ver<10.0.7>:auth<zef:lizmat>;
 use path-utils:ver<0.0.6>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
-# The classes for matching and not-matching lines (that have been added
+# The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
 my class PairMatched is Pair is export { method matched(--> True)  { } }
 my class PairContext is Pair is export { method matched(--> False) { } }
@@ -270,8 +270,22 @@ my sub make-matcher(&pattern, %_) {
     }
 }
 
-# Return a runner Callable for paragrap context around lines
-my sub make-passthru-context-runner(&matcher) {
+# Return a runner Callable for paragrap context around items
+my multi sub make-passthru-context-runner(&matcher, int $max-matches) {
+    my int $matches-seen;
+    -> $item {
+        my $result := matcher($item.value);
+
+        $result =:= False
+          || $result =:= Empty
+          || ++$matches-seen > $max-matches
+          ?? $item
+          !! PairMatched.new:
+               $item.key,
+               $result =:= True ?? $item.value !! $result
+    }
+}
+my multi sub make-passthru-context-runner(&matcher) {
     -> $item {
         my $result := matcher($item.value);
 
@@ -283,8 +297,52 @@ my sub make-passthru-context-runner(&matcher) {
     }
 }
 
-# Return a runner Callable for paragrap context around lines
-my sub make-paragraph-context-runner(&matcher) {
+# Return a runner Callable for paragrap context around items
+my multi sub make-paragraph-context-runner(&matcher, int $max-matches) {
+    my atomicint $matches-seen;
+    my $after;
+    my @before;
+    -> $item {
+        my $result := matcher($item.value);
+
+        # no match
+        if $result =:= False || $result =:= Empty {
+            if $after {
+                if $item.value {
+                    $item
+                }
+                else {
+                    $after = False;
+                    Empty
+                }
+            }
+            else {
+                @before.push: $item;
+                Empty
+            }
+        }
+
+        # seen enough matches
+        elsif ++$matches-seen > $max-matches {
+            $after
+              ?? $item.value
+                ?? $item
+                !! (last)
+              !! (last)
+        }
+
+        # match or something else was produced from match
+        else {
+            $after = True;
+            @before.push(
+              PairMatched.new:
+                $item.key,
+                $result =:= True ?? $item.value !! $result
+            ).splice.Slip
+        }
+    }
+}
+my multi sub make-paragraph-context-runner(&matcher) {
     my $after;
     my @before;
     -> $item {
@@ -319,8 +377,90 @@ my sub make-paragraph-context-runner(&matcher) {
     }
 }
 
-# Return a runner Callable for numeric context around lines
-my sub make-numeric-context-runner(&matcher, $before, $after) {
+# Return a runner Callable for numeric context around items
+my multi sub make-numeric-context-runner(
+  &matcher, $before, $after, int $max-matches
+) {
+    my int $matches-seen;
+    if $before {
+        my $todo;
+        my @before;
+        -> $item {
+            my $result := matcher($item.value);
+
+            # no match
+            if $result =:= False || $result =:= Empty {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    @before.shift if @before.elems == $before;
+                    @before.push: $item;
+                    Empty
+                }
+            }
+
+            # seen enough matches
+            elsif ++$matches-seen > $max-matches {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    last
+                }
+            }
+
+            # match or something was produced from match
+            else {
+                $todo = $after;
+                @before.push(
+                  PairMatched.new:
+                    $item.key,
+                    $result =:= True ?? $item.value !! $result
+                ).splice.Slip
+            }
+        }
+    }
+    else {
+        my $todo;
+        -> $item {
+            my $result := matcher($item.value);
+
+            # no match
+            if $result =:= False || $result =:= Empty {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    Empty
+                }
+            }
+
+            # seen enough matches
+            elsif ++$matches-seen > $max-matches {
+                if $todo {
+                    --$todo;
+                    $item
+                }
+                else {
+                    last
+                }
+            }
+
+            # match or something was produced from match
+            else {
+                $todo = $after;
+                PairMatched.new:
+                  $item.key,
+                  $result =:= True ?? $item.value !! $result
+            }
+        }
+    }
+}
+my multi sub make-numeric-context-runner(&matcher, $before, $after) {
     if $before {
         my $todo;
         my @before;
@@ -379,7 +519,22 @@ my sub make-numeric-context-runner(&matcher, $before, $after) {
 }
 
 # Base case of a runner from a matcher
-sub make-runner(&matcher) {
+my multi sub make-runner(&matcher, int $max-matches) {
+    my int $matches-seen;
+    -> $item {
+        my $result := matcher($item.value);
+        $result =:= False
+          ?? Empty
+          !! $result =:= Empty
+            ?? $item
+            !! ++$matches-seen > $max-matches
+              ?? (last)
+              !! PairMatched.new:
+                   $item.key,
+                   $result =:= True ?? $item.value !! $result
+    }
+}
+my multi sub make-runner(&matcher) {
     -> $item {
         my $result := matcher($item.value);
         $result =:= False
@@ -535,30 +690,55 @@ multi sub rak(&pattern, %n) {
     # The runner Callable should take a PairContext object as the argument,
     # and call the matcher with that.  If the result is True, then it should
     # produce that line as a PairMatched object with the original value, and
-    # any other lines as as PairContext objects.  If the result is False, it
+    # any other items as as PairContext objects.  If the result is False, it
     # should produce Empty.  In any other case, it should produce a
     # PairMatched object with the original key, and the value returned by
-    # the matcher as its value.
+    # the matcher as its value.  To make sure each source gets its own
+    # closure clone, the runner is actually a Callable returning the actual
+    # runner code.
     my &runner := do if $count-only {
-        make-runner(&matcher)  # simplest runner for just counting
+        -> { make-runner &matcher }  # simplest runner for just counting
+    }
+    elsif %n<max-matches-per-source>:delete -> int $max {
+        if %n<context>:delete -> $context {
+            -> { make-numeric-context-runner
+                   &matcher, $context, $context, $max }
+        }
+        elsif %n<before-context>:delete -> $before {
+            -> { make-numeric-context-runner
+                   &matcher, $before, %n<after-context>:delete, $max }
+        }
+        elsif %n<after-context>:delete -> $after {
+            -> { make-numeric-context-runner &matcher, Any, $after, $max }
+        }
+        elsif %n<paragraph-context>:delete {
+            -> { make-paragraph-context-runner &matcher, $max }
+        }
+        elsif %n<passthru-context>:delete {
+            -> { make-passthru-context-runner &matcher, $max }
+        }
+        else {
+            -> { make-runner &matcher, $max }
+        }
     }
     elsif %n<context>:delete -> $context {
-        make-numeric-context-runner(&matcher, $context, $context)
+        -> { make-numeric-context-runner &matcher, $context, $context }
     }
     elsif %n<before-context>:delete -> $before {
-        make-numeric-context-runner(&matcher, $before, %n<after-context>:delete)
+        -> { make-numeric-context-runner
+               &matcher, $before, %n<after-context>:delete }
     }
     elsif %n<after-context>:delete -> $after {
-        make-numeric-context-runner(&matcher, Any, $after)
+        -> { make-numeric-context-runner &matcher, Any, $after }
     }
     elsif %n<paragraph-context>:delete {
-        make-paragraph-context-runner(&matcher)
+        -> { make-paragraph-context-runner &matcher }
     }
     elsif %n<passthru-context>:delete {
-        make-passthru-context-runner(&matcher)
+        -> { make-passthru-context-runner &matcher }
     }
     else {
-        make-runner(&matcher)
+        -> { make-runner &matcher }
     }
 
     # Step 6: run the sequences
@@ -594,7 +774,7 @@ multi sub rak(&pattern, %n) {
         my $lock := Lock.new;
         $sources-seq.map: -> $source {
             ++⚛$nr-sources;
-            producer($source).map(&runner).iterator.push-all(
+            producer($source).map(runner).iterator.push-all(
               my $buffer := IterationBuffer.new
             );
 
@@ -616,7 +796,7 @@ multi sub rak(&pattern, %n) {
         $sources-seq.map: -> $source {
             ++⚛$nr-sources;
             my \result :=
-              Pair.new: $source, eagerSlip producer($source).map: &runner;
+              Pair.new: $source, eagerSlip producer($source).map: runner;
             $lock.protect: &next-phaser;
             result
         }
@@ -626,7 +806,7 @@ multi sub rak(&pattern, %n) {
     else {
         $sources-seq.map: -> $source {
             ++⚛$nr-sources;
-            Pair.new: $source, eagerSlip producer($source).map: &runner
+            Pair.new: $source, eagerSlip producer($source).map: runner
         }
     }
 

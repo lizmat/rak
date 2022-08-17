@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 30;
+plan 32;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -67,12 +67,6 @@ my sub lookup(
         is %nameds.elems, 0, 'did all named arguments get removed';
     }
 }
-
-#lookup '/ i /', :paths($dir), :max-matches-per-source(10),
-#  "eight"  => (l5,l6),
-#;
-#
-#=finish
 
 lookup "nine", :paths($dir),
   "nine" => (l9,)
@@ -176,6 +170,25 @@ lookup 'one', :paths($dir), :is-empty,
 
 lookup 'NINE', :paths($dir), :produce-many(*.IO.lines.map: *.uc),
   "nine"  => (L9,),
+;
+
+lookup '/ i /', :paths($dir), :max-matches-per-source(3),
+  "five"  => (l5,),
+  "six"   => (l5,l6),
+  "seven" => (l5,l6),
+  "eight" => (l5,l6,l8),
+  "nine"  => (l5,l6,l8),
+;
+
+lookup '/ t /', :paths($dir), :max-matches-per-source(2), :context(1),
+  "two"   => (c1,l2),
+  "three" => (c1,l2,l3),
+  "four"  => (c1,l2,l3,c4),
+  "five"  => (c1,l2,l3,c4),
+  "six"   => (c1,l2,l3,c4),
+  "seven" => (c1,l2,l3,c4),
+  "eight" => (c1,l2,l3,c4),
+  "nine"  => (c1,l2,l3,c4),
 ;
 
 my %b is BagHash;

@@ -150,21 +150,23 @@ Related named arguments are (in alphabetical order):
 
 ### 5. Create logic for running
 
-Take the matcher logic of the `Callable` of step 4 and create a runner `Callable` that will produce the items found and their possible context (such as extra lines before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
+Take the matcher logic of the `Callable` of step 4 and create a runner `Callable` that will produce the items found and their possible context (such as extra items before or after). Assuming no context, the runner changes a return value of `False` from the matcher into `Empty`, a return value of `True` in the original line, and passes through any other value.
 
 Related named arguments are (in alphabetical order):
 
-  * :after-context - number of lines to show after a match
+  * :after-context - number of items to show after a match
 
-  * :before-context - number of lines to show before a match
+  * :before-context - number of items to show before a match
 
-  * :context - number of lines to show around a match
+  * :context - number of items to show around a match
 
-  * :paragraph-context - lines around match until empty line
+  * :paragraph-context - items around match until empty line
 
-  * :passthru-context - pass on *all* lines
+  * :passthru-context - pass on *all* items
 
-Matching lines are represented by `PairMatched` objects, and lines that have been added because of the above context arguments, are represented by `PairContext` objects.
+  * :max-matches-per-source - max # of matches per source
+
+Matching items are represented by `PairMatched` objects, and items that have been added because of the above context arguments, are represented by `PairContext` objects.
 
 ### 6. Run the sequence(s)
 
@@ -200,7 +202,7 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 ### :after-context(N)
 
-Indicate the number of lines that should also be returned **after** a line with a pattern match. Defaults to **0**.
+Indicate the number of items that should also be returned **after** a line with a pattern match. Defaults to **0**.
 
 ### :batch(N)
 
@@ -208,7 +210,7 @@ When hypering over multiple cores, indicate how many items should be processed p
 
 ### :before-context(N)
 
-Indicate the number of lines that should also be returned **before** a line with a pattern match. Defaults to **0**.
+Indicate the number of items that should also be returned **before** a line with a pattern match. Defaults to **0**.
 
 ### :blocks(&filter)
 
@@ -216,7 +218,7 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 ### :context(N)
 
-Indicate the number of lines that should also be returned around a line with a pattern match. Defaults to **0**.
+Indicate the number of items that should also be returned around a line with a pattern match. Defaults to **0**.
 
 ### :count-only
 
@@ -358,6 +360,10 @@ Whatever the mapper `Callable` returns, will become the result of the call to th
 
 Flag. If specified with a trueish value, will call the mapper logic, as specified with `:mapper`, even if a source has no matches. Defaults to `False`: 
 
+### :max-matches-per-source(N)
+
+Indicate the maximum number of items that may be produce per source. Defaults to **all** (which can also be specified by an falsish value).
+
 ### :meta-modified(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
@@ -372,11 +378,11 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 ### :paragraph-context
 
-Flag. If specified with a trueish value, produce lines **around** the line with a pattern match until an empty line is encountered.
+Flag. If specified with a trueish value, produce items **around** the line with a pattern match until an empty line is encountered.
 
 ### :passthru-context
 
-Flag. If specified with a trueish value, produces **all** lines.
+Flag. If specified with a trueish value, produces **all** items.
 
 ### :paths-from($filename)
 
@@ -412,11 +418,11 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 
 ### :sources(@objects)
 
-If specified, indicates a list of objects that should be used as a source for the production of lines.
+If specified, indicates a list of objects that should be used as a source for the production of items.
 
 ### :stats
 
-Flag. If specified with a trueish value, will keep stats on number of files and number of lines seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument, with the same keys as with the `:count-only` flag.
+Flag. If specified with a trueish value, will keep stats on number of files and number of items seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument, with the same keys as with the `:count-only` flag.
 
 ### :uid(&filter)
 
@@ -456,10 +462,10 @@ PHASERS
 
 Any `FIRST`, `NEXT` and `LAST` phaser that are specified in the pattern `Callable`, will be executed at the correct time.
 
-MATCHING LINES vs CONTEXT LINES
--------------------------------
+MATCHED ITEMS vs CONTEXT ITEMS
+------------------------------
 
-The `Pair`s that contain the search result within an object, have an additional method mixed in: `matched`. This returns `True` for lines that matched, and `False` for lines that have been added because of a context specification (`:context`, `:before-context`, `:after-context` or `paragraph-context`).
+The `Pair`s that contain the search result within an object, have an additional method mixed in: `matched`. This returns `True` for items that matched, and `False` for items that have been added because of a context specification (`:context`, `:before-context`, `:after-context` or `paragraph-context`).
 
 These `Pair`s can also be recognized by their class: `PairMatched` versus `PairContext`, which are also exported.
 
