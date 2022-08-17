@@ -102,6 +102,7 @@ Related named arguments are (in alphabetical order):
 =item :find - map sequence of step 1 to item producer
 =item :produce-one - produce one item per given source
 =item :produce-many - produce zero or more items by given source
+=item :omit-item-numbers - do not store item numbers in result
 =item :with-line-ending - produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable)
@@ -502,6 +503,12 @@ passed a C<Num> value of the modification time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
+=head4 :omit-item-numbers
+
+Flag. If specified with a trueish value, won't produce any C<PairMatched>
+or C<PairContext> objects in the result, but will just produce the result
+of the match.  Defaults to C<False>, meaning to include item numbers.
+
 =head4 :paragraph-context
 
 Flag. If specified with a trueish value, produce items B<around>
@@ -568,7 +575,8 @@ and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 =head4 :sources(@objects)
 
 If specified, indicates a list of objects that should be used
-as a source for the production of items.
+as a source for the production of items.  Which generally means
+they cannot be just strings.
 
 =head4 :stats
 

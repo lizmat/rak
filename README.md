@@ -128,6 +128,8 @@ Related named arguments are (in alphabetical order):
 
   * :produce-many - produce zero or more items by given source
 
+  * :omit-item-numbers - do not store item numbers in result
+
   * :with-line-ending - produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
@@ -406,6 +408,10 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
 
+#### :omit-item-numbers
+
+Flag. If specified with a trueish value, won't produce any `PairMatched` or `PairContext` objects in the result, but will just produce the result of the match. Defaults to `False`, meaning to include item numbers.
+
 #### :paragraph-context
 
 Flag. If specified with a trueish value, produce items **around** the empty with a pattern match until a falsish item is encountered.
@@ -448,7 +454,7 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 
 #### :sources(@objects)
 
-If specified, indicates a list of objects that should be used as a source for the production of items.
+If specified, indicates a list of objects that should be used as a source for the production of items. Which generally means they cannot be just strings.
 
 #### :stats
 

@@ -1,11 +1,17 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.8  2022-08-17T23:52:03+02:00
     - Changed return value of rak to always be a Pair, with
       either an Exception / Map with stats as key, and a potentially
       empty Iterable as value
     - Change :count-only to :stats-only
     - Make sure explicit producer get an IO::Path instead of a string
+    - Add ":omit-item-numbers" to get faster/leaner data-structures
+      if item numbers are not needed
+    - Made sure that source is always an IO::Path object, unless the
+      sources were specified with :sources, or reading from STDIN
 
 0.0.7  2022-08-17T13:25:56+02:00
     - Split :producer into :produce-one and :produce-many
