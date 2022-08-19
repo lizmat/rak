@@ -28,7 +28,7 @@ The `rak` subroutine provides a mostly abstract core search (plumbing) functiona
 THEORY OF OPERATION
 ===================
 
-The `rak` subroutine basically goes through 6 steps to produce a result.
+The `rak` subroutine basically goes through 6 steps to produce a `Rak` object.
 
 ### 1. Acquire sources
 
@@ -77,10 +77,6 @@ Filter down the list of sources from step 1 on any additional filesystem related
   * :is-empty - is path empty (filesize == 0)
 
   * :is-executable - is path executable
-
-  * :is-git-repo - is path top directory of a Git repository
-
-  * :is-github-repo - is path top directory of a GitHub repository
 
   * :is-group-executable - is path executable by group
 
@@ -186,6 +182,50 @@ Related named arguments are (in alphabetical order):
 
   * :unique - only return unique matches
 
+EXPORTED CLASSES
+================
+
+Rak
+---
+
+The return value of a `rak` search. Contains the following attributes:
+
+### result
+
+An `Iterable` with search results. This could be a lazy `Seq` or a fully vivified `List` (see below).
+
+### completed
+
+A `Bool` indicating whether the search has already been completed. This is typically `True` if statistics were asked to be collected, or the pattern `Callable` contained `LAST` phasers.
+
+### stats
+
+A `Map` with any statistics collected (so far, in case an exception was thrown). If the `Map` is not empty, it contains the following keys:
+
+  * nr-sources - number of sources seen
+
+  * nr-items - number of items inspected
+
+  * nr-matches - number of items that matched
+
+  * nr-passthrus - number of items that have passed through
+
+  * nr-changes - number of items that would have been changed
+
+### exception
+
+Any `Exception` object that was caught.
+
+PairMatched
+-----------
+
+A subclass of `Pair` of which the `matched` method returns `True`. Used for matching items when item-numbers are required to be returned.
+
+PairContext
+-----------
+
+A subclass of `Pair` of which the `matched` method returns `False`. Used for non-matching items when item-numbers are required to be returned and a certain item context was requested.
+
 EXPORTED SUBROUTINES
 ====================
 
@@ -196,9 +236,7 @@ The `rak` subroutine takes a `Callable` (or `Regex`) pattern as the only positio
 
 ### Return value
 
-A `Pair` is always returned: if the key is an `Exception` then that means that somehow that Exception was thrown during processing, In that case the value contains the exception's message.
-
-Or the key is a `Map`, in which case that `Map` contains the statistics of the search (if activated with `:stats` or `:stats-only`, or else an empty `Map`), and the value contains `Nil` (if :stats-only was specified) or the result `Iterable` of the search.
+A `Rak` object (see above) is always returned. The object provides four attributes: `result` (with the result `Iterable`), `completed` (a Bool indicating whether all searching has been done already), `stats` (Map with any statistics) and `exception` (any `Exception` object or `Nil`).
 
 #### Result Iterable
 
@@ -210,33 +248,27 @@ If there was only one item produced per source, then the value will be that valu
 
 Otherwise the value will be a `Slip`. If no item numbers were requested, each element contains the result of matching. If item-numbers were requested, each element is a `Pair`, of which the key is the item-number where the pattern was found, and the value is the product of the search (which, by default, is the item in which the pattern was found).
 
-Possible result structures in a graph:
+In a graph:
 
-    rak
-     |- Pair
-         |- key: Exception object
-         |- value: exception message
-         or
-         |- key: - empty Map
-         |      or
-         |       - Map with statistics
-         |
-         |- value: - Nil
-                  or
-                   - result Iterable
-                      |- Pair
-                      |   |- key: source object
-                      |   |- value:
-                      |        |- Slip
-                      |        |   |- PairMatched|PairContext
-                      |        |   |   |- key: item-number
-                      |        |   |   \- value: match result
-                      |        |   or
-                      |        |   \- match result
-                      |        or
-                      |        \- single item match result
-                      or
-                      \- unique match result
+    rak(...)
+     |- Rak
+         |- exception: Exception object or Nil
+         |- stats: Map with statistics (if any)
+         |- completed: Bool whether all searching done already
+         |- result: Iterable
+              |- Pair
+              |   |- key: source object
+              |   |- value:
+              |        |- Slip
+              |        |   |- PairMatched|PairContext
+              |        |   |   |- key: item-number
+              |        |   |   \- value: match result
+              |        |   or
+              |        |   \- match result
+              |        or
+              |        \- single item match result
+              or
+              \- unique match result
 
 ### Named Arguments
 
@@ -329,14 +361,6 @@ Flag. If specified, indicates paths, that are empty (aka: have a filesize of 0 b
 #### :is-executable
 
 Flag. If specified, indicates paths, that are **executable** by the current **user**, are (not) acceptable for further selection.
-
-#### :is-git-repo
-
-Flag. If specified, indicates paths, look like they're the top directory in a Git repository (because they have a `.git` directory in it), are (not) acceptable for further selection.
-
-#### :is-github-repo
-
-Flag. If specified, indicates paths, look like they're the top directory in a GitHub repository (because they have a `.github` directory in it), are (not) acceptable for further selection.
 
 #### :is-group-executable
 
@@ -458,21 +482,11 @@ If specified, indicates a list of objects that should be used as a source for th
 
 #### :stats
 
-Flag. If specified with a trueish value, will keep stats on number of files and number of items seen. And instead of just returning the results sequence, will then return a `List` of the result sequence as the first argument, and a `Map` with statistics as the second argument, with the following keys:
-
-  * nr-sources - number of sources seen
-
-  * nr-items - number of items inspected
-
-  * nr-matches - number of items that matched
-
-  * nr-passthrus - number of items that have passed through
-
-  * nr-changes - number of items that would have been changed
+Flag. If specified with a trueish value, will keep stats on number of files and number of items seen, and make that available in the `stats` attribute of the `Rak` object.
 
 #### :stats-only
 
-Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any results other than a `Map` with the same keys as with the `:stats-only` flag.
+Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any result. The statistics will be available in the `stats` attribute, and the `result` attribute will be `Empty`.
 
 #### :uid(&filter)
 
@@ -515,7 +529,7 @@ Any `FIRST`, `NEXT` and `LAST` phaser that are specified in the pattern `Callabl
 MATCHED ITEMS vs CONTEXT ITEMS
 ------------------------------
 
-The `Pair`s that contain the search result within an object, have an additional method mixed in: `matched`. This returns `True` for items that matched, and `False` for items that have been added because of a context specification (`:context`, `:before-context`, `:after-context` or `paragraph-context`).
+The `Pair`s that contain the search result within an object, have an additional method mixed in: `matched`. This returns `True` for items that matched, and `False` for items that have been added because of a context specification (`:context`, `:before-context`, `:after-context`, `paragraph-context` or `passthru-context`).
 
 These `Pair`s can also be recognized by their class: `PairMatched` versus `PairContext`, which are also exported.
 

@@ -2,6 +2,14 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.9  2022-08-19T14:17:48+02:00
+    - Remove :is-git-repo and :is-github-repo arguments: they would
+      never fire as the checks are only applied to files, and those
+      are directory level checks.
+    - Recognize &defined to be used as a "noop" producer of matches,
+      to allow e.g. a bare :find without pattern to produce all files.
+    - The return result is now always a Rak object
+
 0.0.8  2022-08-17T23:52:03+02:00
     - Changed return value of rak to always be a Pair, with
       either an Exception / Map with stats as key, and a potentially

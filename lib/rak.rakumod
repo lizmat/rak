@@ -9,7 +9,14 @@ use Trap:ver<0.0.1>:auth<zef:lizmat>;
 # because of some context argument having been specified).
 my class PairMatched is Pair is export { method matched(--> True)  { } }
 my class PairContext is Pair is export { method matched(--> False) { } }
-my constant EmptyMap = Map.new;
+
+# The result class returned by the rak call
+our class Rak {
+    has $.result    is built(:bind) = Empty;          # search result, if any
+    has $.completed is built(:bind) = False;          # True if done already
+    has $.stats     is built(:bind) = BEGIN Map.new;  # Map with stats, if any
+    has $.exception is built(:bind) = Nil;            # what was thrown
+}
 
 # Create an eager slip for a given Seq
 my sub eagerSlip($seq) {
@@ -148,19 +155,6 @@ my sub make-property-filter($seq is copy, %_) {
           (%_<is-executable>:delete)
             ?? -> $path { path-is-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-executable($path) ?? Empty !! $path }
-    }
-
-    if %_<is-git-repo>:exists {
-        $seq = $seq.map:
-          (%_<is-git-repo>:delete)
-            ?? -> $path { path-is-git-repo($path) ?? $path !! Empty }
-            !! -> $path { path-is-git-repo($path) ?? Empty !! $path }
-    }
-    if %_<is-github-repo>:exists {
-        $seq = $seq.map:
-          (%_<is-github-repo>:delete)
-            ?? -> $path { path-is-github-repo($path) ?? $path !! Empty }
-            !! -> $path { path-is-github-repo($path) ?? Empty !! $path }
     }
 
     if %_<is-group-readable>:exists {
@@ -722,7 +716,11 @@ multi sub rak(&pattern, *%n) {
 multi sub rak(&pattern, %n) {
     # any execution error will be caught and become a return state
     my $CATCH := !(%n<dont-catch>:delete);
-    CATCH { return $_ => Empty if $CATCH }
+    CATCH {
+        return Rak.new:
+          exception => $_,
+          stats     => map-stats,
+    }
 
     # Some settings we always need
     my $batch  := %n<batch>:delete;
@@ -795,7 +793,7 @@ multi sub rak(&pattern, %n) {
         my int $line-number;
         $item-numbers
           ?? -> $ { $seq.map: { PairContext.new: ++$line-number, $_ } }
-          !! $seq
+          !! -> $ { $seq }
     }
     else {
         my $chomp := !(%n<with-line-endings>:delete);
@@ -813,10 +811,12 @@ multi sub rak(&pattern, %n) {
     # call the pattern with that.  And optionally do some massaging to make
     # sure we get the right thing.  But in all other aspects, the matcher
     # has the same API as the pattern.
-    my &matcher = make-matcher(
-      Regex.ACCEPTS(&pattern) ?? *.contains(&pattern) !! &pattern,
-      %n
-    );
+    my &matcher = &pattern =:= &defined
+      ?? &defined
+      !! make-matcher(
+           Regex.ACCEPTS(&pattern) ?? *.contains(&pattern) !! &pattern,
+           %n
+         );
 
     # Stats keeping stuff
     my $stats;
@@ -1025,14 +1025,18 @@ multi sub rak(&pattern, %n) {
         last-phaser()        if &last-phaser;
         last-mapper-phaser() if &last-mapper-phaser;
 
-        Pair.new:
-          $stats-only || $stats ?? map-stats() !! EmptyMap,
-          $stats-only           ?? Empty      !! $buffer.Seq
+        # For some reason we cannot do this in one statement, "stats" is
+        # getting called *always*, 2022.07
+        my %args =
+          (result => $buffer.Seq unless $stats-only),
+          (stats  => map-stats() if $stats || $stats-only),
+          :completed;
+        Rak.new: |%args;
     }
 
     # We can be lazy
     else {
-        Pair.new: EmptyMap, $result-seq<>
+        Rak.new: result => $result-seq<>
     }
 }
 

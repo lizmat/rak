@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 43;
+plan 44;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -58,12 +58,13 @@ my sub lookup(
     my %expected = @expected.map: { %name2path{.key} => .value }
 
     subtest "testing '$pattern'" => {
-        plan 4;
+        plan 5;
         my %nameds = :degree(1), :dont-catch, |%additional;
-        my (:$key, :value(@matches)) := rak &needle, %nameds;
-        is-deeply $key, Map.new, 'did we get an empty Map for stats';
+        my $rak := rak &needle, %nameds;
+        isa-ok $rak, Rak;
+        is-deeply $rak.stats, Map.new, 'did we get an empty Map for stats';
 
-        my %got = @matches.map: {
+        my %got = $rak.result.map: {
             .key => .value.List if .value.elems
         }
 
@@ -230,8 +231,8 @@ ok $LAST-mapper-fired,   "LAST phaser fired in mapper";
 is $NEXT-matcher-count, 10, 'was NEXT phaser in matcher fired ok';
 is $NEXT-mapper-count,  10, 'was NEXT phaser in mapper fired ok';
 
-my (:$key, :value(@matches)) := rak -> $ --> True { }, :paths($dir), :unique;
-is-deeply @matches.sort, @targets.sort, 'did we get all unique strings';
+my $rak := rak -> $ --> True { }, :paths($dir), :unique;
+is-deeply $rak.result.sort, @targets.sort, 'did we get all unique strings';
 
 is-deeply rak( -> $_ {
     if $_ eq "five" {
@@ -243,14 +244,14 @@ is-deeply rak( -> $_ {
     else {
         True
     }
-}, :paths($dir), :stats).key,
+}, :paths($dir), :stats).stats,
   Map.new((
     :nr-changes(5), :nr-items(55), :nr-matches(47),
     :nr-passthrus(3), :nr-sources(10)
   )),
-  "did stats work out for key?";
+  "did stats work out?";
 
-my $result := rak( -> $_ {
+$rak := rak( -> $_ {
     if $_ eq "five" {
         "seven"
     }
@@ -261,13 +262,17 @@ my $result := rak( -> $_ {
         True
     }
 }, :paths($dir), :stats-only);
-is-deeply $result.key, 
+is-deeply $rak.stats, 
    Map.new((
     :nr-changes(5), :nr-items(55), :nr-matches(47),
     :nr-passthrus(3), :nr-sources(10)
   )),
-  "did stats-only work out for key?";
-is-deeply $result.value, Empty,
-  "did stats-only work out for value?";
+  "did stats-only work out for stats?";
+is-deeply $rak.result, Empty,
+  "did stats-only work out for result?";
+
+$rak := rak &defined, :paths($dir), :find, :omit-item-numbers, :dont-catch;
+ok $rak.result.head.value>>.absolute (==) %path2name.keys,
+  'did a :find with &defined pattern work out';
 
 # vim: expandtab shiftwidth=3
