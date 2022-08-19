@@ -14,7 +14,7 @@ for @targets.kv -> $n, $name {
     is %name2path{$name}.IO.slurp, @targets[0..$n].join("\n") ~ "\n",
       "is the file for $name ok?";
 }
-#LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
+LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
 
 # Line locations and their contents for matches
 my \l0 = PairMatched.new:  1, "zero";
@@ -122,31 +122,31 @@ lookup '-> $_ { .ends-with("o") && .uc }', :paths($dir),
   "nine"  => (L0, L2),
 ;
 
-lookup "/ er /", :sources(%name2path<nine>.IO),
+lookup "/ er /", :paths(%name2path<nine>),
   "nine"  => (l0,),
 ;
-lookup "/ zer /", :sources(%name2path<eight nine>.map(*.IO)),
+lookup "/ zer /", :paths(%name2path<eight nine>),
   "eight" => (l0,),
   "nine"  => (l0,),
 ;
 
-lookup "four", :sources(%name2path<nine>.IO), :context(2),
+lookup "four", :paths(%name2path<nine>), :context(2),
   "nine"  => (c2, c3, l4, c5, c6),
 ;
 
-lookup "/ four /", :sources(%name2path<nine>.IO), :before-context(2),
+lookup "/ four /", :paths(%name2path<nine>), :before-context(2),
   "nine"  => (c2, c3, l4),
 ;
 
-lookup "/ fou /", :sources(%name2path<nine>.IO), :after-context(2),
+lookup "/ fou /", :paths(%name2path<nine>), :after-context(2),
   "nine"  => (l4, c5, c6),
 ;
 
-lookup "/ our /", :sources(%name2path<nine>.IO), :paragraph-context,
+lookup "/ our /", :paths(%name2path<nine>), :paragraph-context,
   "nine"  => (c0, c1, c2, c3, l4, c5, c6, c7, c8, c9),
 ;
 
-lookup '*.ends-with("five")', :sources(%name2path<nine>.IO), :passthru-context,
+lookup '*.ends-with("five")', :paths(%name2path<nine>), :passthru-context,
   "nine"  => (c0, c1, c2, c3, c4, l5, c6, c7, c8, c9),
 ;
 
