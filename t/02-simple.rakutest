@@ -14,7 +14,7 @@ for @targets.kv -> $n, $name {
     is %name2path{$name}.IO.slurp, @targets[0..$n].join("\n") ~ "\n",
       "is the file for $name ok?";
 }
-LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
+#LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
 
 # Line locations and their contents for matches
 my \l0 = PairMatched.new:  1, "zero";
