@@ -161,6 +161,7 @@ Related named arguments are (in alphabetical order):
 
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
+=item :sources-only - only produce the source of any match
 =item :unique - only return unique matches
 
 =head1 EXPORTED CLASSES
@@ -597,6 +598,11 @@ and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 If specified, indicates a list of objects that should be used
 as a source for the production of items.  Which generally means
 they cannot be just strings.
+
+=head4 :sources-only
+
+Flag.  If specified with a trueish value, will only produce the
+source of a match once per source.  Defaults to C<False>.
 
 =head4 :stats
 

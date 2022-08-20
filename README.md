@@ -180,6 +180,8 @@ Related named arguments are (in alphabetical order):
 
   * :map-all - also call mapper if a source has no matches
 
+  * :sources-only - only produce the source of any match
+
   * :unique - only return unique matches
 
 EXPORTED CLASSES
@@ -479,6 +481,10 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 #### :sources(@objects)
 
 If specified, indicates a list of objects that should be used as a source for the production of items. Which generally means they cannot be just strings.
+
+#### :sources-only
+
+Flag. If specified with a trueish value, will only produce the source of a match once per source. Defaults to `False`.
 
 #### :stats
 

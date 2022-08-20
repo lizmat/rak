@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 44;
+plan 45;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -274,5 +274,9 @@ is-deeply $rak.result, Empty,
 $rak := rak &defined, :paths($dir), :find, :omit-item-numbers, :dont-catch;
 ok $rak.result.head.value>>.absolute (==) %path2name.keys,
   'did a :find with &defined pattern work out';
+
+$rak := rak *.contains("seven"), :paths($dir), :sources-only, :dont-catch;
+ok $rak.result>>.absolute (==) %name2path<seven eight nine>,
+  'did a :sources-only only produce paths';
 
 # vim: expandtab shiftwidth=3

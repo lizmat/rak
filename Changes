@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.10  2022-08-20T14:51:48+02:00
+    - Make sure we stop trying to match if we reached number of required
+      matches (rather than trying once more)
+    - Add support for :sources-only
+
 0.0.9  2022-08-19T14:17:48+02:00
     - Remove :is-git-repo and :is-github-repo arguments: they would
       never fire as the checks are only applied to files, and those

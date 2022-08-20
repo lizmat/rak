@@ -272,25 +272,37 @@ my multi sub make-passthru-context-runner(
     my int $matches-seen;
     $item-numbers
       ?? -> $item {
-             my $result := matcher($item.value);
-             $result =:= False
-               || $result =:= Empty
-               || ++$matches-seen > $max-matches
-               ?? $item
-               !! PairMatched.new:
-                    $item.key,
-                    $result =:= True ?? $item.value !! $result
+             if $matches-seen == $max-matches {
+                 $item
+             }
+             else {
+                 my $result := matcher($item.value);
+                 if $result =:= False || $result =:= Empty {
+                     $item
+                 }
+                 else {
+                     ++$matches-seen;
+                     PairMatched.new:
+                       $item.key,
+                       $result =:= True ?? $item.value !! $result
+                 }
+             }
          }
       # no item numbers needed
       !! -> $item {
-             my $result := matcher($item);
-             $result =:= False
-               || $result =:= Empty
-               || ++$matches-seen > $max-matches
-               ?? $item
-               !! $result =:= True
-                 ?? $item
-                 !! $result
+             if $matches-seen == $max-matches {
+                 $item
+             }
+             else {
+                 my $result := matcher($item);
+                 if $result =:= False || $result =:= Empty {
+                     $item
+                 }
+                 else {
+                     ++$matches-seen;
+                     $result =:= True ?? $item !! $result
+                 }
+             }
          }
 }
 my multi sub make-passthru-context-runner(&matcher, $item-numbers) {
@@ -323,68 +335,74 @@ my multi sub make-paragraph-context-runner(
     my @before;
     $item-numbers
       ?? -> $item {
-             my $result := matcher($item.value);
-             if $result =:= False || $result =:= Empty {  # no match
-                 if $after {
-                     if $item.value {
-                         $item
-                     }
-                     else {
-                         $after = False;
-                         Empty
-                     }
-                 }
-                 else {
-                     @before.push: $item;
-                     Empty
-                 }
-             }
-             elsif ++$matches-seen > $max-matches {  # seen enough matches
+             if $matches-seen == $max-matches {  # enough matches seen
                  $after
                    ?? $item.value
                      ?? $item
                      !! (last)
                    !! (last)
              }
-             else {  # match or something else was produced from match
-                 $after = True;
-                 @before.push(
-                   PairMatched.new:
-                     $item.key,
-                     $result =:= True ?? $item.value !! $result
-                 ).splice.Slip
+             else {  # must still try to match
+                 my $result := matcher($item.value);
+                 if $result =:= False || $result =:= Empty {  # no match
+                     if $after {
+                         if $item.value {
+                             $item
+                         }
+                         else {
+                             $after = False;
+                             Empty
+                         }
+                     }
+                     else {
+                         @before.push: $item;
+                         Empty
+                     }
+                 }
+                 else {  # match or something else was produced from match
+                     ++$matches-seen;
+                     $after = True;
+                     @before.push(
+                       PairMatched.new:
+                         $item.key,
+                         $result =:= True ?? $item.value !! $result
+                     ).splice.Slip
+                 }
              }
          }
       # no item numbers needed
       !! -> $item {
-             my $result := matcher($item);
-             if $result =:= False || $result =:= Empty {  # no match
-                 if $after {
-                     if $item {
-                         $item
-                     }
-                     else {
-                         $after = False;
-                         Empty
-                     }
-                 }
-                 else {
-                     @before.push: $item;
-                     Empty
-                 }
-             }
-             elsif ++$matches-seen > $max-matches {  # seen enough matches
+             if $matches-seen == $max-matches {  # enough matches seen
                  $after
                    ?? $item
                      ?? $item
                      !! (last)
                    !! (last)
              }
-             else {  # match or something else was produced from match
-                 $after = True;
-                 @before.push(
-                   $result =:= True ?? $item !! $result
-                 ).splice.Slip
+             else {  # must still try to match
+                 my $result := matcher($item);
+                 if $result =:= False || $result =:= Empty {  # no match
+                     if $after {
+                         if $item {
+                             $item
+                         }
+                         else {
+                             $after = False;
+                             Empty
+                         }
+                     }
+                     else {
+                         @before.push: $item;
+                         Empty
+                     }
+                 }
+                 else {  # match or something else was produced from match
+                     ++$matches-seen;
+                     $after = True;
+                     @before.push(
+                       $result =:= True ?? $item !! $result
+                     ).splice.Slip
+                 }
              }
          }
 }
@@ -455,19 +473,7 @@ my multi sub make-numeric-context-runner(
         my @before;
         $item-numbers
           ?? -> $item {
-                 my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {  # no match
-                     if $todo {
-                         --$todo; $item
-                     }
-                     else {
-                         @before.shift if @before.elems == $before;
-                         @before.push: $item;
-                         Empty
-                     }
-                 }
-
-                 elsif ++$matches-seen > $max-matches {  # seen enough matches
+                 if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
                          --$todo; $item
                      }
@@ -475,29 +481,33 @@ my multi sub make-numeric-context-runner(
                          last
                      }
                  }
-                 else {  # match or something was produced from match
-                     $todo = $after;
-                     @before.push(
-                       PairMatched.new:
-                         $item.key,
-                         $result =:= True ?? $item.value !! $result
-                     ).splice.Slip
+                 else {
+                     my $result := matcher($item.value);
+                     if $result =:= False || $result =:= Empty {  # no match
+                         if $todo {
+                             --$todo; $item
+                         }
+                         else {
+                             @before.shift if @before.elems == $before;
+                             @before.push: $item;
+                             Empty
+                         }
+                     }
+
+                     else {  # match or something was produced from match
+                         ++$matches-seen;
+                         $todo = $after;
+                         @before.push(
+                           PairMatched.new:
+                             $item.key,
+                             $result =:= True ?? $item.value !! $result
+                         ).splice.Slip
+                     }
                  }
              }
           # no item numbers needed
           !! -> $item {
-                 my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {  # no match
-                     if $todo {
-                         --$todo; $item
-                     }
-                     else {
-                         @before.shift if @before.elems == $before;
-                         @before.push: $item;
-                         Empty
-                     }
-                 }
-                 elsif ++$matches-seen > $max-matches {  # seen enough matches
+                 if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
                          --$todo; $item
                      }
@@ -505,11 +515,26 @@ my multi sub make-numeric-context-runner(
                          last
                      }
                  }
-                 else {  # match or something was produced from match
-                     $todo = $after;
-                     @before.push(
-                       $result =:= True ?? $item !! $result
-                     ).splice.Slip
+                 else {
+                     my $result := matcher($item);
+                     if $result =:= False || $result =:= Empty {  # no match
+                         if $todo {
+                             --$todo; $item
+                         }
+                         else {
+                             @before.shift if @before.elems == $before;
+                             @before.push: $item;
+                             Empty
+                         }
+                     }
+
+                     else {  # match or something was produced from match
+                         ++$matches-seen;
+                         $todo = $after;
+                         @before.push(
+                           $result =:= True ?? $item !! $result
+                         ).splice.Slip
+                     }
                  }
              }
     }
@@ -517,16 +542,7 @@ my multi sub make-numeric-context-runner(
         my $todo;
         $item-numbers
           ?? -> $item {
-                 my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {  # no match
-                     if $todo {
-                         --$todo; $item
-                     }
-                     else {
-                         Empty
-                     }
-                 }
-                 elsif ++$matches-seen > $max-matches {  # seen enough matches
+                 if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
                          --$todo; $item
                      }
@@ -534,25 +550,28 @@ my multi sub make-numeric-context-runner(
                          last
                      }
                  }
-                 else {  # match or something was produced from match
-                     $todo = $after;
-                     PairMatched.new:
-                       $item.key,
-                       $result =:= True ?? $item.value !! $result
+                 else {
+                     my $result := matcher($item.value);
+                     if $result =:= False || $result =:= Empty {  # no match
+                         if $todo {
+                             --$todo; $item
+                         }
+                         else {
+                             Empty
+                         }
+                     }
+                     else {  # match or something was produced from match
+                         ++$matches-seen;
+                         $todo = $after;
+                         PairMatched.new:
+                           $item.key,
+                           $result =:= True ?? $item.value !! $result
+                     }
                  }
              }
           # no item numbers needed
           !! -> $item {
-                 my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {  # no match
-                     if $todo {
-                         --$todo; $item
-                     }
-                     else {
-                         Empty
-                     }
-                 }
-                 elsif ++$matches-seen > $max-matches {  # seen enough matches
+                 if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
                          --$todo; $item
                      }
@@ -560,9 +579,21 @@ my multi sub make-numeric-context-runner(
                          last
                      }
                  }
-                 else {  # match or something was produced from match
-                     $todo = $after;
-                     $result =:= True ?? $item !! $result
+                 else {
+                     my $result := matcher($item);
+                     if $result =:= False || $result =:= Empty {  # no match
+                         if $todo {
+                             --$todo; $item
+                         }
+                         else {
+                             Empty
+                         }
+                     }
+                     else {  # match or something was produced from match
+                         ++$matches-seen;
+                         $todo = $after;
+                         $result =:= True ?? $item !! $result
+                     }
                  }
              }
     }
@@ -661,29 +692,37 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
     my int $matches-seen;
     $item-numbers
       ?? -> $item {
+             last if $matches-seen == $max-matches;
+
              my $result := matcher($item.value);
-             $result =:= False
-               ?? Empty
-               !! $result =:= Empty
-                 ?? $item
-                 !! ++$matches-seen > $max-matches
-                   ?? (last)
-                   !! PairMatched.new:
-                        $item.key,
-                        $result =:= True ?? $item.value !! $result
+             if $result =:= False {
+                 Empty
+             }
+             elsif $result =:= Empty {
+                 $item
+             }
+             else {
+                 ++$matches-seen;
+                 PairMatched.new:
+                   $item.key,
+                   $result =:= True ?? $item.value !! $result
+             }
          }
       # no item numbers needed
       !! -> $item {
+             last if $matches-seen == $max-matches;
+
              my $result := matcher($item);
-             $result =:= False
-               ?? Empty
-               !! $result =:= Empty
-                 ?? $item
-                 !! ++$matches-seen > $max-matches
-                   ?? (last)
-                   !! $result =:= True
-                     ?? $item
-                     !! $result
+             if $result =:= False {
+                 Empty
+             }
+             elsif $result =:= Empty {
+                 $item
+             }
+             else {
+                 ++$matches-seen;
+                 $result =:= True ?? $item !! $result
+             }
          }
 }
 my multi sub make-runner(&matcher, $item-numbers) {
@@ -762,10 +801,30 @@ multi sub rak(&pattern, %n) {
         # Step 2. filtering on properties
         make-property-filter($seq, %n);
     }
+    
+    # Some flags that we need
+    my $sources-only;
+    my $unique;
+    my $item-numbers;
+    my $max-matches-per-source;
+
+    if %n<sources-only>:delete {
+        $sources-only := True;
+        $item-numbers := False;
+        $max-matches-per-source := 1;
+    }
+    else {
+        $max-matches-per-source := %n<max-matches-per-source>:delete;
+        if %n<unique>:delete {
+            $unique       := True;
+            $item-numbers := False;
+        }
+        else {
+            $item-numbers := !(%n<omit-item-numbers>:delete);
+        }
+    }
 
     # Step 3: producer Callable
-    my $unique       := %n<unique>:delete;
-    my $item-numbers := !(%n<omit-item-numbers>:delete // $unique);
     my &producer := do if (%n<produce-one>:delete) -> $produce-one {
         $item-numbers
           ?? -> $source {
@@ -885,7 +944,7 @@ multi sub rak(&pattern, %n) {
         -> { make-runner &matcher, $item-numbers }
     }
     # limit on number of matches
-    elsif %n<max-matches-per-source>:delete -> int $max {
+    elsif $max-matches-per-source -> int $max {
         if %n<context>:delete -> $context {
             -> { make-numeric-context-runner &matcher,
                    $item-numbers, $context, $context, $max }
@@ -948,7 +1007,7 @@ multi sub rak(&pattern, %n) {
     my $map-all;
     my &next-mapper-phaser;
     my &last-mapper-phaser;
-    if !$stats-only && (%n<mapper>:exists) {
+    if !$stats-only && !$sources-only && (%n<mapper>:exists) {
         $map-all := %n<map-all>:delete;
         &mapper   = %n<mapper>:delete;
         if &mapper.has-loop-phasers {
@@ -979,6 +1038,19 @@ multi sub rak(&pattern, %n) {
                     result
                 }
             }
+        }
+    }
+    
+    # Only want sources
+    elsif $sources-only {
+        my $lock := Lock.new if &next-phaser;
+        $sources-seq.map: -> $source {
+            ++⚛$nr-sources;
+            producer($source).map(runner).iterator.push-all(
+              my $buffer := IterationBuffer.new
+            );
+            $lock.protect(&next-phaser) if $lock;
+            $source if $buffer.elems;
         }
     }
 
