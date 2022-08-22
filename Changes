@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.11  2022-08-22T21:08:35+02:00
+    - Fix issue with :paragraph-context
+
 0.0.10  2022-08-20T14:51:48+02:00
     - Make sure we stop trying to match if we reached number of required
       matches (rather than trying once more)

@@ -265,7 +265,7 @@ my sub make-matcher(&pattern, %_) {
     }
 }
 
-# Return a runner Callable for paragrap context around items
+# Return a runner Callable for passthru context
 my multi sub make-passthru-context-runner(
   &matcher, $item-numbers, int $max-matches
 ) {
@@ -326,7 +326,7 @@ my multi sub make-passthru-context-runner(&matcher, $item-numbers) {
          }
 }
 
-# Return a runner Callable for paragrap context around items
+# Return a runner Callable for paragraph context around items
 my multi sub make-paragraph-context-runner(
   &matcher, $item-numbers, int $max-matches
 ) {
@@ -355,7 +355,9 @@ my multi sub make-paragraph-context-runner(
                          }
                      }
                      else {
-                         @before.push: $item;
+                         $item.value
+                           ?? @before.push($item)
+                           !! @before.splice;
                          Empty
                      }
                  }
@@ -392,7 +394,9 @@ my multi sub make-paragraph-context-runner(
                          }
                      }
                      else {
-                         @before.push: $item;
+                         $item
+                           ?? @before.push($item)
+                           !! @before.splice;
                          Empty
                      }
                  }
@@ -423,7 +427,9 @@ my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
                      }
                  }
                  else {
-                     @before.push: $item;
+                     $item.value
+                       ?? @before.push($item)
+                       !! @before.splice;
                      Empty
                  }
              }
@@ -450,7 +456,9 @@ my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
                      }
                  }
                  else {
-                     @before.push: $item;
+                     $item
+                       ?? @before.push($item)
+                       !! @before.splice;
                      Empty
                  }
              }
