@@ -52,6 +52,8 @@ Related named arguments are (in alphabetical order):
 
   * :sources - list of objects to be considered as source
 
+  * :under-version-control - only include paths under version control
+
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
 ### 2. Filter applicable objects
@@ -504,6 +506,12 @@ Flag. If specified with a trueish value, will perform all searching, but only up
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **uid** of the path. The `Callable` is passed the numeric uid of a path and is expected to return a trueish value to have the path be considered for further selection. See also `owner` and `group` filters.
 
+#### :under-version-control($name = 'git')
+
+If specified, indicates that any path specification that is a directory, should be considered as the root of a directory structure under some form of version control. If specified as `True`, will assume `git`. If such a path is under version control, then only files that are actually controlled, will be produced for further inspection. If it is **not** under version control, **no** files will be produced.
+
+Currently, only `git` is supported.
+
 #### :unique
 
 Flag. If specified, indicates that only unique matches will be returned, instead of the normal sequence of source => result pairs.
@@ -531,7 +539,7 @@ If `Nil` is returned, assume the pattern is **not** found. This can typically ha
 
 ### Empty
 
-Always produce the item. Even if `:invert-match` was specified. Shown in stats as a `passthru`.
+If the empty `Slip` is returned, assume the pattern is **not** found. Do **not** produce the item unless `:invert-match` was specified. Shown in stats as a `passthru`.
 
 ### any other value
 

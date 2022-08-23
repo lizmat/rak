@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.13  2022-08-23T22:58:57+02:00
+    - Add support for :under-version-control
+    - Change semantics of matcher returning Empty: now means no match
+    - Fix :invert-match logic
+
 0.0.12  2022-08-23T13:00:04+02:00
     - Make matcher returning Nil act the same as False.  This can
       typically happen in a pattern with a try and an execution error

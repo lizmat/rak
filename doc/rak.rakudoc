@@ -47,6 +47,7 @@ Related named arguments are (in alphabetical order):
 =item :recurse-symlinked-dir - recurse into symlinked directories
 =item :recurse-unmatched-dir - recurse into directories not matching :dir
 =item :sources - list of objects to be considered as source
+=item :under-version-control - only include paths under version control
 
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
@@ -631,6 +632,17 @@ numeric uid of a path and is expected to return a trueish value to have the
 path be considered for further selection.  See also C<owner> and C<group>
 filters.
 
+=head4 :under-version-control($name = 'git')
+
+If specified, indicates that any path specification that is a directory,
+should be considered as the root of a directory structure under some
+form of version control.  If specified as C<True>, will assume C<git>.
+If such a path is under version control, then only files that are
+actually controlled, will be produced for further inspection.  If it
+is B<not> under version control, B<no> files will be produced.
+
+Currently, only C<git> is supported.
+
 =head4 :unique
 
 Flag.  If specified, indicates that only unique matches will be returned,
@@ -666,7 +678,8 @@ specified.
 
 =head3 Empty
 
-Always produce the item.  Even if C<:invert-match> was specified.  Shown
+If the empty C<Slip> is returned, assume the pattern is B<not> found.
+Do B<not> produce the item unless C<:invert-match> was specified.  Shown
 in stats as a C<passthru>.
 
 =head3 any other value

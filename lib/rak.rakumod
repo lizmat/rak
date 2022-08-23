@@ -50,13 +50,30 @@ my sub paths-arguments(%_) {
     Map.new: (:$dir, :$file, :$follow-symlinks, :$recurse)
 }
 
+# Obtain paths for given revision control system and specs
+my sub uvc-paths($uvc, *@specs) {
+    if $uvc<> =:= True || $uvc eq 'git' {
+        my $proc := run <git ls-files>, @specs, :out, :err;
+        $proc.err.slurp;
+        $proc.out.lines.Slip
+    }
+    else {
+        die "Don't know how to select files for '$uvc'";
+    }
+}
+
 # Convert a given seq producing paths to a seq producing files
-my sub paths-to-files($seq, $degree, %_) {
-    my %paths-arguments := paths-arguments(%_);
-    $seq.&hyperize(1, $degree).map: {
-        is-regular-file($_)
-          ?? $_
-          !! paths($_, |%paths-arguments).Slip
+my sub paths-to-files($iterable, $degree, %_) {
+    if %_<under-version-control>:delete -> $uvc {
+        uvc-paths($uvc, $iterable)
+    }
+    else {
+        my %paths-arguments := paths-arguments(%_);
+        $iterable.&hyperize(1, $degree).map: {
+            is-regular-file($_)
+              ?? $_
+              !! paths($_, |%paths-arguments).Slip
+        }
     }
 }
 
@@ -208,9 +225,12 @@ my sub make-property-filter($seq is copy, %_) {
 my sub make-matcher(&pattern, %_) {
     my &matcher := %_<invert-match>:delete
       ?? -> $haystack {
-             Bool.ACCEPTS(my $result := pattern($haystack))
-               ?? !$result
-               !! $result
+             my $result := pattern($haystack);
+             $result =:= True
+               ?? False
+               !! not-acceptable($result)
+                 ?? True
+                 !! $result
          }
       !! &pattern;
 
@@ -266,8 +286,8 @@ my sub make-matcher(&pattern, %_) {
 }
 
 # Not matching
-my sub not-acceptable($result is raw) {
-    $result =:= False || $result =:= Empty || $result =:= Nil
+my sub not-acceptable($result) {
+    $result<> =:= False || $result<> =:= Empty || $result<> =:= Nil
 }
 
 # Return a runner Callable for passthru context
@@ -708,11 +728,8 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
              last if $matches-seen == $max-matches;
 
              my $result := matcher($item.value);
-             if $result =:= False || $result =:= Nil {
+             if not-acceptable($result) {
                  Empty
-             }
-             elsif $result =:= Empty {
-                 $item
              }
              else {
                  ++$matches-seen;
@@ -726,11 +743,8 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
              last if $matches-seen == $max-matches;
 
              my $result := matcher($item);
-             if $result =:= False || $result =:= Nil {
+             if not-acceptable($result) {
                  Empty
-             }
-             elsif $result =:= Empty {
-                 $item
              }
              else {
                  ++$matches-seen;
@@ -742,22 +756,18 @@ my multi sub make-runner(&matcher, $item-numbers) {
     $item-numbers
       ?? -> $item {
              my $result := matcher($item.value);
-             $result =:= False || $result =:= Nil
+             not-acceptable($result)
                ?? Empty
-               !! $result =:= Empty
-                 ?? $item
-                 !! PairMatched.new:
-                      $item.key,
-                      $result =:= True ?? $item.value !! $result
+               !! PairMatched.new:
+                    $item.key,
+                    $result =:= True ?? $item.value !! $result
          }
       # no item numbers needed
       !! -> $item {
              my $result := matcher($item);
-             $result =:= False || $result =:= Nil
+             not-acceptable($result)
                ?? Empty
-               !! $result =:= True || $result =:= Empty
-                 ?? $item
-                 !! $result
+               !! $result =:= True ?? $item !! $result
          }
 }
 
@@ -806,6 +816,9 @@ multi sub rak(&pattern, %n) {
                   %n
                 )
             }
+        }
+        elsif %n<under-version-control>:delete -> $uvc {
+            uvc-paths($uvc)
         }
         else {
             paths ".", |paths-arguments(%n)
