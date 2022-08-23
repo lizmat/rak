@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.12  2022-08-23T13:00:04+02:00
+    - Make matcher returning Nil act the same as False.  This can
+      typically happen in a pattern with a try and an execution error
+    - Add support for :frequencies
+
 0.0.11  2022-08-22T21:08:35+02:00
     - Fix issue with :paragraph-context
 

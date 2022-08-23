@@ -162,7 +162,8 @@ Related named arguments are (in alphabetical order):
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
 =item :sources-only - only produce the source of any match
-=item :unique - only return unique matches
+=item :frequencies - produce items and their frequencies
+=item :unique - only produce unique items
 
 =head1 EXPORTED CLASSES
 
@@ -381,6 +382,11 @@ of files to be used as sources will be read.
 =head4 :find
 
 Flag.  If specified, maps the sources of items into items to search.
+
+=head4 :frequencies
+
+Flag.  If specified, produces key/value C<Pair>s in which the key is the
+item, and the value is the frequency with which the item was seen.
 
 =head4 :gid(&filter)
 
@@ -650,6 +656,13 @@ Produce the item unless C<:invert-match> was specified.
 
 If the C<Bool>ean False value is returned, assume the pattern is B<not>
 found.  Do B<not> produce the item unless C<:invert-match> was specified.
+
+=head3 Nil
+
+If C<Nil> is returned, assume the pattern is B<not> found.  This can
+typically happen when a C<try> is used in a pattern, and an execution
+error occurred.  Do B<not> produce the item unless C<:invert-match> was
+specified.
 
 =head3 Empty
 

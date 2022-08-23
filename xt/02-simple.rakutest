@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 45;
+plan 46;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -278,5 +278,11 @@ ok $rak.result.head.value>>.absolute (==) %path2name.keys,
 $rak := rak *.contains("seven"), :paths($dir), :sources-only, :dont-catch;
 ok $rak.result>>.absolute (==) %name2path<seven eight nine>,
   'did a :sources-only only produce paths';
+
+$rak := rak *.defined, :paths($dir), :frequencies, :dont-catch;
+is-deeply $rak.result,
+  (:10zero, :9one, :8two, :7three, :6four,
+   :5five, :4six, :3seven, :2eight, :1nine),
+  'did frequencies produce ok';
 
 # vim: expandtab shiftwidth=3

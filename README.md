@@ -182,7 +182,9 @@ Related named arguments are (in alphabetical order):
 
   * :sources-only - only produce the source of any match
 
-  * :unique - only return unique matches
+  * :frequencies - produce items and their frequencies
+
+  * :unique - only produce unique items
 
 EXPORTED CLASSES
 ================
@@ -339,6 +341,10 @@ If specified, indicates the name of the file from which a list of files to be us
 #### :find
 
 Flag. If specified, maps the sources of items into items to search.
+
+#### :frequencies
+
+Flag. If specified, produces key/value `Pair`s in which the key is the item, and the value is the frequency with which the item was seen.
 
 #### :gid(&filter)
 
@@ -518,6 +524,10 @@ If the `Bool`ean True value is returned, assume the pattern is found. Produce th
 ### False
 
 If the `Bool`ean False value is returned, assume the pattern is **not** found. Do **not** produce the item unless `:invert-match` was specified.
+
+### Nil
+
+If `Nil` is returned, assume the pattern is **not** found. This can typically happen when a `try` is used in a pattern, and an execution error occurred. Do **not** produce the item unless `:invert-match` was specified.
 
 ### Empty
 

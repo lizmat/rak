@@ -265,6 +265,11 @@ my sub make-matcher(&pattern, %_) {
     }
 }
 
+# Not matching
+my sub not-acceptable($result is raw) {
+    $result =:= False || $result =:= Empty || $result =:= Nil
+}
+
 # Return a runner Callable for passthru context
 my multi sub make-passthru-context-runner(
   &matcher, $item-numbers, int $max-matches
@@ -277,7 +282,7 @@ my multi sub make-passthru-context-runner(
              }
              else {
                  my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {
+                 if not-acceptable($result) {
                      $item
                  }
                  else {
@@ -295,7 +300,7 @@ my multi sub make-passthru-context-runner(
              }
              else {
                  my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {
+                 if not-acceptable($result) {
                      $item
                  }
                  else {
@@ -309,7 +314,7 @@ my multi sub make-passthru-context-runner(&matcher, $item-numbers) {
     $item-numbers
       ?? -> $item {
              my $result := matcher($item.value);
-             $result =:= False || $result =:= Empty
+             not-acceptable($result)
                ?? $item
                !! PairMatched.new:
                     $item.key,
@@ -318,7 +323,7 @@ my multi sub make-passthru-context-runner(&matcher, $item-numbers) {
       # no item numbers needed
       !! -> $item {
              my $result := matcher($item);
-             $result =:= False || $result =:= Empty
+             not-acceptable($result)
                ?? $item
                !! $result =:= True
                  ?? $item
@@ -344,7 +349,7 @@ my multi sub make-paragraph-context-runner(
              }
              else {  # must still try to match
                  my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $after {
                          if $item.value {
                              $item
@@ -383,7 +388,7 @@ my multi sub make-paragraph-context-runner(
              }
              else {  # must still try to match
                  my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $after {
                          if $item {
                              $item
@@ -416,7 +421,7 @@ my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
     $item-numbers
       ?? -> $item {
              my $result := matcher($item.value);
-             if $result =:= False || $result =:= Empty {  # no match
+             if not-acceptable($result) {  # no match
                  if $after {
                      if $item.value {
                          $item
@@ -445,7 +450,7 @@ my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
       # no item numbers needed
       !! -> $item {
              my $result := matcher($item);
-             if $result =:= False || $result =:= Empty {  # no match
+             if not-acceptable($result) {  # no match
                  if $after {
                      if $item {
                          $item
@@ -491,7 +496,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {
                      my $result := matcher($item.value);
-                     if $result =:= False || $result =:= Empty {  # no match
+                     if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
                          }
@@ -525,7 +530,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {
                      my $result := matcher($item);
-                     if $result =:= False || $result =:= Empty {  # no match
+                     if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
                          }
@@ -560,7 +565,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {
                      my $result := matcher($item.value);
-                     if $result =:= False || $result =:= Empty {  # no match
+                     if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
                          }
@@ -589,7 +594,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {
                      my $result := matcher($item);
-                     if $result =:= False || $result =:= Empty {  # no match
+                     if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
                          }
@@ -616,7 +621,7 @@ my multi sub make-numeric-context-runner(
         $item-numbers
           ?? -> $item {
                  my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
                      }
@@ -638,7 +643,7 @@ my multi sub make-numeric-context-runner(
           # no item numbers needed
           !! -> $item {
                  my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
                      }
@@ -661,7 +666,7 @@ my multi sub make-numeric-context-runner(
         $item-numbers
           ?? -> $item {
                  my $result := matcher($item.value);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
                      }
@@ -679,7 +684,7 @@ my multi sub make-numeric-context-runner(
           # no item numbers needed
           !! -> $item {
                  my $result := matcher($item);
-                 if $result =:= False || $result =:= Empty {  # no match
+                 if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
                      }
@@ -703,7 +708,7 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
              last if $matches-seen == $max-matches;
 
              my $result := matcher($item.value);
-             if $result =:= False {
+             if $result =:= False || $result =:= Nil {
                  Empty
              }
              elsif $result =:= Empty {
@@ -721,7 +726,7 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
              last if $matches-seen == $max-matches;
 
              my $result := matcher($item);
-             if $result =:= False {
+             if $result =:= False || $result =:= Nil {
                  Empty
              }
              elsif $result =:= Empty {
@@ -737,7 +742,7 @@ my multi sub make-runner(&matcher, $item-numbers) {
     $item-numbers
       ?? -> $item {
              my $result := matcher($item.value);
-             $result =:= False
+             $result =:= False || $result =:= Nil
                ?? Empty
                !! $result =:= Empty
                  ?? $item
@@ -748,7 +753,7 @@ my multi sub make-runner(&matcher, $item-numbers) {
       # no item numbers needed
       !! -> $item {
              my $result := matcher($item);
-             $result =:= False
+             $result =:= False || $result =:= Nil
                ?? Empty
                !! $result =:= True || $result =:= Empty
                  ?? $item
@@ -813,6 +818,7 @@ multi sub rak(&pattern, %n) {
     # Some flags that we need
     my $sources-only;
     my $unique;
+    my $frequencies;
     my $item-numbers;
     my $max-matches-per-source;
 
@@ -825,6 +831,10 @@ multi sub rak(&pattern, %n) {
         $max-matches-per-source := %n<max-matches-per-source>:delete;
         if %n<unique>:delete {
             $unique       := True;
+            $item-numbers := False;
+        }
+        elsif %n<frequencies>:delete {
+            $frequencies  := True;
             $item-numbers := False;
         }
         else {
@@ -1054,11 +1064,9 @@ multi sub rak(&pattern, %n) {
         my $lock := Lock.new if &next-phaser;
         $sources-seq.map: -> $source {
             ++⚛$nr-sources;
-            producer($source).map(runner).iterator.push-all(
-              my $buffer := IterationBuffer.new
-            );
+            my \result := producer($source).map(runner).iterator.pull-one;
             $lock.protect(&next-phaser) if $lock;
-            $source if $buffer.elems;
+            $source unless result =:= IterationEnd
         }
     }
 
@@ -1100,8 +1108,25 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
-    if $stats-only || $stats || &last-mapper-phaser || &last-phaser {
-        $result-seq.iterator.push-all(my $buffer := IterationBuffer.new);
+    if $frequencies
+      || $stats-only
+      || $stats
+      || &last-mapper-phaser
+      || &last-phaser {
+        my $buffer := IterationBuffer.new;
+
+        # Convert to frequency map if so requested
+        if $frequencies {
+            my %bh is Bag = $result-seq.map: *.value.Slip;
+            %bh.sort(-*.value).iterator.push-all: $buffer;
+        }
+
+        # Normal collection
+        else {
+            $result-seq.iterator.push-all: $buffer;
+        }
+
+        # Run the phasers if any
         last-phaser()        if &last-phaser;
         last-mapper-phaser() if &last-mapper-phaser;
 
