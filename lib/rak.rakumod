@@ -2,13 +2,13 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.6>:auth<zef:lizmat>;
+use path-utils:ver<0.0.7>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
-my class PairMatched is Pair is export { method matched(--> True)  { } }
-my class PairContext is Pair is export { method matched(--> False) { } }
+my class PairContext is Pair        is export { method matched(--> False) { } }
+my class PairMatched is PairContext is export { method matched(--> True)  { } }
 
 # The result class returned by the rak call
 our class Rak {
@@ -54,8 +54,8 @@ my sub paths-arguments(%_) {
 my sub uvc-paths($uvc, *@specs) {
     if $uvc<> =:= True || $uvc eq 'git' {
         my $proc := run <git ls-files>, @specs, :out, :err;
-        $proc.err.slurp;
-        $proc.out.lines.Slip
+        $proc.err.slurp(:close);
+        $proc.out.lines(:close).Slip
     }
     else {
         die "Don't know how to select files for '$uvc'";
@@ -174,6 +174,25 @@ my sub make-property-filter($seq is copy, %_) {
             !! -> $path { path-is-executable($path) ?? Empty !! $path }
     }
 
+    if %_<is-owner-readable>:exists {
+        $seq = $seq.map:
+          (%_<is-owner-readable>:delete)
+            ?? -> $path { path-is-owner-readable($path) ?? $path !! Empty }
+            !! -> $path { path-is-owner-readable($path) ?? Empty !! $path }
+    }
+    if %_<is-owner-writable>:exists {
+        $seq = $seq.map:
+          (%_<is-owner-writable>:delete)
+            ?? -> $path { path-is-owner-writable($path) ?? $path !! Empty }
+            !! -> $path { path-is-owner-writable($path) ?? Empty !! $path }
+    }
+    if %_<is-owner-executable>:exists {
+        $seq = $seq.map:
+          (%_<is-owner-executable>:delete)
+            ?? -> $path { path-is-owner-executable($path) ?? $path !! Empty }
+            !! -> $path { path-is-owner-executable($path) ?? Empty !! $path }
+    }
+
     if %_<is-group-readable>:exists {
         $seq = $seq.map:
           (%_<is-group-readable>:delete)
@@ -192,6 +211,7 @@ my sub make-property-filter($seq is copy, %_) {
             ?? -> $path { path-is-group-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-group-executable($path) ?? Empty !! $path }
     }
+
     if %_<is-symbolic-link>:exists {
         $seq = $seq.map:
           (%_<is-symbolic-link>:delete)
@@ -290,75 +310,78 @@ my sub not-acceptable($result) {
     $result<> =:= False || $result<> =:= Empty || $result<> =:= Nil
 }
 
-# Return a runner Callable for passthru context
-my multi sub make-passthru-context-runner(
-  &matcher, $item-numbers, int $max-matches
-) {
-    my int $matches-seen;
-    $item-numbers
-      ?? -> $item {
-             if $matches-seen == $max-matches {
-                 $item
-             }
-             else {
-                 my $result := matcher($item.value);
-                 if not-acceptable($result) {
-                     $item
-                 }
-                 else {
-                     ++$matches-seen;
-                     PairMatched.new:
-                       $item.key,
-                       $result =:= True ?? $item.value !! $result
-                 }
-             }
-         }
-      # no item numbers needed
-      !! -> $item {
-             if $matches-seen == $max-matches {
-                 $item
-             }
-             else {
-                 my $result := matcher($item);
-                 if not-acceptable($result) {
-                     $item
-                 }
-                 else {
-                     ++$matches-seen;
-                     $result =:= True ?? $item !! $result
-                 }
-             }
-         }
-}
-my multi sub make-passthru-context-runner(&matcher, $item-numbers) {
-    $item-numbers
+# Return a runner Callable for passthru
+my sub make-passthru-runner(&matcher, $item-number) {
+    $item-number
       ?? -> $item {
              my $result := matcher($item.value);
              not-acceptable($result)
                ?? $item
                !! PairMatched.new:
-                    $item.key,
-                    $result =:= True ?? $item.value !! $result
+                     $item.key,
+                     $result =:= True ?? $item.value !! $result
          }
-      # no item numbers needed
       !! -> $item {
              my $result := matcher($item);
-             not-acceptable($result)
+             $result =:= True || not-acceptable($result)
                ?? $item
-               !! $result =:= True
-                 ?? $item
-                 !! $result
+               !! $result
+         }
+}
+
+# Return a runner Callable for passthru context
+my sub make-passthru-context-runner(&matcher, $item-number) {
+    my $after;
+    my @before;
+    $item-number
+      ?? -> $item {
+             my $result := matcher($item.value);
+             if not-acceptable($result) {  # no match
+                 if $after {
+                     $item
+                 }
+                 else {
+                     @before.push($item);
+                     Empty
+                 }
+             }
+             else {  # match or something else was produced from match
+                 $after = True;
+                 @before.push(
+                   PairMatched.new:
+                     $item.key,
+                     $result =:= True ?? $item.value !! $result
+                 ).splice.Slip
+             }
+         }
+      !! -> $item {
+             my $result := matcher($item);
+             if not-acceptable($result) {  # no match
+                 if $after {
+                     $item
+                 }
+                 else {
+                     @before.push($item);
+                     Empty
+                 }
+             }
+             else {  # match or something else was produced from match
+                 $after = True;
+                 @before.push(
+                   $result =:= True ?? $item !! $result
+                 ).splice.Slip
+             }
          }
 }
 
 # Return a runner Callable for paragraph context around items
 my multi sub make-paragraph-context-runner(
-  &matcher, $item-numbers, int $max-matches
+  &matcher, $item-number, int $max-matches
 ) {
     my int $matches-seen;
     my $after;
     my @before;
-    $item-numbers
+    $item-number
       ?? -> $item {
              if $matches-seen == $max-matches {  # enough matches seen
                  $after
@@ -435,10 +458,10 @@ my multi sub make-paragraph-context-runner(
              }
          }
 }
-my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
+my multi sub make-paragraph-context-runner(&matcher, $item-number) {
     my $after;
     my @before;
-    $item-numbers
+    $item-number
       ?? -> $item {
              my $result := matcher($item.value);
              if not-acceptable($result) {  # no match
@@ -498,13 +521,13 @@ my multi sub make-paragraph-context-runner(&matcher, $item-numbers) {
 
 # Return a runner Callable for numeric context around items
 my multi sub make-numeric-context-runner(
-  &matcher, $item-numbers, $before, $after, int $max-matches
+  &matcher, $item-number, $before, $after, int $max-matches
 ) {
     my int $matches-seen;
     if $before {
         my $todo;
         my @before;
-        $item-numbers
+        $item-number
           ?? -> $item {
                  if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
@@ -573,7 +596,7 @@ my multi sub make-numeric-context-runner(
     }
     else {
         my $todo;
-        $item-numbers
+        $item-number
           ?? -> $item {
                  if $matches-seen == $max-matches {  # seen enough matches
                      if $todo {
@@ -632,13 +655,13 @@ my multi sub make-numeric-context-runner(
     }
 }
 my multi sub make-numeric-context-runner(
-  &matcher, $item-numbers, $before, $after
+  &matcher, $item-number, $before, $after
 ) {
     if $before {
         my $todo;
         my @before;
 
-        $item-numbers
+        $item-number
           ?? -> $item {
                  my $result := matcher($item.value);
                  if not-acceptable($result) {  # no match
@@ -683,7 +706,7 @@ my multi sub make-numeric-context-runner(
     }
     else {
         my $todo;
-        $item-numbers
+        $item-number
           ?? -> $item {
                  my $result := matcher($item.value);
                  if not-acceptable($result) {  # no match
@@ -721,9 +744,9 @@ my multi sub make-numeric-context-runner(
 }
 
 # Base case of a runner from a matcher without any context
-my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
+my multi sub make-runner(&matcher, $item-number, int $max-matches) {
     my int $matches-seen;
-    $item-numbers
+    $item-number
       ?? -> $item {
              last if $matches-seen == $max-matches;
 
@@ -752,8 +775,8 @@ my multi sub make-runner(&matcher, $item-numbers, int $max-matches) {
              }
          }
 }
-my multi sub make-runner(&matcher, $item-numbers) {
-    $item-numbers
+my multi sub make-runner(&matcher, $item-number) {
+    $item-number
       ?? -> $item {
              my $result := matcher($item.value);
              not-acceptable($result)
@@ -827,37 +850,37 @@ multi sub rak(&pattern, %n) {
         # Step 2. filtering on properties
         make-property-filter($seq, %n);
     }
-    
+
     # Some flags that we need
     my $sources-only;
     my $unique;
     my $frequencies;
-    my $item-numbers;
+    my $item-number;
     my $max-matches-per-source;
 
     if %n<sources-only>:delete {
         $sources-only := True;
-        $item-numbers := False;
+        $item-number  := False;
         $max-matches-per-source := 1;
     }
     else {
         $max-matches-per-source := %n<max-matches-per-source>:delete;
         if %n<unique>:delete {
-            $unique       := True;
-            $item-numbers := False;
+            $unique      := True;
+            $item-number := False;
         }
         elsif %n<frequencies>:delete {
-            $frequencies  := True;
-            $item-numbers := False;
+            $frequencies := True;
+            $item-number := False;
         }
         else {
-            $item-numbers := !(%n<omit-item-numbers>:delete);
+            $item-number := !(%n<omit-item-number>:delete);
         }
     }
 
     # Step 3: producer Callable
     my &producer := do if (%n<produce-one>:delete) -> $produce-one {
-        $item-numbers
+        $item-number
           ?? -> $source {
                  (PairContext.new(Nil, $produce-one($source)),)
              }
@@ -867,7 +890,7 @@ multi sub rak(&pattern, %n) {
              }
     }
     elsif (%n<produce-many>:delete)<> -> $produce-many {
-        $item-numbers
+        $item-number
           ?? -> $source {
                  my $line-number = 0;
                  $produce-many($source).map: {
@@ -881,7 +904,7 @@ multi sub rak(&pattern, %n) {
         my $seq := $sources-seq<>;
         $sources-seq = ("<find>",);
         my int $line-number;
-        $item-numbers
+        $item-number
           ?? -> $ { $seq.map: { PairContext.new: ++$line-number, $_ } }
           !! -> $ { $seq }
     }
@@ -890,7 +913,7 @@ multi sub rak(&pattern, %n) {
         -> $source {
             my $seq := $source.lines(:$chomp, :$enc);
             my int $line-number;
-            $item-numbers
+            $item-number
               ?? $seq.map: { PairContext.new: ++$line-number, $_ }
               !! $seq
         }
@@ -972,55 +995,57 @@ multi sub rak(&pattern, %n) {
     # runner code Callable.
     my &runner := do if $stats-only {
         # simplest runner for just counting
-        -> { make-runner &matcher, $item-numbers }
+        -> { make-runner &matcher, $item-number }
     }
+
+    # special passthru contexts
+    elsif %n<passthru>:delete {
+        -> { make-passthru-runner &matcher, $item-number }
+    }
+    elsif %n<passthru-context>:delete {
+        -> { make-passthru-context-runner &matcher, $item-number }
+    }
+
     # limit on number of matches
     elsif $max-matches-per-source -> int $max {
         if %n<context>:delete -> $context {
             -> { make-numeric-context-runner &matcher,
-                   $item-numbers, $context, $context, $max }
+                   $item-number, $context, $context, $max }
         }
         elsif %n<before-context>:delete -> $before {
             -> { make-numeric-context-runner &matcher,
-                   $item-numbers, $before, %n<after-context>:delete, $max }
+                   $item-number, $before, %n<after-context>:delete, $max }
         }
         elsif %n<after-context>:delete -> $after {
             -> { make-numeric-context-runner &matcher,
-                   $item-numbers, Any, $after, $max }
+                   $item-number, Any, $after, $max }
         }
         elsif %n<paragraph-context>:delete {
             -> { make-paragraph-context-runner &matcher,
-                   $item-numbers, $max }
-        }
-        elsif %n<passthru-context>:delete {
-            -> { make-passthru-context-runner &matcher,
-                   $item-numbers, $max }
+                   $item-number, $max }
         }
         else {
-            -> { make-runner &matcher, $item-numbers, $max }
+            -> { make-runner &matcher, $item-number, $max }
         }
     }
     # no limit on number of matches
     elsif %n<context>:delete -> $context {
         -> { make-numeric-context-runner &matcher,
-               $item-numbers, $context, $context }
+               $item-number, $context, $context }
     }
     elsif %n<before-context>:delete -> $before {
         -> { make-numeric-context-runner &matcher,
-               $item-numbers, $before, %n<after-context>:delete }
+               $item-number, $before, %n<after-context>:delete }
     }
     elsif %n<after-context>:delete -> $after {
         -> { make-numeric-context-runner &matcher,
-               $item-numbers, Any, $after }
+               $item-number, Any, $after }
     }
     elsif %n<paragraph-context>:delete {
-        -> { make-paragraph-context-runner &matcher, $item-numbers }
-    }
-    elsif %n<passthru-context>:delete {
-        -> { make-passthru-context-runner &matcher, $item-numbers }
+        -> { make-paragraph-context-runner &matcher, $item-number }
     }
     else {
-        -> { make-runner &matcher, $item-numbers }
+        -> { make-runner &matcher, $item-number }
     }
 
     # Step 6: run the sequences
@@ -1071,7 +1096,7 @@ multi sub rak(&pattern, %n) {
             }
         }
     }
-    
+
     # Only want sources
     elsif $sources-only {
         my $lock := Lock.new if &next-phaser;
@@ -1131,7 +1156,9 @@ multi sub rak(&pattern, %n) {
         # Convert to frequency map if so requested
         if $frequencies {
             my %bh is Bag = $result-seq.map: *.value.Slip;
-            %bh.sort(-*.value).iterator.push-all: $buffer;
+            %bh.sort({
+                $^b.value cmp $^a.value || $^a.key cmp $^b.key
+            }).iterator.push-all: $buffer;
         }
 
         # Normal collection

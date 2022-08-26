@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 46;
+plan 48;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -14,7 +14,10 @@ for @targets.kv -> $n, $name {
     is %name2path{$name}.IO.slurp, @targets[0..$n].join("\n") ~ "\n",
       "is the file for $name ok?";
 }
-LEAVE { .IO.unlink for %name2path.values; $dir.rmdir }
+LEAVE {
+    .IO.unlink for %name2path.values;
+    $dir.rmdir
+}
 
 # Line locations and their contents for matches
 my \l0 = PairMatched.new:  1, "zero";
@@ -146,8 +149,16 @@ lookup "/ our /", :paths(%name2path<nine>), :paragraph-context,
   "nine"  => (c0, c1, c2, c3, l4, c5, c6, c7, c8, c9),
 ;
 
-lookup '*.ends-with("five")', :paths(%name2path<nine>), :passthru-context,
-  "nine"  => (c0, c1, c2, c3, c4, l5, c6, c7, c8, c9),
+lookup '*.ends-with("nine")', :paths($dir), :passthru-context,
+  "nine"  => (c0, c1, c2, c3, c4, c5, c6, c7, c8, l9),
+;
+
+lookup 'zippo', :paths($dir), :passthru-context,
+  (),
+;
+
+lookup 'zippo', :paths(%name2path<nine>), :passthru,
+  "nine"  => (c0, c1, c2, c3, c4, c5, c6, c7, c8, c9),
 ;
 
 lookup 'o', :paths($dir), :filesize(*>45),
@@ -271,7 +282,7 @@ is-deeply $rak.stats,
 is-deeply $rak.result, Empty,
   "did stats-only work out for result?";
 
-$rak := rak &defined, :paths($dir), :find, :omit-item-numbers, :dont-catch;
+$rak := rak &defined, :paths($dir), :find, :omit-item-number, :dont-catch;
 ok $rak.result.head.value>>.absolute (==) %path2name.keys,
   'did a :find with &defined pattern work out';
 

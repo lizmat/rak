@@ -2,6 +2,21 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.14  2022-08-27T00:15:28+02:00
+    - Make PairMatched a subclass of PairContext, so that we can check
+      on the PairContext type to see if it is a "normal" line number /
+      line | produced value case
+    - Changed name of :omit-item-numbers to :omit-item-number for
+      consistency
+    - Changed name of :passthru-context to :passthru, as it will
+      *always* pass through all lines, even if there is no match.
+      So there's not really a concept of context at work here
+    - Add support for :passthru-context, which will only produce
+      all items *if* there is at least one match
+    - Add support for :is-owner-readable
+    - Add support for :is-owner-writable
+    - Add support for :is-owner-executable
+
 0.0.13  2022-08-23T22:58:57+02:00
     - Add support for :under-version-control
     - Change semantics of matcher returning Empty: now means no match

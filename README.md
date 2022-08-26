@@ -78,7 +78,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :is-empty - is path empty (filesize == 0)
 
-  * :is-executable - is path executable
+  * :is-executable - is path executable by current user
 
   * :is-group-executable - is path executable by group
 
@@ -89,6 +89,12 @@ Filter down the list of sources from step 1 on any additional filesystem related
   * :is-owned-by-group - is path owned by group of current user
 
   * :is-owned-by-user - is path owned by current user
+
+  * :is-owner-executable - is path executable by owner
+
+  * :is-owner-readable - is path readable by owner
+
+  * :is-owner-writable - is path writable by owner
 
   * :is-readable - is path readable by current user
 
@@ -126,7 +132,7 @@ Related named arguments are (in alphabetical order):
 
   * :produce-many - produce zero or more items by given source
 
-  * :omit-item-numbers - do not store item numbers in result
+  * :omit-item-number - do not store item numbers in result
 
   * :with-line-ending - produce lines with line endings
 
@@ -162,9 +168,11 @@ Related named arguments are (in alphabetical order):
 
   * :paragraph-context - items around match until false item
 
-  * :passthru-context - pass on *all* items
+  * :passthru-context - pass on *all* items if there is a match
 
   * :max-matches-per-source - max # of matches per source
+
+  * :passthru - pass on *all* items always
 
 Matching items are represented by `PairMatched` objects, and items that have been added because of the above context arguments, are represented by `PairContext` objects.
 
@@ -396,6 +404,18 @@ Flag. If specified, indicates only paths that are **owned** by the **group** of 
 
 Flag. If specified, indicates only paths that are **owned** by the current **user**, are (not) acceptable for further selection.
 
+#### :is-owner-executable
+
+Flag. If specified, indicates paths, that are **executable** by the owner, are (not) acceptable for further selection.
+
+#### :is-owner-readable
+
+Flag. If specified, indicates paths, that are **readable** by the owner, are (not) acceptable for further selection.
+
+#### :is-owner-writable
+
+Flag. If specified, indicates paths, that are **writable** by the owner, are (not) acceptable for further selection.
+
 #### :is-symbolic-link
 
 Flag. If specified, indicates only paths that are symbolic links, are (not) acceptable for further selection.
@@ -442,7 +462,7 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
 
-#### :omit-item-numbers
+#### :omit-item-number
 
 Flag. If specified with a trueish value, won't produce any `PairMatched` or `PairContext` objects in the result, but will just produce the result of the match. Defaults to `False`, meaning to include item numbers.
 
@@ -450,9 +470,13 @@ Flag. If specified with a trueish value, won't produce any `PairMatched` or `Pai
 
 Flag. If specified with a trueish value, produce items **around** the empty with a pattern match until a falsish item is encountered.
 
+#### :passthru
+
+Flag. If specified with a trueish value, produces **all** items always.
+
 #### :passthru-context
 
-Flag. If specified with a trueish value, produces **all** items.
+Flag. If specified with a trueish value, produces **all** items if there is at least one match.
 
 #### :paths-from($filename)
 

@@ -67,12 +67,15 @@ strings of absolute paths to be checked.
 =item :hard-links - number of hard-links to path on filesystem
 =item :inode - inode of path on filesystem
 =item :is-empty - is path empty (filesize == 0)
-=item :is-executable - is path executable
+=item :is-executable - is path executable by current user
 =item :is-group-executable - is path executable by group
 =item :is-group-readable - is path readable by group
 =item :is-group-writable - is path writable by group
 =item :is-owned-by-group - is path owned by group of current user
 =item :is-owned-by-user - is path owned by current user
+=item :is-owner-executable - is path executable by owner
+=item :is-owner-readable - is path readable by owner
+=item :is-owner-writable - is path writable by owner
 =item :is-readable - is path readable by current user
 =item :is-symbolic-link - is path a symbolic link
 =item :is-world-executable - is path executable by any user
@@ -101,7 +104,7 @@ Related named arguments are (in alphabetical order):
 =item :find - map sequence of step 1 to item producer
 =item :produce-one - produce one item per given source
 =item :produce-many - produce zero or more items by given source
-=item :omit-item-numbers - do not store item numbers in result
+=item :omit-item-number - do not store item numbers in result
 =item :with-line-ending - produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable)
@@ -135,8 +138,9 @@ Related named arguments are (in alphabetical order):
 =item :before-context - number of items to show before a match
 =item :context - number of items to show around a match
 =item :paragraph-context - items around match until false item
-=item :passthru-context - pass on *all* items
+=item :passthru-context - pass on *all* items if there is a match
 =item :max-matches-per-source - max # of matches per source
+=item :passthru - pass on *all* items always
 
 Matching items are represented by C<PairMatched> objects, and items that
 have been added because of the above context arguments, are represented by
@@ -458,6 +462,21 @@ of the current user, are (not) acceptable for further selection.
 Flag.  If specified, indicates only paths that are B<owned> by the current
 B<user>, are (not) acceptable for further selection.
 
+=head4 :is-owner-executable
+
+Flag.  If specified, indicates paths, that are B<executable> by the owner,
+are (not) acceptable for further selection.
+
+=head4 :is-owner-readable
+
+Flag.  If specified, indicates paths, that are B<readable> by the owner,
+are (not) acceptable for further selection.
+
+=head4 :is-owner-writable
+
+Flag.  If specified, indicates paths, that are B<writable> by the owner,
+are (not) acceptable for further selection.
+
 =head4 :is-symbolic-link
 
 Flag.  If specified, indicates only paths that are symbolic links,
@@ -531,7 +550,7 @@ passed a C<Num> value of the modification time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
 
-=head4 :omit-item-numbers
+=head4 :omit-item-number
 
 Flag. If specified with a trueish value, won't produce any C<PairMatched>
 or C<PairContext> objects in the result, but will just produce the result
@@ -542,9 +561,14 @@ of the match.  Defaults to C<False>, meaning to include item numbers.
 Flag. If specified with a trueish value, produce items B<around>
 the empty with a pattern match until a falsish item is encountered.
 
+=head4 :passthru
+
+Flag. If specified with a trueish value, produces B<all> items always.
+
 =head4 :passthru-context
 
-Flag. If specified with a trueish value, produces B<all> items.
+Flag. If specified with a trueish value, produces B<all> items if there
+is at least one match.
 
 =head4 :paths-from($filename)
 
