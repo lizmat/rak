@@ -65,6 +65,8 @@ strings of absolute paths to be checked.
 =item :filesize - size of the path in bytes
 =item :gid - numeric gid of the path
 =item :hard-links - number of hard-links to path on filesystem
+=item :has-setgid - has SETGID bit set in attributes
+=item :has-setuid - has SETUID bit set in attributes
 =item :inode - inode of path on filesystem
 =item :is-empty - is path empty (filesize == 0)
 =item :is-executable - is path executable by current user
@@ -77,6 +79,7 @@ strings of absolute paths to be checked.
 =item :is-owner-readable - is path readable by owner
 =item :is-owner-writable - is path writable by owner
 =item :is-readable - is path readable by current user
+=item :is-sticky - has STICKY bit set in attributes
 =item :is-symbolic-link - is path a symbolic link
 =item :is-world-executable - is path executable by any user
 =item :is-world-readable - is path readable by any user
@@ -151,10 +154,11 @@ whether they matched or not (if part of a context specification).
 =head3 6. Run the sequence(s)
 
 The final step is to take the C<Callable> of step 5 and run that
-repeatedly on the sequence of step 2, and for each item of that
-sequence, run the sequence of step 5 on that.  Make sure any
-phasers (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
-time in a thread-safe manner.
+repeatedly on the sequence of step 2.  Make sure any phasers
+(C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
+time in a thread-safe manner.  Inside the C<Callable> of step 5,
+the dynamic variable C<$*SOURCE> will be set to the source of
+the items being checked.
 
 Either produces a sequence in which the key is the source, and the
 value is a C<Slip> of C<Pair>s where the key is the item-number and
@@ -411,6 +415,18 @@ acceptable paths by the B<number of hard-links> of the path.  The C<Callable>
 is passed the number of hard-links of a path and is expected to return a
 trueish value to have the path be considered for further selection.
 
+=head4 :has-setgid
+
+Flag.  If specified, indicates paths that have the SETGID bit set in
+their attributes, are (not) acceptable for further selection.  Usually
+only makes sense when uses together with C<:find>.
+
+=head4 :has-setuid
+
+Flag.  If specified, indicates paths that have the SETUID bit set in
+their attributes, are (not) acceptable for further selection.  Usually
+only makes sense when uses together with C<:find>.
+
 =head4 :inode(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
@@ -479,6 +495,12 @@ are (not) acceptable for further selection.
 
 Flag.  If specified, indicates paths, that are B<writable> by the owner,
 are (not) acceptable for further selection.
+
+=head4 :is-sticky
+
+Flag.  If specified, indicates paths that have the STICKY bit set in
+their attributes, are (not) acceptable for further selection.  Usually
+only makes sense when uses together with C<:find>.
 
 =head4 :is-symbolic-link
 

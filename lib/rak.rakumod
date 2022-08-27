@@ -2,7 +2,7 @@
 use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.7>:auth<zef:lizmat>;
+use path-utils:ver<0.0.8>:auth<zef:lizmat>;
 use Trap:ver<0.0.1>:auth<zef:lizmat>;
 
 # The classes for matching and not-matching items (that have been added
@@ -172,6 +172,25 @@ my sub make-property-filter($seq is copy, %_) {
           (%_<is-executable>:delete)
             ?? -> $path { path-is-executable($path) ?? $path !! Empty }
             !! -> $path { path-is-executable($path) ?? Empty !! $path }
+    }
+
+    if %_<has-setuid>:exists {
+        $seq = $seq.map:
+          (%_<has-setuid>:delete)
+            ?? -> $path { path-has-setuid($path) ?? $path !! Empty }
+            !! -> $path { path-has-setuid($path) ?? Empty !! $path }
+    }
+    if %_<has-setgid>:exists {
+        $seq = $seq.map:
+          (%_<has-setgid>:delete)
+            ?? -> $path { path-has-setgid($path) ?? $path !! Empty }
+            !! -> $path { path-has-setgid($path) ?? Empty !! $path }
+    }
+    if %_<is-sticky>:exists {
+        $seq = $seq.map:
+          (%_<is-sticky>:delete)
+            ?? -> $path { path-is-sticky($path) ?? $path !! Empty }
+            !! -> $path { path-is-sticky($path) ?? Empty !! $path }
     }
 
     if %_<is-owner-readable>:exists {
@@ -1079,16 +1098,16 @@ multi sub rak(&pattern, %n) {
     # A mapper was specified
     my $result-seq := do if &mapper {
         my $lock := Lock.new;
-        $sources-seq.map: -> $source {
+        $sources-seq.map: -> $*SOURCE {
             ++⚛$nr-sources;
-            producer($source).map(runner).iterator.push-all(
+            producer($*SOURCE).map(runner).iterator.push-all(
               my $buffer := IterationBuffer.new
             );
 
             if $map-all || $buffer.elems {
                 # thread-safely run mapper and associated phasers
                 $lock.protect: {
-                    my \result := mapper($source, $buffer.List);
+                    my \result := mapper($*SOURCE, $buffer.List);
                     next-phaser()        if &next-phaser;
                     next-mapper-phaser() if &next-mapper-phaser;
                     result
@@ -1100,21 +1119,21 @@ multi sub rak(&pattern, %n) {
     # Only want sources
     elsif $sources-only {
         my $lock := Lock.new if &next-phaser;
-        $sources-seq.map: -> $source {
+        $sources-seq.map: -> $*SOURCE {
             ++⚛$nr-sources;
-            my \result := producer($source).map(runner).iterator.pull-one;
+            my \result := producer($*SOURCE).map(runner).iterator.pull-one;
             $lock.protect(&next-phaser) if $lock;
-            $source unless result =:= IterationEnd
+            $*SOURCE unless result =:= IterationEnd
         }
     }
 
     # The matcher has a NEXT phaser
     elsif &next-phaser {
         my $lock := Lock.new;
-        $sources-seq.map: -> $source {
+        $sources-seq.map: -> $*SOURCE {
             ++⚛$nr-sources;
             my \result :=
-              Pair.new: $source, eagerSlip producer($source).map: runner;
+              Pair.new: $*SOURCE, eagerSlip producer($*SOURCE).map: runner;
             $lock.protect: &next-phaser;
             result
         }
@@ -1122,9 +1141,9 @@ multi sub rak(&pattern, %n) {
 
     # Nothing special to do for each source
     else {
-        $sources-seq.map: -> $source {
+        $sources-seq.map: -> $*SOURCE {
             ++⚛$nr-sources;
-            Pair.new: $source, eagerSlip producer($source).map: runner
+            Pair.new: $*SOURCE, eagerSlip producer($*SOURCE).map: runner
         }
     }
 

@@ -2,6 +2,14 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.16  2022-08-27T15:44:46+02:00
+    - Make sure $*SOURCE is set to indicate the current source of
+      items to check
+    - Bump dependency on "path-utils"
+    - Add support for :has-setgid
+    - Add support for :has-setuid
+    - Add support for :is-sticky
+
 0.0.15  2022-08-27T12:21:06+02:00
     - Clarification about the relation between PairContext and
       PairMatched
@@ -19,6 +27,7 @@ Revision history for rak
       So there's not really a concept of context at work here
     - Add support for :passthru-context, which will only produce
       all items *if* there is at least one match
+    - Bump dependency on "path-utils"
     - Add support for :is-owner-readable
     - Add support for :is-owner-writable
     - Add support for :is-owner-executable

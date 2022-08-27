@@ -74,6 +74,10 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :hard-links - number of hard-links to path on filesystem
 
+  * :has-setgid - has SETGID bit set in attributes
+
+  * :has-setuid - has SETUID bit set in attributes
+
   * :inode - inode of path on filesystem
 
   * :is-empty - is path empty (filesize == 0)
@@ -97,6 +101,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
   * :is-owner-writable - is path writable by owner
 
   * :is-readable - is path readable by current user
+
+  * :is-sticky - has STICKY bit set in attributes
 
   * :is-symbolic-link - is path a symbolic link
 
@@ -178,7 +184,7 @@ Matching items are represented by `PairMatched` objects, and items that have bee
 
 ### 6. Run the sequence(s)
 
-The final step is to take the `Callable` of step 5 and run that repeatedly on the sequence of step 2, and for each item of that sequence, run the sequence of step 5 on that. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner.
+The final step is to take the `Callable` of step 5 and run that repeatedly on the sequence of step 2. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. Inside the `Callable` of step 5, the dynamic variable `$*SOURCE` will be set to the source of the items being checked.
 
 Either produces a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the item-number and the value is item with the match, or whatever the pattern matcher returned.
 
@@ -364,6 +370,14 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of hard-links** of the path. The `Callable` is passed the number of hard-links of a path and is expected to return a trueish value to have the path be considered for further selection.
 
+#### :has-setgid
+
+Flag. If specified, indicates paths that have the SETGID bit set in their attributes, are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
+
+#### :has-setuid
+
+Flag. If specified, indicates paths that have the SETUID bit set in their attributes, are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
+
 #### :inode(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **inode** of the path. The `Callable` is passed the inode of a path and is expected to return a trueish value to have the path be considered for further selection.
@@ -415,6 +429,10 @@ Flag. If specified, indicates paths, that are **readable** by the owner, are (no
 #### :is-owner-writable
 
 Flag. If specified, indicates paths, that are **writable** by the owner, are (not) acceptable for further selection.
+
+#### :is-sticky
+
+Flag. If specified, indicates paths that have the STICKY bit set in their attributes, are (not) acceptable for further selection. Usually only makes sense when uses together with `:find`.
 
 #### :is-symbolic-link
 
