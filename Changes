@@ -2,6 +2,12 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.15  2022-08-27T12:21:06+02:00
+    - Clarification about the relation between PairContext and
+      PairMatched
+    - Attempt to upload to fez again, as it appeared to have eaten the
+      previous release
+
 0.0.14  2022-08-27T00:15:28+02:00
     - Make PairMatched a subclass of PairContext, so that we can check
       on the PairContext type to see if it is a "normal" line number /

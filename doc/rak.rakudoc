@@ -144,7 +144,9 @@ Related named arguments are (in alphabetical order):
 
 Matching items are represented by C<PairMatched> objects, and items that
 have been added because of the above context arguments, are represented by
-C<PairContext> objects.
+C<PairContext> objects.  Unless C<:omit-item-number> has been specified
+with a trueish value, in which case items will always be just a string,
+whether they matched or not (if part of a context specification).
 
 =head3 6. Run the sequence(s)
 
@@ -202,16 +204,17 @@ thrown).  If the C<Map> is not empty, it contains the following keys:
 
 Any C<Exception> object that was caught.
 
-=head2 PairMatched
-
-A subclass of C<Pair> of which the C<matched> method returns C<True>.
-Used for matching items when item-numbers are required to be returned.
-
 =head2 PairContext
 
 A subclass of C<Pair> of which the C<matched> method returns C<False>.
 Used for non-matching items when item-numbers are required to be
 returned and a certain item context was requested.
+
+=head2 PairMatched
+
+A subclass of C<PairContext> of which the C<matched> method returns
+C<True>.  Used for matching items when item-numbers are required to
+be returned.
 
 =head1 EXPORTED SUBROUTINES
 

@@ -174,7 +174,7 @@ Related named arguments are (in alphabetical order):
 
   * :passthru - pass on *all* items always
 
-Matching items are represented by `PairMatched` objects, and items that have been added because of the above context arguments, are represented by `PairContext` objects.
+Matching items are represented by `PairMatched` objects, and items that have been added because of the above context arguments, are represented by `PairContext` objects. Unless `:omit-item-number` has been specified with a trueish value, in which case items will always be just a string, whether they matched or not (if part of a context specification).
 
 ### 6. Run the sequence(s)
 
@@ -230,15 +230,15 @@ A `Map` with any statistics collected (so far, in case an exception was thrown).
 
 Any `Exception` object that was caught.
 
-PairMatched
------------
-
-A subclass of `Pair` of which the `matched` method returns `True`. Used for matching items when item-numbers are required to be returned.
-
 PairContext
 -----------
 
 A subclass of `Pair` of which the `matched` method returns `False`. Used for non-matching items when item-numbers are required to be returned and a certain item context was requested.
+
+PairMatched
+-----------
+
+A subclass of `PairContext` of which the `matched` method returns `True`. Used for matching items when item-numbers are required to be returned.
 
 EXPORTED SUBROUTINES
 ====================
