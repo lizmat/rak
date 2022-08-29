@@ -12,7 +12,10 @@ SYNOPSIS
 use rak;
 
 # look for "foo" in all .txt files from current directory
-for rak / foo /, :file(/ \.txt $/) -> (:key($path), :value(@found)) {
+my $rak = rak / foo /, :file(/ \.txt $/);
+
+# show results
+for $rak.result -> (:key($path), :value(@found)) {
     if @found {
         say "$path:";
         say .key ~ ':' ~ .value for @found;
