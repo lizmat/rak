@@ -2,6 +2,12 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.18  2022-08-30T00:08:33+02:00
+    - Fix synopsis in pod
+    - Assume :under-version-control if only searching current
+      directory *and* the directory looks like it is the top
+      directory of a git repository.
+
 0.0.17  2022-08-29T11:08:06+02:00
     - Add support for :sources-without-only
 

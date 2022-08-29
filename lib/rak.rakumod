@@ -862,6 +862,9 @@ multi sub rak(&pattern, %n) {
         elsif %n<under-version-control>:delete -> $uvc {
             uvc-paths($uvc)
         }
+        elsif path-is-git-repo(".") {
+            uvc-paths("git")
+        }
         else {
             paths ".", |paths-arguments(%n)
         }
