@@ -872,6 +872,7 @@ multi sub rak(&pattern, %n) {
 
     # Some flags that we need
     my $sources-only;
+    my $sources-without-only;
     my $unique;
     my $frequencies;
     my $item-number;
@@ -879,6 +880,11 @@ multi sub rak(&pattern, %n) {
 
     if %n<sources-only>:delete {
         $sources-only := True;
+        $item-number  := False;
+        $max-matches-per-source := 1;
+    }
+    elsif %n<sources-without-only>:delete {
+        $sources-without-only := $sources-only := True;
         $item-number  := False;
         $max-matches-per-source := 1;
     }
@@ -1123,7 +1129,12 @@ multi sub rak(&pattern, %n) {
             ++⚛$nr-sources;
             my \result := producer($*SOURCE).map(runner).iterator.pull-one;
             $lock.protect(&next-phaser) if $lock;
-            $*SOURCE unless result =:= IterationEnd
+            if $sources-without-only {
+                $*SOURCE if result =:= IterationEnd
+            }
+            else {
+                $*SOURCE unless result =:= IterationEnd
+            }
         }
     }
 

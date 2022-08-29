@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.17  2022-08-29T11:08:06+02:00
+    - Add support for :sources-without-only
+
 0.0.16  2022-08-27T15:44:46+02:00
     - Make sure $*SOURCE is set to indicate the current source of
       items to check

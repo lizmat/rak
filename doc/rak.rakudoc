@@ -173,6 +173,7 @@ Related named arguments are (in alphabetical order):
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
 =item :sources-only - only produce the source of any match
+=item :sources-without-only - produce the source without any match
 =item :frequencies - produce items and their frequencies
 =item :unique - only produce unique items
 
@@ -621,6 +622,7 @@ on a given source, with the C<:encoding> and C<:with-line-ending>
 arguments.
 
 =head4 :produce-one(&producer)
+
 If specified, indicates a C<Callable> that will be called given
 a source, and is expected to produce one items to be inspected.
 
@@ -659,6 +661,12 @@ they cannot be just strings.
 
 Flag.  If specified with a trueish value, will only produce the
 source of a match once per source.  Defaults to C<False>.
+
+=head4 :sources-without-only
+
+Flag.  If specified with a trueish value, will only produce the
+source of a match if there is B<not> a single match.  Defaults
+to C<False>.
 
 =head4 :stats
 

@@ -198,6 +198,8 @@ Related named arguments are (in alphabetical order):
 
   * :sources-only - only produce the source of any match
 
+  * :sources-without-only - produce the source without any match
+
   * :frequencies - produce items and their frequencies
 
   * :unique - only produce unique items
@@ -510,7 +512,9 @@ If a single hyphen is specified as the path, then STDIN will be assumed as the s
 
 If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
 
-#### :produce-one(&producer) If specified, indicates a `Callable` that will be called given a source, and is expected to produce one items to be inspected.
+#### :produce-one(&producer)
+
+If specified, indicates a `Callable` that will be called given a source, and is expected to produce one items to be inspected.
 
 #### :recurse-symlinked-dir
 
@@ -535,6 +539,10 @@ If specified, indicates a list of objects that should be used as a source for th
 #### :sources-only
 
 Flag. If specified with a trueish value, will only produce the source of a match once per source. Defaults to `False`.
+
+#### :sources-without-only
+
+Flag. If specified with a trueish value, will only produce the source of a match if there is **not** a single match. Defaults to `False`.
 
 #### :stats
 
