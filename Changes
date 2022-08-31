@@ -2,6 +2,12 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.19  2022-08-31T12:10:51+02:00
+    - Remove :file / :dir specification if default :under-version-control
+      is active
+    - Remove unused dependency on "has-word", that lives in App::Rak now
+    - Ignore git submodules for now when --under-version-control is active
+
 0.0.18  2022-08-30T00:08:33+02:00
     - Fix synopsis in pod
     - Assume :under-version-control if only searching current

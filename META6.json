@@ -6,7 +6,6 @@
   "build-depends": [
   ],
   "depends": [
-    "has-word:ver<0.0.3>:auth<zef:lizmat>",
     "hyperize:ver<0.0.2>:auth<zef:lizmat>",
     "paths:ver<10.0.7>:auth<zef:lizmat>",
     "path-utils:ver<0.0.8>:auth<zef:lizmat>",
@@ -29,5 +28,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.18"
+  "version": "0.0.19"
 }

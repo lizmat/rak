@@ -1,5 +1,4 @@
 # The modules that we need here, with their full identities
-use has-word:ver<0.0.3>:auth<zef:lizmat>;
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;
 use paths:ver<10.0.7>:auth<zef:lizmat>;
 use path-utils:ver<0.0.8>:auth<zef:lizmat>;
@@ -53,9 +52,10 @@ my sub paths-arguments(%_) {
 # Obtain paths for given revision control system and specs
 my sub uvc-paths($uvc, *@specs) {
     if $uvc<> =:= True || $uvc eq 'git' {
-        my $proc := run <git ls-files>, @specs, :out, :err;
-        $proc.err.slurp(:close);
-        $proc.out.lines(:close).Slip
+        my $proc := run <git ls-files>, @specs.Slip, :out;
+        $proc.out.lines(:close).map({
+            $_ unless path-is-directory($_)
+        }).Slip
     }
     else {
         die "Don't know how to select files for '$uvc'";
@@ -863,6 +863,7 @@ multi sub rak(&pattern, %n) {
             uvc-paths($uvc)
         }
         elsif path-is-git-repo(".") {
+            %n<file dir>:delete;
             uvc-paths("git")
         }
         else {
