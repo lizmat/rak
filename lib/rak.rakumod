@@ -54,7 +54,11 @@ my sub uvc-paths($uvc, *@specs) {
     if $uvc<> =:= True || $uvc eq 'git' {
         my $proc := run <git ls-files>, @specs.Slip, :out;
         $proc.out.lines(:close).map({
-            $_ unless path-is-directory($_)
+            path-is-directory($_)
+              ?? path-is-github-repo($_)
+                ?? uvc-paths($uvc, $_)
+                !! Empty
+              !! $_
         }).Slip
     }
     else {
@@ -316,7 +320,7 @@ my sub make-matcher(&pattern, %_) {
         }
         else {
             -> $haystack {
-                CONTROL { .resume if CX::Warns.ACCEPTS($) }
+                CONTROL { .resume if CX::Warn.ACCEPTS($_) }
                 matcher($haystack)
             }
         }
@@ -867,18 +871,14 @@ multi sub rak(&pattern, %n) {
                   $paths.map(*.subst(/^ '~' '/'? /, $home)),
                   $degree,
                   %n
-                )
+                ).&hyperize($batch, $degree)
             }
         }
         elsif %n<under-version-control>:delete -> $uvc {
             uvc-paths($uvc)
         }
-        elsif path-is-git-repo(".") {
-            %n<file dir>:delete;
-            uvc-paths("git")
-        }
         else {
-            paths ".", |paths-arguments(%n)
+            paths(".", |paths-arguments(%n)).&hyperize($batch, $degree)
         }
 
         # Step 2. filtering on properties
