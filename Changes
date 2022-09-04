@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.20  2022-09-04T13:20:22+02:00
+    - Add support for :exec and :shell
+
 0.0.19  2022-08-31T12:10:51+02:00
     - Remove :file / :dir specification if default :under-version-control
       is active

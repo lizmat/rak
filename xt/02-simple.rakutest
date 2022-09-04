@@ -1,12 +1,14 @@
 use Test;
 use rak;
 
-plan 48;
+plan 50;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
 my %name2path = @targets.map: { $_ => $dir.add($_).absolute }
 my %path2name = %name2path.kv.reverse;
+my $append      := $dir.add("append");
+my $append-path := $append.absolute;
 
 $dir.mkdir;
 for @targets.kv -> $n, $name {
@@ -16,6 +18,7 @@ for @targets.kv -> $n, $name {
 }
 LEAVE {
     .IO.unlink for %name2path.values;
+    $append.unlink;
     $dir.rmdir
 }
 
@@ -295,5 +298,11 @@ is-deeply $rak.result,
   (:10zero, :9one, :8two, :7three, :6four,
    :5five, :4six, :3seven, :2eight, :1nine),
   'did frequencies produce ok';
+
+$rak := rak &defined, :paths($dir), :shell("echo \$_ >> $append-path"),
+  :find, :omit-item-number, :dont-catch;
+ok $rak.result.head.value>>.absolute (==) %path2name.keys,
+  'did a :shell with :find  with &defined pattern work out';
+ok $append.lines (==) %path2name.keys, 'did we get all paths';
 
 # vim: expandtab shiftwidth=3

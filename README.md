@@ -71,6 +71,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :device-number - device number on which path is located
 
+  * :exec - run program, include if successful
+
   * :filesize - size of the path in bytes
 
   * :gid - numeric gid of the path
@@ -122,6 +124,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
   * :mode - the mode of the path
 
   * :modified - when path was last modified
+
+  * :shell - run shell command, include if successful
 
   * :uid - numeric uid of path
 
@@ -339,13 +343,17 @@ If specified, indicates the `Callable` filter that should be used to select acce
 
 If specified, indicates the matcher that should be used to select acceptable directories with the `paths` utility. Defaults to `True` indicating **all** directories should be recursed into. Applicable for any situation where `paths` is used to create the list of files to check.
 
-#### dont-catch
+#### :dont-catch
 
 Flag. If specified with a trueish value, will **not** catch any error during processing, but will throw any error again. Defaults to `False`, making sure that errors **will** be caught.
 
 #### :encoding("utf8-c8")
 
 When specified with a string, indicates the name of the encoding to be used to produce items to check (typically by calling `lines` or `slurp`). Defaults to `utf8-c8`, the UTF-8 encoding that is permissive of encoding issues.
+
+#### :exec($invocation)
+
+If specified, indicates the name of a program and its arguments to be executed. Any `$_` in the invocation string will be replaced by the file being checked. The file will be included if the program runs to a successful conclusion.
 
 #### :file(&file-matcher)
 
@@ -530,6 +538,10 @@ Flag. If specified with a trueish value, will recurse into directories that did 
 #### :quietly
 
 Flag. If specified with a trueish value, will absorb any warnings that may occur when looking for the pattern.
+
+#### :shell($invocation)
+
+If specified, indicates the command(s) to be executed in a shell. Any `$_` in the invocation string will be replaced by the file being checked. The file will be included if the shell command(s) run to a successful conclusion.
 
 #### :silently("out,err")
 
