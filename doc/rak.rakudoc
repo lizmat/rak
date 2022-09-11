@@ -175,6 +175,7 @@ and/or with uniqueifying enabled.
 
 Related named arguments are (in alphabetical order):
 
+=item :eager - produce all results before creating Rak object
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
 =item :sources-only - only produce the source of any match
@@ -369,6 +370,12 @@ to check.
 Flag.  If specified with a trueish value, will B<not> catch any error
 during processing, but will throw any error again.  Defaults to C<False>,
 making sure that errors B<will> be caught.
+
+=head4 :eager
+
+Flag.  If specified with a trueish value, will B<always> produce B<all>
+results before returning the C<Rak> object.  Defaults to C<False>,
+making result production lazy if possible.
 
 =head4 :encoding("utf8-c8")
 

@@ -199,6 +199,8 @@ Or, produces sequence of whatever a specified mapper returned and/or with unique
 
 Related named arguments are (in alphabetical order):
 
+  * :eager - produce all results before creating Rak object
+
   * :mapper - code to map results of a single source
 
   * :map-all - also call mapper if a source has no matches
@@ -346,6 +348,10 @@ If specified, indicates the matcher that should be used to select acceptable dir
 #### :dont-catch
 
 Flag. If specified with a trueish value, will **not** catch any error during processing, but will throw any error again. Defaults to `False`, making sure that errors **will** be caught.
+
+#### :eager
+
+Flag. If specified with a trueish value, will **always** produce **all** results before returning the `Rak` object. Defaults to `False`, making result production lazy if possible.
 
 #### :encoding("utf8-c8")
 

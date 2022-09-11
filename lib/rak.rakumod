@@ -1191,7 +1191,8 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
-    if $frequencies
+    if %n<eager>:delete
+      || $frequencies
       || $stats-only
       || $stats
       || &last-mapper-phaser
