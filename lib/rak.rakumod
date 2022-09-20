@@ -1,8 +1,9 @@
 # The modules that we need here, with their full identities
-use hyperize:ver<0.0.2>:auth<zef:lizmat>;
-use paths:ver<10.0.7>:auth<zef:lizmat>;
-use path-utils:ver<0.0.8>:auth<zef:lizmat>;
-use Trap:ver<0.0.1>:auth<zef:lizmat>;
+use Git::Files:ver<0.0.2>:auth<zef:lizmat>;  # git-files
+use hyperize:ver<0.0.2>:auth<zef:lizmat>;    # hyperize raceize
+use paths:ver<10.0.7>:auth<zef:lizmat>;      # paths
+use path-utils:ver<0.0.9>:auth<zef:lizmat>;  # path-*
+use Trap:ver<0.0.1>:auth<zef:lizmat>;        # Trap
 
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
@@ -51,19 +52,9 @@ my sub paths-arguments(%_) {
 
 # Obtain paths for given revision control system and specs
 my sub uvc-paths($uvc, *@specs) {
-    if $uvc<> =:= True || $uvc eq 'git' {
-        my $proc := run <git ls-files>, @specs.Slip, :out;
-        $proc.out.lines(:close).map({
-            path-is-directory($_)
-              ?? path-is-github-repo($_)
-                ?? uvc-paths($uvc, $_)
-                !! Empty
-              !! $_
-        }).Slip
-    }
-    else {
-        die "Don't know how to select files for '$uvc'";
-    }
+    $uvc<> =:= True || $uvc eq 'git'
+      ?? git-files @specs
+      !! die "Don't know how to select files for '$uvc'";
 }
 
 # Convert a given seq producing paths to a seq producing files

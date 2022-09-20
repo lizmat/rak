@@ -2,6 +2,13 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.23  2022-09-20T13:38:57+02:00
+    - Fix issue with --under-version-control, to handle files that have
+      been removed (or 'git mv'ed), but which haven't been committed yet.
+    - Bump dependency on path-utils, because we can
+    - Add dependency on Git::Files: it handles --under-version-control
+      semantics more correctly than the local code did
+
 0.0.22  2022-09-11T22:45:09+02:00
     - Add :eager option for eager evalution
 
