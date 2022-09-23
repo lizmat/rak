@@ -904,6 +904,9 @@ multi sub rak(&pattern, %n) {
             $frequencies := True;
             $item-number := False;
         }
+        elsif %n<produce-one>:exists {
+            $item-number := False;
+        }
         else {
             $item-number := !(%n<omit-item-number>:delete);
         }
@@ -911,14 +914,12 @@ multi sub rak(&pattern, %n) {
 
     # Step 3: producer Callable
     my &producer := do if (%n<produce-one>:delete) -> $produce-one {
-        $item-number
-          ?? -> $source {
-                 (PairContext.new(Nil, $produce-one($source)),)
-             }
-          # no item numbers produced
-          !! -> $source {
-                 ($produce-one($source),)
-             }
+          # no item numbers produced ever
+          -> $source {
+              (my $producer := $produce-one($source)) =:= Nil
+                ?? ()
+                !! ($producer,)
+          }
     }
     elsif (%n<produce-many>:delete)<> -> $produce-many {
         $item-number
@@ -942,11 +943,13 @@ multi sub rak(&pattern, %n) {
     else {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
-            my $seq := $source.lines(:$chomp, :$enc);
-            my int $line-number;
-            $item-number
-              ?? $seq.map: { PairContext.new: ++$line-number, $_ }
-              !! $seq
+            if $source.r {  # source exists and is readable
+                my $seq := $source.lines(:$chomp, :$enc);
+                my int $line-number;
+                $item-number
+                  ?? $seq.map: { PairContext.new: ++$line-number, $_ }
+                  !! $seq
+            }
         }
     }
 
@@ -1044,8 +1047,9 @@ multi sub rak(&pattern, %n) {
                    $item-number, $context, $context, $max }
         }
         elsif %n<before-context>:delete -> $before {
+            my $after := %n<after-context>:delete;
             -> { make-numeric-context-runner &matcher,
-                   $item-number, $before, %n<after-context>:delete, $max }
+                   $item-number, $before, $after, $max }
         }
         elsif %n<after-context>:delete -> $after {
             -> { make-numeric-context-runner &matcher,
@@ -1065,8 +1069,9 @@ multi sub rak(&pattern, %n) {
                $item-number, $context, $context }
     }
     elsif %n<before-context>:delete -> $before {
+        my $after := %n<after-context>:delete;
         -> { make-numeric-context-runner &matcher,
-               $item-number, $before, %n<after-context>:delete }
+               $item-number, $before, $after }
     }
     elsif %n<after-context>:delete -> $after {
         -> { make-numeric-context-runner &matcher,
@@ -1094,7 +1099,7 @@ multi sub rak(&pattern, %n) {
     my $map-all;
     my &next-mapper-phaser;
     my &last-mapper-phaser;
-    if !$stats-only && !$sources-only && (%n<mapper>:exists) {
+    if !$stats-only && (%n<mapper>:exists) {
         $map-all := %n<map-all>:delete;
         &mapper   = %n<mapper>:delete;
         if &mapper.has-loop-phasers {
@@ -1110,22 +1115,50 @@ multi sub rak(&pattern, %n) {
     # A mapper was specified
     my $result-seq := do if &mapper {
         my $lock := Lock.new;
-        $sources-seq.map: -> $*SOURCE {
-            ++⚛$nr-sources;
-            producer($*SOURCE).map(runner).iterator.push-all(
-              my $buffer := IterationBuffer.new
-            );
+        $sources-seq.map: $sources-without-only
+          ?? -> $*SOURCE {
+                 ++⚛$nr-sources;
+                 if producer($*SOURCE).map(runner).iterator.pull-one
+                   =:= IterationEnd {
+                     # thread-safely run mapper and associated phasers
+                     $lock.protect: {
+                         my \result := mapper($*SOURCE);
+                         next-phaser()        if &next-phaser;
+                         next-mapper-phaser() if &next-mapper-phaser;
+                         result
+                     }
+                 }
+             }
+          !! $sources-only
+            ?? -> $*SOURCE {
+                   ++⚛$nr-sources;
+                   unless producer($*SOURCE).map(runner).iterator.pull-one
+                     =:= IterationEnd {
+                       # thread-safely run mapper and associated phasers
+                       $lock.protect: {
+                           my \result := mapper($*SOURCE);
+                           next-phaser()        if &next-phaser;
+                           next-mapper-phaser() if &next-mapper-phaser;
+                           result
+                       }
+                   }
+               }
+            !! -> $*SOURCE {
+                   ++⚛$nr-sources;
+                   producer($*SOURCE).map(runner).iterator.push-all(
+                     my $buffer := IterationBuffer.new
+                   );
 
-            if $map-all || $buffer.elems {
-                # thread-safely run mapper and associated phasers
-                $lock.protect: {
-                    my \result := mapper($*SOURCE, $buffer.List);
-                    next-phaser()        if &next-phaser;
-                    next-mapper-phaser() if &next-mapper-phaser;
-                    result
-                }
-            }
-        }
+                   if $map-all || $buffer.elems {
+                       # thread-safely run mapper and associated phasers
+                       $lock.protect: {
+                           my \result := mapper($*SOURCE, $buffer.List);
+                           next-phaser()        if &next-phaser;
+                           next-mapper-phaser() if &next-mapper-phaser;
+                           result
+                       }
+                   }
+               }
     }
 
     # Only want sources

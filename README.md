@@ -529,9 +529,13 @@ If a single hyphen is specified as the path, then STDIN will be assumed as the s
 
 If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
 
+The `Callable` should return `Empty` if for some reason nothing could be produced.
+
 #### :produce-one(&producer)
 
 If specified, indicates a `Callable` that will be called given a source, and is expected to produce one items to be inspected.
+
+The `Callable` should return `Nil` if for some reason nothing could be produced).
 
 #### :recurse-symlinked-dir
 

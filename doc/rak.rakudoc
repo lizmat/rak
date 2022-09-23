@@ -643,10 +643,16 @@ inspected.  Defaults to a producer that calles the C<lines> method
 on a given source, with the C<:encoding> and C<:with-line-ending>
 arguments.
 
+The C<Callable> should return C<Empty> if for some reason nothing
+could be produced.
+
 =head4 :produce-one(&producer)
 
 If specified, indicates a C<Callable> that will be called given
 a source, and is expected to produce one items to be inspected.
+
+The C<Callable> should return C<Nil> if for some reason nothing
+could be produced).
 
 =head4 :recurse-symlinked-dir
 
