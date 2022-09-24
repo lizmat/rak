@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.25  2022-09-24T16:46:02+02:00
+    - Fix issue with path "-" and reading from STDIN if $*IN.t
+    - Fix issue with checking for readability when reading from STDIN
+
 0.0.24  2022-09-23T18:08:09+02:00
     - Add support for :mapper if :sources-only or :sources-without-only
       has been specified

@@ -844,6 +844,11 @@ multi sub rak(&pattern, %n) {
     elsif !($*IN.t) {
         $*IN
     }
+    elsif %n<paths>:exists && %n<paths> eq '-' {
+        %n<paths>:delete;
+        warn-if-human-on-stdin;
+        $*IN
+    }
     else {
         my $seq := do if %n<files-from>:delete -> $files-from {
             paths-from-file($files-from)
@@ -852,18 +857,12 @@ multi sub rak(&pattern, %n) {
             paths-to-files(paths-from-file($paths-from), $degree, %n)
         }
         elsif %n<paths>:delete -> $paths {
-            if $paths eq '-' {
-                warn-if-human-on-stdin;
-                $*IN
-            }
-            else {
-                my $home := $*HOME.absolute ~ '/';
-                paths-to-files(
-                  $paths.map(*.subst(/^ '~' '/'? /, $home)),
-                  $degree,
-                  %n
-                ).&hyperize($batch, $degree)
-            }
+            my $home := $*HOME.absolute ~ '/';
+            paths-to-files(
+              $paths.map(*.subst(/^ '~' '/'? /, $home)),
+              $degree,
+              %n
+            ).&hyperize($batch, $degree)
         }
         elsif %n<under-version-control>:delete -> $uvc {
             uvc-paths($uvc)
@@ -943,7 +942,8 @@ multi sub rak(&pattern, %n) {
     else {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
-            if $source.r {  # source exists and is readable
+            # source exists and is readable
+            if !IO::Path.ACCEPTS($source) || $source.r {
                 my $seq := $source.lines(:$chomp, :$enc);
                 my int $line-number;
                 $item-number
