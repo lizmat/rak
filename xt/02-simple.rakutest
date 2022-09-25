@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 50;
+plan 51;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -27,6 +27,7 @@ my \l0 = PairMatched.new:  1, "zero";
 my \L0 = PairMatched.new:  1, "ZERO";
 my \l1 = PairMatched.new:  2, "one";
 my \l2 = PairMatched.new:  3, "two";
+my \o2 = PairMatched.new:  3, "two" => "tvo";
 my \L2 = PairMatched.new:  3, "TWO";
 my \l3 = PairMatched.new:  4, "three";
 my \l4 = PairMatched.new:  5, "four";
@@ -209,6 +210,17 @@ lookup '/ t /', :paths($dir), :max-matches-per-source(2), :context(1),
   "seven" => (c1,l2,l3,c4),
   "eight" => (c1,l2,l3,c4),
   "nine"  => (c1,l2,l3,c4),
+;
+
+lookup '*.subst("w","v",:g)', :paths($dir), :old-new,
+  "two"   => (o2,),
+  "three" => (o2,),
+  "four"  => (o2,),
+  "five"  => (o2,),
+  "six"   => (o2,),
+  "seven" => (o2,),
+  "eight" => (o2,),
+  "nine"  => (o2,),
 ;
 
 my %b is BagHash;

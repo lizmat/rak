@@ -126,6 +126,7 @@ do the actual matching with the items produced in step 3.
 Related named arguments are (in alphabetical order):
 
 =item :invert-match - invert the logic of matching
+=item :old-new - produce pairs of old/new state
 =item :quietly - absorb any warnings produced by the matcher
 =item :silently - absorb any output done by the matcher
 =item :stats - produce results and statistics
@@ -594,6 +595,14 @@ acceptable paths by the B<modification> time of the path.  The C<Callable> is
 passed a C<Num> value of the modification time (number of seconds since epoch)
 and is expected to return a trueish value to have the path be considered
 for further selection.
+
+=head4 :old-new
+
+Flag. If specified with a trueish value, will produce C<Pair>s of the
+current value being investigated, and whatever was returned by the C<Callable>
+pattern for that value (if what was returned was B<not> a C<Bool>, C<Empty>
+or C<Nil>) B<if> that value was different from the original value.  Defaults
+to C<False>, meaning to just produce according to what was returned.
 
 =head4 :omit-item-number
 

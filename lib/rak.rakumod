@@ -965,6 +965,17 @@ multi sub rak(&pattern, %n) {
            %n
          );
 
+    # Want to have pair of old/new
+    if %n<old-new>:delete {
+        my &old-matcher = &matcher;
+        &matcher = -> $old {
+            my $new := old-matcher($old);
+            unless Bool.ACCEPTS($new) || $new =:= Empty || $new =:= Nil {
+                Pair.new($old, $new) unless $new eqv $old;
+            }
+        }
+    }
+
     # Stats keeping stuff
     my $stats;
     my $stats-only;

@@ -159,6 +159,8 @@ Related named arguments are (in alphabetical order):
 
   * :invert-match - invert the logic of matching
 
+  * :old-new - produce pairs of old/new state
+
   * :quietly - absorb any warnings produced by the matcher
 
   * :silently - absorb any output done by the matcher
@@ -498,6 +500,10 @@ If specified, indicates the `Callable` filter that should be used to select acce
 #### :modified(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **modification** time of the path. The `Callable` is passed a `Num` value of the modification time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
+
+#### :old-new
+
+Flag. If specified with a trueish value, will produce `Pair`s of the current value being investigated, and whatever was returned by the `Callable` pattern for that value (if what was returned was **not** a `Bool`, `Empty` or `Nil`) **if** that value was different from the original value. Defaults to `False`, meaning to just produce according to what was returned.
 
 #### :omit-item-number
 

@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.26  2022-09-25T21:51:39+02:00
+    - Add support for :old-new
+
 0.0.25  2022-09-24T16:46:02+02:00
     - Fix issue with path "-" and reading from STDIN if $*IN.t
     - Fix issue with checking for readability when reading from STDIN
