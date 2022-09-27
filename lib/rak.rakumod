@@ -1,9 +1,9 @@
 # The modules that we need here, with their full identities
-use Git::Files:ver<0.0.3>:auth<zef:lizmat>;  # git-files
-use hyperize:ver<0.0.2>:auth<zef:lizmat>;    # hyperize raceize
-use paths:ver<10.0.7>:auth<zef:lizmat>;      # paths
-use path-utils:ver<0.0.9>:auth<zef:lizmat>;  # path-*
-use Trap:ver<0.0.1>:auth<zef:lizmat>;        # Trap
+use Git::Files:ver<0.0.3>:auth<zef:lizmat>;   # git-files
+use hyperize:ver<0.0.2>:auth<zef:lizmat>;     # hyperize raceize
+use paths:ver<10.0.7>:auth<zef:lizmat>;       # paths
+use path-utils:ver<0.0.10>:auth<zef:lizmat>;  # path-*
+use Trap:ver<0.0.1>:auth<zef:lizmat>;         # Trap
 
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
