@@ -604,7 +604,7 @@ Flag. If specified, indicates line endings are to be kept when producing items t
 PATTERN RETURN VALUES
 ---------------------
 
-The return value of the pattern `Callable` match is interpreted in the following ways:
+The return value of the pattern `Callable` match is interpreted in the following way:
 
 ### True
 

@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.27  2022-09-27T21:04:28+02:00
+    - Bump dependency of Git::Files to fix deadlock on large repos
+    - Bump dependency of path-utils for Windows fixes
+
 0.0.26  2022-09-25T21:51:39+02:00
     - Add support for :old-new
 

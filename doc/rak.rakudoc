@@ -758,7 +758,7 @@ removed from items to check.  Only applicable with line-based checking.
 =head2 PATTERN RETURN VALUES
 
 The return value of the pattern C<Callable> match is interpreted in the
-following ways:
+following way:
 
 =head3 True
 
