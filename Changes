@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.29  2022-09-29T01:20:05+02:00
+    - Make sure that not specifying :dir or :file will actually use
+      the defaults that "paths" assume for :dir and :file
+
 0.0.28  2022-09-27T21:41:23+02:00
     - Fix version dependency snafu
 
