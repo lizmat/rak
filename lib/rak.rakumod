@@ -836,12 +836,13 @@ multi sub rak(&pattern, %n) {
     my $batch  := %n<batch>:delete;
     my $degree := %n<degree>:delete;
     my $enc    := %n<encoding>:delete // 'utf8-c8';
+    my $reading-from-stdin := !($*IN.t);
 
     # Step 1: sources sequence
     my $sources-seq = do if %n<sources>:delete -> $sources {
         $sources
     }
-    elsif !($*IN.t) {
+    elsif $reading-from-stdin {
         $*IN
     }
     elsif %n<paths>:exists && %n<paths> eq '-' {
@@ -1197,6 +1198,14 @@ multi sub rak(&pattern, %n) {
               Pair.new: $*SOURCE, eagerSlip producer($*SOURCE).map: runner;
             $lock.protect: &next-phaser;
             result
+        }
+    }
+
+    # reading from STDIN should not eagerize
+    elsif $reading-from-stdin {
+        $sources-seq.map: -> $*SOURCE {
+            ++⚛$nr-sources;
+            Pair.new: $*SOURCE, producer($*SOURCE).map: runner
         }
     }
 

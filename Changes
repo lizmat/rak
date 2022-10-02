@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.30  2022-10-02T17:49:27+02:00
+    - Make sure reading from STDIN does not eagerize to allow
+      tail -f sources to work
+
 0.0.29  2022-09-29T01:20:05+02:00
     - Make sure that not specifying :dir or :file will actually use
       the defaults that "paths" assume for :dir and :file
