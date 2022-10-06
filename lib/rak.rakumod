@@ -833,17 +833,18 @@ multi sub rak(&pattern, %n) {
     }
 
     # Some settings we always need
-    my $batch  := %n<batch>:delete;
-    my $degree := %n<degree>:delete;
-    my $enc    := %n<encoding>:delete // 'utf8-c8';
-    my $reading-from-stdin := !($*IN.t);
+    my $batch     := %n<batch>:delete;
+    my $degree    := %n<degree>:delete;
+    my $enc       := %n<encoding>:delete // 'utf8-c8';
+    my $eagerSlip := True;
 
     # Step 1: sources sequence
-    my $sources-seq = do if %n<sources>:delete -> $sources {
-        $sources
-    }
-    elsif $reading-from-stdin {
+    my $sources-seq = do if !($*IN.t) {
+        $eagerSlip := False;
         $*IN
+    }
+    elsif %n<sources>:delete -> $sources {
+        $sources
     }
     elsif %n<paths>:exists && %n<paths> eq '-' {
         %n<paths>:delete;
@@ -933,6 +934,7 @@ multi sub rak(&pattern, %n) {
           !! -> $source { $produce-many($source) }
     }
     elsif %n<find>:delete {
+        $eagerSlip := False;
         my $seq := $sources-seq<>;
         $sources-seq = ("<find>",);
         my int $line-number;
@@ -1201,19 +1203,19 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # reading from STDIN should not eagerize
-    elsif $reading-from-stdin {
-        $sources-seq.map: -> $*SOURCE {
-            ++⚛$nr-sources;
-            Pair.new: $*SOURCE, producer($*SOURCE).map: runner
-        }
-    }
-
-    # Nothing special to do for each source
-    else {
+    # Want each file to eager Slip its items
+    elsif $eagerSlip {
         $sources-seq.map: -> $*SOURCE {
             ++⚛$nr-sources;
             Pair.new: $*SOURCE, eagerSlip producer($*SOURCE).map: runner
+        }
+    }
+
+    # Each file (probably only one) will run over items lazily
+    else {
+        $sources-seq.map: -> $*SOURCE {
+            ++⚛$nr-sources;
+            Pair.new: $*SOURCE, producer($*SOURCE).map: runner
         }
     }
 

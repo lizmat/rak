@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.31  2022-10-06T14:33:17+02:00
+    - Make sure that :find doesn't eagerize either
+
 0.0.30  2022-10-02T17:49:27+02:00
     - Make sure reading from STDIN does not eagerize to allow
       tail -f sources to work
