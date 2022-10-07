@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.32  2022-10-07T12:44:51+02:00
+    - Support URLs as path/file specifications, needs 'curl'
+
 0.0.31  2022-10-06T14:33:17+02:00
     - Make sure that :find doesn't eagerize either
 

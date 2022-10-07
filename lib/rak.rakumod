@@ -37,8 +37,7 @@ my sub paths-from-file($from) {
     ($from eq '-'
       ?? $*IN.lines
       !! $from.subst(/^ '~' '/'? /, $home).IO.lines
-    ).map:
-      *.subst(/^ '~' '/'? /, $home)
+    ).map: *.subst(/^ '~' '/'? /, $home)
 }
 
 # Return a Map with named arguments for "paths"
@@ -57,6 +56,27 @@ my sub uvc-paths($uvc, *@specs) {
       !! die "Don't know how to select files for '$uvc'";
 }
 
+my @temp-files;
+END .unlink for @temp-files;
+
+# Check if argument looks like a URL, and if so, fetch it
+my sub fetch-if-url(Str:D $target) {
+    if $target.contains(/^ \w+ '://' /) {
+        my $proc := run 'curl', $target, :out, :err;
+        if $proc.out.slurp(:close) -> $contents {
+            my $io := $*TMPDIR.add('rak-' ~ $*PID ~ '-' ~ time);
+            $io.spurt($contents);
+            @temp-files.push: $io;
+            $proc.err.slurp(:close);
+            $io but $target
+        }
+        else {
+            $proc.err.slurp(:close);
+            Empty
+        }
+    }
+}
+
 # Convert a given seq producing paths to a seq producing files
 my sub paths-to-files($iterable, $degree, %_) {
     if %_<under-version-control>:delete -> $uvc {
@@ -65,9 +85,11 @@ my sub paths-to-files($iterable, $degree, %_) {
     else {
         my %paths-arguments := paths-arguments(%_);
         $iterable.&hyperize(1, $degree).map: {
-            is-regular-file($_)
-              ?? $_
-              !! paths($_, |%paths-arguments).Slip
+            path-exists($_)
+              ?? path-is-regular-file($_)
+                ?? $_
+                !! paths($_, |%paths-arguments).Slip
+              !! fetch-if-url($_)
         }
     }
 }
@@ -853,7 +875,9 @@ multi sub rak(&pattern, %n) {
     }
     else {
         my $seq := do if %n<files-from>:delete -> $files-from {
-            paths-from-file($files-from)
+            paths-from-file($files-from).map: {
+                path-exists($_) ?? $_ !! fetch-if-url($_)
+            }
         }
         elsif %n<paths-from>:delete -> $paths-from {
             paths-to-files(paths-from-file($paths-from), $degree, %n)
