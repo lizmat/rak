@@ -274,6 +274,14 @@ my sub make-property-filter($seq is copy, %_) {
             !! -> $path { path-is-world-executable($path) ?? Empty !! $path }
     }
 
+    if %_<accept>:delete -> &code {
+        $seq = $seq.map: -> $path { code($path.IO) ?? $path !! Empty }
+    }
+
+    if %_<deny>:delete -> &code {
+        $seq = $seq.map: -> $path { code($path.IO) ?? Empty !! $path }
+    }
+
     if %_<exec>:delete -> $command {
         $seq = $seq.map: -> $path {
             run($command.subst('$_', $path, :g)) ?? $path !! Empty

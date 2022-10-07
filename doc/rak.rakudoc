@@ -61,9 +61,11 @@ Filter down the list of sources from step 1 on any additional filesystem
 related properties.  This assumes that the list of objects created are
 strings of absolute paths to be checked.
 
+=item :accept - given IO, is path acceptable
 =item :accessed - when was path last accessed
 =item :blocks- number of filesystem blocks
 =item :created - when was path created
+=item :deny - given IO, is path NOT acceptable
 =item :device-number - device number on which path is located
 =item :exec - run program, include if successful
 =item :filesize - size of the path in bytes
@@ -299,6 +301,12 @@ rak(...)
 The following named arguments can be specified (in alphabetical
 order):
 
+=head4 :accept(&filter)
+
+If specified, indicates a C<Callable> filter that will be given an
+C<IO::Path> of the path.  It should return C<True> if the path is
+acceptable.
+
 =head4 :accessed(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select
@@ -349,6 +357,12 @@ for further selection.
 When hypering over multiple cores, indicate the maximum number of
 threads that should be used.  Defaults to whatever the system
 thinks is best (which B<may> be sub-optimal).
+
+=head4 :deny(&filter)
+
+If specified, indicates a C<Callable> filter that will be given an
+C<IO::Path> of the path.  It should return C<True> if the path is
+B<NOT> acceptable.
 
 =head4 :device-number(&filter)
 

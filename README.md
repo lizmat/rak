@@ -63,11 +63,15 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked.
 
+  * :accept - given IO, is path acceptable
+
   * :accessed - when was path last accessed
 
   * :blocks- number of filesystem blocks
 
   * :created - when was path created
+
+  * :deny - given IO, is path NOT acceptable
 
   * :device-number - device number on which path is located
 
@@ -307,6 +311,10 @@ In a graph:
 
 The following named arguments can be specified (in alphabetical order):
 
+#### :accept(&filter)
+
+If specified, indicates a `Callable` filter that will be given an `IO::Path` of the path. It should return `True` if the path is acceptable.
+
 #### :accessed(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **access** time of the path. The `Callable` is passed a `Num` value of the access time (number of seconds since epoch) and is expected to return a trueish value to have the path be considered for further selection.
@@ -338,6 +346,10 @@ If specified, indicates the `Callable` filter that should be used to select acce
 #### :degree(N)
 
 When hypering over multiple cores, indicate the maximum number of threads that should be used. Defaults to whatever the system thinks is best (which **may** be sub-optimal).
+
+#### :deny(&filter)
+
+If specified, indicates a `Callable` filter that will be given an `IO::Path` of the path. It should return `True` if the path is **NOT** acceptable.
 
 #### :device-number(&filter)
 

@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 51;
+plan 53;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -221,6 +221,14 @@ lookup '*.subst("w","v",:g)', :paths($dir), :old-new,
   "seven" => (o2,),
   "eight" => (o2,),
   "nine"  => (o2,),
+;
+
+lookup "eight", :accept(*.slurp.contains("nine")), :paths($dir),
+  "nine" => (l8,)
+;
+
+lookup "eight", :deny(*.slurp.contains("nine")), :paths($dir),
+  "eight" => (l8,)
 ;
 
 my %b is BagHash;

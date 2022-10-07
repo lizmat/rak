@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.33  2022-10-07T23:16:07+02:00
+    - Add support for --accept and --deny
+
 0.0.32  2022-10-07T12:44:51+02:00
     - Support URLs as path/file specifications, needs 'curl'
 
