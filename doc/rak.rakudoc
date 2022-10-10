@@ -102,7 +102,7 @@ sequence of objects.
 
 =head3 3. Produce items to search in (apply transformers)
 
-The second step is to create the logic for creating items to
+The third step is to create the logic for creating items to
 search in from the objects in step 2.  If search is to be done
 per object, then C<.slurp> is called on the object.  Otherwise
 C<.lines> is called on the object.  Unless one provides their
@@ -162,7 +162,7 @@ whether they matched or not (if part of a context specification).
 =head3 6. Run the sequence(s)
 
 The final step is to take the C<Callable> of step 5 and run that
-repeatedly on the sequence of step 2.  Make sure any phasers
+repeatedly on the sequence of step 3.  Make sure any phasers
 (C<FIRST>, C<NEXT> and C<LAST>) are called at the appropriate
 time in a thread-safe manner.  Inside the C<Callable> of step 5,
 the dynamic variable C<$*SOURCE> will be set to the source of
