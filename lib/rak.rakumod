@@ -910,10 +910,13 @@ multi sub rak(&pattern, %n) {
     }
 
     # Some flags that we need
+    my $eager := %n<eager>:delete;
     my $sources-only;
     my $sources-without-only;
     my $unique;
     my $frequencies;
+    my $classify;
+    my $categorize;
     my $item-number;
     my $max-matches-per-source;
 
@@ -930,11 +933,21 @@ multi sub rak(&pattern, %n) {
     else {
         $max-matches-per-source := %n<max-matches-per-source>:delete;
         if %n<unique>:delete {
-            $unique      := True;
+            $unique      := $eager := True;
             $item-number := False;
         }
         elsif %n<frequencies>:delete {
-            $frequencies := True;
+            $frequencies := $eager := True;
+            $item-number := False;
+        }
+        elsif %n<classify>:delete -> &classifier {
+            $classify    := &classifier;
+            $eager       := True;
+            $item-number := False;
+        }
+        elsif %n<categorize>:delete -> &categorizer {
+            $categorize  := &categorizer;
+            $eager       := True;
             $item-number := False;
         }
         elsif %n<produce-one>:exists {
@@ -1074,6 +1087,7 @@ multi sub rak(&pattern, %n) {
     # closure clone, the runner is actually a Callable returning the actual
     # runner code Callable.
     my &runner := do if $stats-only {
+        $eager := True;
         # simplest runner for just counting
         -> { make-runner &matcher, $item-number }
     }
@@ -1251,28 +1265,86 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # Only want unique matches if we're not only counting
-    if !$stats-only && $unique {
-        my %seen;
-        $result-seq := $result-seq.map: {
-            my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
-            if List.ACCEPTS($outer) {
-                $outer.map({
-                    my $inner := Pair.ACCEPTS($_) ?? .value !! $_;
-                    $inner unless %seen{$inner.WHICH}++
-                }).Slip
+    # If we're not only counting
+    unless $stats-only {
+        # Only want unique matches
+        if $unique {
+            my %seen;
+            $result-seq := $result-seq.map: {
+                my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
+                if List.ACCEPTS($outer) {
+                    $outer.map({
+                        my $inner := Pair.ACCEPTS($_) ?? .value !! $_;
+                        $inner unless %seen{$inner.WHICH}++
+                    }).Slip
+                }
+                else {
+                    $outer unless %seen{$outer.WHICH}++
+                }
             }
-            else {
-                $outer unless %seen{$outer.WHICH}++
+        }
+
+        # Want classification
+        elsif $classify -> &classifier {
+            my %classified{Any};
+            my sub store(\key, $value) {
+                (%classified{key} //
+                  (%classified{key} := IterationBuffer.new)
+                ).push: $value;
+            }
+
+            for $result-seq {
+                my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
+                if List.ACCEPTS($outer) {
+                    for $outer {
+                        my $value := Pair.ACCEPTS($_) ?? .value !! $_;
+                        store classifier($value), $value;
+                    }
+                }
+                else {
+                    store classifier($outer), $outer;
+                    my $key := classifier($outer);
+                    (%classified{$key} // (%classified{$key} := []))
+                      .push: $outer;
+                }
+            }
+            $result-seq := %classified.sort(-*.value.elems).map: {
+                Pair.new: .key, .value.List
+            }
+        }
+
+        # Want categorization
+        elsif $categorize -> &categorizer {
+            my %categorized{Any};
+            my sub store(\keys, $value) {
+                for keys -> $key {
+                    (%categorized{$key} //
+                      (%categorized{$key} := IterationBuffer.new)
+                    ).push: $value;
+                }
+            }
+
+            for $result-seq {
+                my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
+                if List.ACCEPTS($outer) {
+                    for $outer {
+                        my $value := Pair.ACCEPTS($_) ?? .value !! $_;
+                        store categorizer($value), $value;
+                    }
+                }
+                else {
+                    store categorizer($outer), $outer;
+                }
+            }
+            $result-seq := %categorized.sort(-*.value.elems).map: {
+                Pair.new: .key, .value.List
             }
         }
     }
 
     # Need to run all searches before returning
-    if %n<eager>:delete
-      || $frequencies
-      || $stats-only
-      || $stats
+    if $eager
+      || $stats    # XXX this should really be lazy
       || &last-mapper-phaser
       || &last-phaser {
         my $buffer := IterationBuffer.new;

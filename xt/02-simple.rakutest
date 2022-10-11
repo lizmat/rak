@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 53;
+plan 55;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -324,5 +324,31 @@ $rak := rak &defined, :paths($dir), :shell("echo \$_ >> $append-path"),
 ok $rak.result.head.value>>.absolute (==) %path2name.keys,
   'did a :shell with :find  with &defined pattern work out';
 ok $append.lines (==) %path2name.keys, 'did we get all paths';
+
+$rak := rak &defined, :paths(%name2path<eight nine>), :classify(*.substr(0,1));
+is-deeply Map.new($rak.result), Map.new((
+  :e<eight eight>,
+  :f<four five four five>,
+  :s<six seven six seven>,
+  :t<two three two three>,
+  :n(("nine",))
+  :o<one one>,
+  :z<zero zero>,
+)), 'classify on the first letter';
+
+$rak := rak &defined,
+  :paths(%name2path<eight nine>), :categorize(*.substr(0,2).comb);
+is-deeply Map.new($rak.result), Map.new((
+  :e<zero seven eight zero seven eight>,
+  :f<four five four five>,
+  :h<three three>,
+  :i<five six eight five six eight nine>,
+  :n<one one nine>,
+  :o<one four one four>,
+  :s<six seven six seven>,
+  :t<two three two three>,
+  :w<two two>,
+  :z<zero zero>,
+)), 'categorize on the first two letters';
 
 # vim: expandtab shiftwidth=3

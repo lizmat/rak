@@ -184,6 +184,8 @@ Related named arguments are (in alphabetical order):
 =item :sources-only - only produce the source of any match
 =item :sources-without-only - produce the source without any match
 =item :frequencies - produce items and their frequencies
+=item :classify - classify items according to a single key
+=item :categorize - classify items according to zero or more keys
 =item :unique - only produce unique items
 
 =head1 EXPORTED CLASSES
@@ -338,6 +340,21 @@ acceptable paths by the B<number of blocks> used by the path on the filesystem
 on which the path is located.  The C<Callable> is passed the number of blocks
 of a path and is expected to return a trueish value to have the path be
 considered for further selection.
+
+=head4 :categorize(&categorizer)
+
+If specified, indicates the C<Callable> that should return zero or more
+keys for a given item to have it categorized.  This effectively replaces
+the source if an item by any of its key in the result.  The result will
+contain the key/item(s) pairs ordered by most to least number of items
+per key.
+
+=head4 :classify(&classifier)
+
+If specified, indicates the C<Callable> that should return a key for
+a given item to have it classified.  This effectively replaces the
+source if an item by its key in the result.  The result will contain
+the key/item(s) pairs ordered by most to least number of items per key.
 
 =head4 :context(N)
 

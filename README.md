@@ -137,7 +137,7 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 ### 3. Produce items to search in (apply transformers)
 
-The second step is to create the logic for creating items to search in from the objects in step 2. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
+The third step is to create the logic for creating items to search in from the objects in step 2. If search is to be done per object, then `.slurp` is called on the object. Otherwise `.lines` is called on the object. Unless one provides their own logic for producing items to search in.
 
 Related named arguments are (in alphabetical order):
 
@@ -197,7 +197,7 @@ Matching items are represented by `PairMatched` objects, and items that have bee
 
 ### 6. Run the sequence(s)
 
-The final step is to take the `Callable` of step 5 and run that repeatedly on the sequence of step 2. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. Inside the `Callable` of step 5, the dynamic variable `$*SOURCE` will be set to the source of the items being checked.
+The final step is to take the `Callable` of step 5 and run that repeatedly on the sequence of step 3. Make sure any phasers (`FIRST`, `NEXT` and `LAST`) are called at the appropriate time in a thread-safe manner. Inside the `Callable` of step 5, the dynamic variable `$*SOURCE` will be set to the source of the items being checked.
 
 Either produces a sequence in which the key is the source, and the value is a `Slip` of `Pair`s where the key is the item-number and the value is item with the match, or whatever the pattern matcher returned.
 
@@ -216,6 +216,10 @@ Related named arguments are (in alphabetical order):
   * :sources-without-only - produce the source without any match
 
   * :frequencies - produce items and their frequencies
+
+  * :classify - classify items according to a single key
+
+  * :categorize - classify items according to zero or more keys
 
   * :unique - only produce unique items
 
@@ -334,6 +338,14 @@ Indicate the number of items that should also be returned **before** an item wit
 #### :blocks(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of blocks** used by the path on the filesystem on which the path is located. The `Callable` is passed the number of blocks of a path and is expected to return a trueish value to have the path be considered for further selection.
+
+#### :categorize(&categorizer)
+
+If specified, indicates the `Callable` that should return zero or more keys for a given item to have it categorized. This effectively replaces the source if an item by any of its key in the result. The result will contain the key/item(s) pairs ordered by most to least number of items per key.
+
+#### :classify(&classifier)
+
+If specified, indicates the `Callable` that should return a key for a given item to have it classified. This effectively replaces the source if an item by its key in the result. The result will contain the key/item(s) pairs ordered by most to least number of items per key.
 
 #### :context(N)
 
