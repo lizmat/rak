@@ -2,6 +2,12 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.35  2022-10-12T14:23:38+02:00
+    - Fix issue with :unique|classify|categorize when being given
+      a Seq rather than something Listy
+    - Make default stringification of PairContext/PairMatched objects
+      a bit more intuitive
+
 0.0.34  2022-10-11T15:36:32+02:00
     - Add support for --classify and --categorize
 

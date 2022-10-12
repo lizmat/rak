@@ -7,8 +7,13 @@ use Trap:ver<0.0.1>:auth<zef:lizmat>;         # Trap
 
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
-my class PairContext is Pair        is export { method matched(--> False) { } }
-my class PairMatched is PairContext is export { method matched(--> True)  { } }
+my class PairContext is Pair is export {
+    method matched(--> False) { }
+    method Str(--> Str:D) { self.key ~ ':' ~ self.value }
+}
+my class PairMatched is PairContext is export {
+    method matched(--> True) { }
+}
 
 # The result class returned by the rak call
 our class Rak {
@@ -1272,7 +1277,7 @@ multi sub rak(&pattern, %n) {
             my %seen;
             $result-seq := $result-seq.map: {
                 my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
-                if List.ACCEPTS($outer) {
+                if Iterable.ACCEPTS($outer) {
                     $outer.map({
                         my $inner := Pair.ACCEPTS($_) ?? .value !! $_;
                         $inner unless %seen{$inner.WHICH}++
@@ -1295,7 +1300,7 @@ multi sub rak(&pattern, %n) {
 
             for $result-seq {
                 my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
-                if List.ACCEPTS($outer) {
+                if Iterable.ACCEPTS($outer) {
                     for $outer {
                         my $value := Pair.ACCEPTS($_) ?? .value !! $_;
                         store classifier($value), $value;
@@ -1326,7 +1331,7 @@ multi sub rak(&pattern, %n) {
 
             for $result-seq {
                 my $outer := Pair.ACCEPTS($_) ?? .value !! $_;
-                if List.ACCEPTS($outer) {
+                if Iterable.ACCEPTS($outer) {
                     for $outer {
                         my $value := Pair.ACCEPTS($_) ?? .value !! $_;
                         store categorizer($value), $value;
