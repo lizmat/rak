@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.36  2022-10-15T21:37:20+02:00
+    - Bump dependency on path-utils to fix issues with testing
+    - Bump dependency on Git::Files to fix issues with testing
+
 0.0.35  2022-10-12T14:23:38+02:00
     - Fix issue with :unique|classify|categorize when being given
       a Seq rather than something Listy
