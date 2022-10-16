@@ -914,6 +914,13 @@ multi sub rak(&pattern, %n) {
         make-property-filter($seq, %n);
     }
 
+    # sort sources if we want them sorted
+    if %n<sort>:delete -> $sort {
+        $sources-seq = Bool.ACCEPTS($sort)
+          ?? $sources-seq.sort
+          !! $sources-seq.sort($sort)
+    }
+
     # Some flags that we need
     my $eager := %n<eager>:delete;
     my $sources-only;

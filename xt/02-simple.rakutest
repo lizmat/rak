@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 55;
+plan 57;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -308,6 +308,15 @@ is-deeply $rak.result, Empty,
 $rak := rak &defined, :paths($dir), :find, :omit-item-number, :dont-catch;
 ok $rak.result.head.value>>.absolute (==) %path2name.keys,
   'did a :find with &defined pattern work out';
+
+$rak := rak &defined, :paths($dir), :find, :sort, :omit-item-number;
+is-deeply $rak.result.head.value>>.absolute, %path2name.keys.sort,
+  'did a :find with &defined pattern work out sorted';
+
+$rak := rak &defined, :paths($dir), :find, :omit-item-number,
+  :sort({ $^b cmp $^a});
+is-deeply $rak.result.head.value>>.absolute, %path2name.keys.sort.reverse,
+  'did a :find with &defined pattern work out sorted reversed';
 
 $rak := rak *.contains("seven"), :paths($dir), :sources-only, :dont-catch;
 ok $rak.result>>.absolute (==) %name2path<seven eight nine>,

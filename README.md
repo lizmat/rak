@@ -205,6 +205,8 @@ Or, produces sequence of whatever a specified mapper returned and/or with unique
 
 Related named arguments are (in alphabetical order):
 
+  * :sort - sort the sources before processing
+
   * :eager - produce all results before creating Rak object
 
   * :mapper - code to map results of a single source
@@ -586,6 +588,10 @@ If specified, indicates the command(s) to be executed in a shell. Any `$_` in th
 #### :silently("out,err")
 
 When specified with `True`, will absorb any output on STDOUT and STDERR. Optionally can only absorb STDOUT ("out"), STDERR ("err") and both STDOUT and STDERR ("out,err").
+
+#### :sort(&logic)
+
+When specified with `True`, will sort the sources alphabetically. Can also be specified with a `Callable`, which should contain the logic sorting (just as the argument to the `.sort` method.
 
 #### :sources(@objects)
 

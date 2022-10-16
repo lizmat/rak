@@ -178,6 +178,7 @@ and/or with uniqueifying enabled.
 
 Related named arguments are (in alphabetical order):
 
+=item :sort - sort the sources before processing
 =item :eager - produce all results before creating Rak object
 =item :mapper - code to map results of a single source
 =item :map-all - also call mapper if a source has no matches
@@ -725,6 +726,12 @@ a successful conclusion.
 When specified with C<True>, will absorb any output on STDOUT
 and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 ("err") and both STDOUT and STDERR ("out,err").
+
+=head4 :sort(&logic)
+
+When specified with C<True>, will sort the sources alphabetically.
+Can also be specified with a C<Callable>, which should contain
+the logic sorting (just as the argument to the C<.sort> method.
 
 =head4 :sources(@objects)
 
