@@ -193,7 +193,7 @@ lookup 'NINE', :paths($dir), :produce-many(*.IO.lines.map: *.uc),
   "nine"  => (L9,),
 ;
 
-lookup '/ i /', :paths($dir), :max-matches-per-source(3),
+lookup '/ i /', :paths($dir), :max-matches-per-source(3), :ioify(*.IO),
   "five"  => (l5,),
   "six"   => (l5,l6),
   "seven" => (l5,l6),

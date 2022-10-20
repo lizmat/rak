@@ -45,6 +45,8 @@ Related named arguments are (in alphabetical order):
 
   * :files-from - file containing filenames as source
 
+  * :ioify - code to create IO::Path-like objects with
+
   * :paths - paths to recurse into if directory
 
   * :paths-from - file containing paths to recurse into
@@ -432,6 +434,10 @@ If specified, indicates the `Callable` filter that should be used to select acce
 #### :invert-match
 
 Flag. If specified with a trueish value, will negate the return value of the pattern if a `Bool` was returned. Defaults to `False`.
+
+#### :ioify(&coercer)
+
+If specified, indicates the `Callable` that will be called with a path and which should return an object on which `.lines` and `.slurp` can be called. Defaults to `*.IO`, creating an `IO::Path` object by default.
 
 #### :is-empty
 

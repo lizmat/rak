@@ -45,6 +45,7 @@ Related named arguments are (in alphabetical order):
 =item :dir - filter for directory basename check to include
 =item :file - filter for file basename check to include
 =item :files-from - file containing filenames as source
+=item :ioify - code to create IO::Path-like objects with
 =item :paths - paths to recurse into if directory
 =item :paths-from - file containing paths to recurse into
 =item :recurse-symlinked-dir - recurse into symlinked directories
@@ -492,6 +493,12 @@ considered for further selection.
 Flag. If specified with a trueish value, will negate the return
 value of the pattern if a C<Bool> was returned.  Defaults to
 C<False>.
+
+=head4 :ioify(&coercer)
+
+If specified, indicates the C<Callable> that will be called with a path
+and which should return an object on which C<.lines> and C<.slurp> can be
+called.  Defaults to C<*.IO>, creating an C<IO::Path> object by default.
 
 =head4 :is-empty
 

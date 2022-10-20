@@ -5,6 +5,9 @@ use paths:ver<10.0.7>:auth<zef:lizmat>;       # paths
 use path-utils:ver<0.0.11>:auth<zef:lizmat>;  # path-*
 use Trap:ver<0.0.1>:auth<zef:lizmat>;         # Trap
 
+# code to convert a path into an object that can do .lines and .slurp
+my &ioify = *.IO;
+
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
 my class PairContext is Pair is export {
@@ -41,7 +44,7 @@ my sub paths-from-file($from) {
     warn-if-human-on-stdin if $from eq '-';
     ($from eq '-'
       ?? $*IN.lines
-      !! $from.subst(/^ '~' '/'? /, $home).IO.lines
+      !! ioify($from.subst(/^ '~' '/'? /, $home)).lines
     ).map: *.subst(/^ '~' '/'? /, $home)
 }
 
@@ -280,11 +283,11 @@ my sub make-property-filter($seq is copy, %_) {
     }
 
     if %_<accept>:delete -> &code {
-        $seq = $seq.map: -> $path { code($path.IO) ?? $path !! Empty }
+        $seq = $seq.map: -> $path { code(ioify $path) ?? $path !! Empty }
     }
 
     if %_<deny>:delete -> &code {
-        $seq = $seq.map: -> $path { code($path.IO) ?? Empty !! $path }
+        $seq = $seq.map: -> $path { code(ioify $path) ?? Empty !! $path }
     }
 
     if %_<exec>:delete -> $command {
@@ -298,7 +301,7 @@ my sub make-property-filter($seq is copy, %_) {
         }
     }
 
-    $seq.map: *.IO
+    $seq.map: &ioify
 }
 
 # Return a matcher Callable for a given pattern.
@@ -866,6 +869,9 @@ multi sub rak(&pattern, %n) {
           exception => $_,
           stats     => map-stats,
     }
+
+    # Determine how we make IO::Path-like objects
+    &ioify = $_ with %n<ioify>:delete;
 
     # Some settings we always need
     my $batch     := %n<batch>:delete;
