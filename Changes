@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.39  2022-11-08T11:04:01+01:00
+    - Add dependency on Data::TextOrBinary
+    - Files without extension that look like they're binary, will
+      not be searched (at least for now)
+
 0.0.38  2022-10-20T15:46:42+02:00
     - Add support for :ioify argument, indicating the code that
       should be used convert a path into an object on which

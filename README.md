@@ -35,7 +35,7 @@ The `rak` subroutine basically goes through 6 steps to produce a `Rak` object.
 
 ### 1. Acquire sources
 
-The first step is determining the objects that should be searched for the specified pattern. If an object is a `Str`, it will be assume that it is a path specification of a file to be searched in some form and an `IO::Path` object will be created for it.
+The first step is determining the objects that should be searched for the specified pattern. If an object is a `Str`, it will be assumed that it is a path specification of a file to be searched in some form and an `IO::Path` object will be created for it.
 
 Related named arguments are (in alphabetical order):
 
@@ -63,9 +63,9 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 ### 2. Filter applicable objects
 
-Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked.
+Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked (except where otherwise indicated).
 
-  * :accept - given IO, is path acceptable
+  * :accept - given an IO::Path, is path acceptable
 
   * :accessed - when was path last accessed
 
@@ -73,7 +73,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :created - when was path created
 
-  * :deny - given IO, is path NOT acceptable
+  * :deny - given an IO::Path, is path NOT acceptable
 
   * :device-number - device number on which path is located
 

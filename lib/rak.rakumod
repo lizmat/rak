@@ -1,4 +1,5 @@
 # The modules that we need here, with their full identities
+use Data::TextOrBinary:ver<1.3>;              # is-text
 use Git::Files:ver<0.0.4>:auth<zef:lizmat>;   # git-files
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;     # hyperize raceize
 use paths:ver<10.0.7>:auth<zef:lizmat>;       # paths
@@ -1009,7 +1010,10 @@ multi sub rak(&pattern, %n) {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
             # source exists and is readable
-            if !IO::Path.ACCEPTS($source) || $source.r {
+            if (IO::Path.ACCEPTS($source) 
+                 && $source.r
+                 && ($source.extension || is-text($source))
+               ) || !IO::Path.ACCEPTS($source) {
                 my $seq := $source.lines(:$chomp, :$enc);
                 my int $line-number;
                 $item-number
@@ -1284,7 +1288,7 @@ multi sub rak(&pattern, %n) {
     }
 
     # If we're not only counting
-    unless $stats-only {
+    unless $stats-only {  # XXX all in here are not thread-safe with HyperSeq
         # Only want unique matches
         if $unique {
             my %seen;
