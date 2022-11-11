@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.40  2022-11-11T19:01:50+01:00
+    - Bump dependency on paths to get support for :!file as a way to
+      fetch directory paths, rather than file paths
+    - Document specification of :!file to get directory paths only
+
 0.0.39  2022-11-08T11:04:01+01:00
     - Add dependency on Data::TextOrBinary
     - Files without extension that look like they're binary, will

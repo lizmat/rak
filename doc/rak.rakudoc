@@ -433,6 +433,10 @@ indicating B<all> files should be checked.  Applicable for any
 situation where C<paths> is used to create the list of files to
 check.
 
+If the boolean value C<False> is specified, then only directory
+paths will be produced.  This only makes sense if C<:find> is also
+specified.
+
 =head4 :filesize(&filter)
 
 If specified, indicates the C<Callable> filter that should be used to select

@@ -395,6 +395,8 @@ If specified, indicates the name of a program and its arguments to be executed. 
 
 If specified, indicates the matcher that should be used to select acceptable files with the `paths` utility. Defaults to `True` indicating **all** files should be checked. Applicable for any situation where `paths` is used to create the list of files to check.
 
+If the boolean value `False` is specified, then only directory paths will be produced. This only makes sense if `:find` is also specified.
+
 #### :filesize(&filter)
 
 If specified, indicates the `Callable` filter that should be used to select acceptable paths by the **number of bytes** of the path. The `Callable` is passed the number of bytes of a path and is expected to return a trueish value to have the path be considered for further selection.
