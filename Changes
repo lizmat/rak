@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.41  2022-11-12T12:52:16+01:00
     - Make :dont-catch actually work
 
 0.0.40  2022-11-11T19:01:50+01:00
