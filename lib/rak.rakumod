@@ -866,9 +866,12 @@ multi sub rak(&pattern, %n) {
     # any execution error will be caught and become a return state
     my $CATCH := !(%n<dont-catch>:delete);
     CATCH {
-        return Rak.new:
-          exception => $_,
-          stats     => map-stats,
+        $CATCH
+          ?? (return Rak.new:
+               exception => $_,
+               stats     => map-stats,
+             )
+          !! .rethrow;
     }
 
     # Determine how we make IO::Path-like objects

@@ -1,6 +1,7 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Make :dont-catch actually work
 
 0.0.40  2022-11-11T19:01:50+01:00
     - Bump dependency on paths to get support for :!file as a way to
