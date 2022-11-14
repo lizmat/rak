@@ -117,6 +117,8 @@ Filter down the list of sources from step 1 on any additional filesystem related
 
   * :is-symbolic-link - is path a symbolic link
 
+  * :is-text - does path contains text?
+
   * :is-world-executable - is path executable by any user
 
   * :is-world-readable - is path readable by any user
@@ -492,6 +494,10 @@ Flag. If specified, indicates paths that have the STICKY bit set in their attrib
 #### :is-symbolic-link
 
 Flag. If specified, indicates only paths that are symbolic links, are (not) acceptable for further selection.
+
+#### :is-text
+
+Flag. If specified, indicates only paths that contain text are (not) acceptable for further selection.
 
 #### :is-world-executable
 

@@ -1,9 +1,8 @@
 # The modules that we need here, with their full identities
-use Data::TextOrBinary:ver<1.3>;                 # is-text
 use Git::Files:ver<0.0.4>:auth<zef:lizmat>;      # git-files
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize raceize
 use paths:ver<10.0.8>:auth<zef:lizmat> 'paths';  # paths
-use path-utils:ver<0.0.11>:auth<zef:lizmat>;     # path-*
+use path-utils:ver<0.0.13>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.1>:auth<zef:lizmat>;            # Trap
 
 # code to convert a path into an object that can do .lines and .slurp
@@ -300,6 +299,13 @@ my sub make-property-filter($seq is copy, %_) {
         $seq = $seq.map: -> $path {
             shell($command.subst('$_', $path, :g)) ?? $path !! Empty
         }
+    }
+
+    if %_<is-text>:exists {
+        $seq = $seq.map:
+          (%_<is-text>:delete)
+            ?? -> $path { path-is-text($path) ?? $path !! Empty }
+            !! -> $path { path-is-text($path) ?? Empty !! $path }
     }
 
     $seq.map: &ioify
@@ -1013,10 +1019,8 @@ multi sub rak(&pattern, %n) {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
             # source exists and is readable
-            if (IO::Path.ACCEPTS($source) 
-                 && $source.r
-                 && ($source.extension || is-text($source))
-               ) || !IO::Path.ACCEPTS($source) {
+            if (IO::Path.ACCEPTS($source) && $source.r)
+                 || !IO::Path.ACCEPTS($source) {
                 my $seq := $source.lines(:$chomp, :$enc);
                 my int $line-number;
                 $item-number

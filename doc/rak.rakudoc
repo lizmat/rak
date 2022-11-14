@@ -88,6 +88,7 @@ strings of absolute paths to be checked (except where otherwise indicated).
 =item :is-readable - is path readable by current user
 =item :is-sticky - has STICKY bit set in attributes
 =item :is-symbolic-link - is path a symbolic link
+=item :is-text - does path contains text?
 =item :is-world-executable - is path executable by any user
 =item :is-world-readable - is path readable by any user
 =item :is-world-writable - is path writable by any user
@@ -570,6 +571,11 @@ only makes sense when uses together with C<:find>.
 
 Flag.  If specified, indicates only paths that are symbolic links,
 are (not) acceptable for further selection.
+
+=head4 :is-text
+
+Flag.  If specified, indicates only paths that contain text are (not)
+acceptable for further selection.
 
 =head4 :is-world-executable
 

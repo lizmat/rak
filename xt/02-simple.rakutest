@@ -1,7 +1,7 @@
 use Test;
 use rak;
 
-plan 57;
+plan 58;
 
 my $dir := $*TMPDIR.add("rak");
 my @targets  := <zero one two three four five six seven eight nine>;
@@ -103,7 +103,7 @@ lookup "/ zero /", :paths($dir),
   "nine"  => (l0,),
 ;
 
-lookup '*.ends-with("o")', :paths($dir),
+lookup '*.ends-with("o")', :paths($dir), :is-text,
   "zero"  => (l0,),
   "one"   => (l0,),
   "two"   => (l0, l2),
@@ -175,6 +175,10 @@ lookup 'ine', :paths($dir), :is-writable, :is-readable,
 
 lookup 'in', :paths($dir), :is-owned-by-user, :!is-symbolic-link,
   "nine"  => (l9,),
+;
+
+lookup 'zero', :paths($dir), :!is-text,
+  ()
 ;
 
 lookup 'zero', :paths($dir), :!is-owned-by-user,
