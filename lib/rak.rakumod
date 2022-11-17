@@ -76,7 +76,13 @@ my sub fetch-if-url(Str:D $target) {
             $io.spurt($contents);
             @temp-files.push: $io;
             $proc.err.slurp(:close);
-            $io but $target
+            # Hide an IO object with the URL hidden in it inside
+            # the absolute path of the object, so that all file
+            # attribute tests, that require a string, will just
+            # work without blowing up because they can't coerce
+            # an IO::Path to a native string
+            role HideIO { has IO::Path:D $.IO is required }
+            $io.absolute but HideIO($io but $target)
         }
         else {
             $proc.err.slurp(:close);

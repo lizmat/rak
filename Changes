@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.43  2022-11-17T18:54:54+01:00
+    - Make sure that data fetched from URLs produce strings for the
+      file filter property checks to be performed without issues.
+
 0.0.42  2022-11-14T18:06:01+01:00
     - Bump dependency on "path-utils" to get "path-is-text" support
     - Add support for :is-text argument
