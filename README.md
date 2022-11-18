@@ -569,8 +569,6 @@ If specified, indicates the name of the file from which a list of paths to be us
 
 If specified, indicates a list of paths that should be used as the base of the production of filename with a `paths` search. If there is no other sources specification (from either the `:files-from`, `:paths-from` or `:sources`) then the current directory (aka ".") will be assumed. If that directory appears to be the top directory in a git repository, then `:under-version-control` will be assumed, only producing files that are under version control under that directory.
 
-If a single hyphen is specified as the path, then STDIN will be assumed as the source.
-
 #### :produce-many(&producer)
 
 If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.

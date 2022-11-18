@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.44  2022-11-18T17:31:34+01:00
+    - Fix issue with --files-from=- and --paths-from=-, spotted by
+      Márton Polgár.
+
 0.0.43  2022-11-17T18:54:54+01:00
     - Make sure that data fetched from URLs produce strings for the
       file filter property checks to be performed without issues.

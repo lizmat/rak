@@ -895,20 +895,7 @@ multi sub rak(&pattern, %n) {
     my $enc       := %n<encoding>:delete // 'utf8-c8';
     my $eagerSlip := True;
 
-    # Step 1: sources sequence
-    my $sources-seq = do if !($*IN.t) {
-        $eagerSlip := False;
-        $*IN
-    }
-    elsif %n<sources>:delete -> $sources {
-        $sources
-    }
-    elsif %n<paths>:exists && %n<paths> eq '-' {
-        %n<paths>:delete;
-        warn-if-human-on-stdin;
-        $*IN
-    }
-    else {
+    my sub get-sources-seq() {
         my $seq := do if %n<files-from>:delete -> $files-from {
             paths-from-file($files-from).map: {
                 path-exists($_) ?? $_ !! fetch-if-url($_)
@@ -928,6 +915,10 @@ multi sub rak(&pattern, %n) {
         elsif %n<under-version-control>:delete -> $uvc {
             uvc-paths($uvc)
         }
+        elsif !($*IN.t) {
+            $eagerSlip := False;
+            return $*IN
+        }
         else {
             paths(".", |paths-arguments(%n)).&hyperize($batch, $degree)
         }
@@ -935,6 +926,9 @@ multi sub rak(&pattern, %n) {
         # Step 2. filtering on properties
         make-property-filter($seq, %n);
     }
+
+    # Step 1: sources sequence
+    my $sources-seq = %n<sources>:delete // get-sources-seq;
 
     # sort sources if we want them sorted
     if %n<sort>:delete -> $sort {
