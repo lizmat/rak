@@ -2,9 +2,15 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.45  2022-11-19T19:53:24+01:00
+    - Fix issue with "is-text" test on unreadable files, again
+      spotted by Márton Polgár.
+    - Bumped dependency on paths to get more comprehensive and
+      better readability checks
+
 0.0.44  2022-11-18T17:31:34+01:00
     - Fix issue with --files-from=- and --paths-from=-, spotted by
-      Márton Polgár.
+      Márton Polgár
 
 0.0.43  2022-11-17T18:54:54+01:00
     - Make sure that data fetched from URLs produce strings for the

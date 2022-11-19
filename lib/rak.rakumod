@@ -1,7 +1,7 @@
 # The modules that we need here, with their full identities
 use Git::Files:ver<0.0.4>:auth<zef:lizmat>;      # git-files
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize raceize
-use paths:ver<10.0.8>:auth<zef:lizmat> 'paths';  # paths
+use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
 use path-utils:ver<0.0.13>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.1>:auth<zef:lizmat>;            # Trap
 
@@ -54,7 +54,8 @@ my sub paths-arguments(%_) {
     my $file := %_<file>:delete;
     my $follow-symlinks := (%_<recurse-symlinked-dir>:delete) // False;
     my $recurse         := (%_<recurse-unmatched-dir>:delete) // False;
-    Map.new: (:$dir, :$file, :$follow-symlinks, :$recurse)
+    my $readable-files  := (%_<is-readable>:delete)           // True;
+    Map.new: (:$dir, :$file, :$recurse, :$follow-symlinks, :$readable-files);
 }
 
 # Obtain paths for given revision control system and specs
@@ -186,12 +187,6 @@ my sub make-property-filter($seq is copy, %_) {
             !! -> $path { path-is-owned-by-group($path) ?? Empty !! $path }
     }
 
-    if %_<is-readable>:exists {
-        $seq = $seq.map:
-          (%_<is-readable>:delete)
-            ?? -> $path { path-is-readable($path) ?? $path !! Empty }
-            !! -> $path { path-is-readable($path) ?? Empty !! $path }
-    }
     if %_<is-writable>:exists {
         $seq = $seq.map:
           (%_<is-writable>:delete)
