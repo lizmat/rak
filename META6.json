@@ -6,7 +6,7 @@
   "build-depends": [
   ],
   "depends": [
-    "Git::Files:ver<0.0.5>:auth<zef:lizmat>",
+    "Git::Files:ver<0.0.6>:auth<zef:lizmat>",
     "hyperize:ver<0.0.2>:auth<zef:lizmat>",
     "paths:ver<10.0.9>:auth<zef:lizmat>",
     "path-utils:ver<0.0.13>:auth<zef:lizmat>",
@@ -29,5 +29,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.46"
+  "version": "0.0.47"
 }
