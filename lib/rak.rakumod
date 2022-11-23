@@ -1,5 +1,5 @@
 # The modules that we need here, with their full identities
-use Git::Files:ver<0.0.4>:auth<zef:lizmat>;      # git-files
+use Git::Files:ver<0.0.5>:auth<zef:lizmat>;      # git-files
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize raceize
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
 use path-utils:ver<0.0.13>:auth<zef:lizmat>;     # path-*

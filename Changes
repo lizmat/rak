@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.46  2022-11-23T12:54:09+01:00
+    - Bump dependency on Git::Files to sync up path-utils version
+
 0.0.45  2022-11-19T19:53:24+01:00
     - Fix issue with "is-text" test on unreadable files, again
       spotted by Márton Polgár.
