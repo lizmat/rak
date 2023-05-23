@@ -39,25 +39,14 @@ The first step is determining the objects that should be searched for the specif
 
 Related named arguments are (in alphabetical order):
 
-  * :dir - filter for directory basename check to include
-
-  * :file - filter for file basename check to include
-
-  * :files-from - file containing filenames as source
-
-  * :ioify - code to create IO::Path-like objects with
-
-  * :paths - paths to recurse into if directory
-
-  * :paths-from - file containing paths to recurse into
-
-  * :recurse-symlinked-dir - recurse into symlinked directories
-
-  * :recurse-unmatched-dir - recurse into directories not matching :dir
-
-  * :sources - list of objects to be considered as source
-
-  * :under-version-control - only include paths under version control
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:dir</td> <td>filter for directory basename check to include</td> </tr> <tr> <td>:file</td> <td>filter for file basename check to include</td> </tr> <tr> <td>:files-from</td> <td>file containing filenames as source</td> </tr> <tr> <td>:ioify</td> <td>code to create IO::Path-like objects with</td> </tr> <tr> <td>:paths</td> <td>paths to recurse into if directory</td> </tr> <tr> <td>:paths-from</td> <td>file containing paths to recurse into</td> </tr> <tr> <td>:recurse-symlinked-dir</td> <td>recurse into symlinked directories</td> </tr> <tr> <td>:recurse-unmatched-dir</td> <td>recurse into directories not matching :dir</td> </tr> <tr> <td>:sources</td> <td>list of objects to be considered as source</td> </tr> <tr> <td>:under-version-control</td> <td>only include paths under version control</td> </tr>
+</tbody>
+</table>
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
@@ -65,77 +54,14 @@ The result of this step, is a (potentially lazy and hyperable) sequence of objec
 
 Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked (except where otherwise indicated).
 
-  * :accept - given an IO::Path, is path acceptable
-
-  * :accessed - when was path last accessed
-
-  * :blocks- number of filesystem blocks
-
-  * :created - when was path created
-
-  * :deny - given an IO::Path, is path NOT acceptable
-
-  * :device-number - device number on which path is located
-
-  * :exec - run program, include if successful
-
-  * :filesize - size of the path in bytes
-
-  * :gid - numeric gid of the path
-
-  * :hard-links - number of hard-links to path on filesystem
-
-  * :has-setgid - has SETGID bit set in attributes
-
-  * :has-setuid - has SETUID bit set in attributes
-
-  * :inode - inode of path on filesystem
-
-  * :is-empty - is path empty (filesize == 0)
-
-  * :is-executable - is path executable by current user
-
-  * :is-group-executable - is path executable by group
-
-  * :is-group-readable - is path readable by group
-
-  * :is-group-writable - is path writable by group
-
-  * :is-owned-by-group - is path owned by group of current user
-
-  * :is-owned-by-user - is path owned by current user
-
-  * :is-owner-executable - is path executable by owner
-
-  * :is-owner-readable - is path readable by owner
-
-  * :is-owner-writable - is path writable by owner
-
-  * :is-readable - is path readable by current user
-
-  * :is-sticky - has STICKY bit set in attributes
-
-  * :is-symbolic-link - is path a symbolic link
-
-  * :is-text - does path contains text?
-
-  * :is-world-executable - is path executable by any user
-
-  * :is-world-readable - is path readable by any user
-
-  * :is-world-writable - is path writable by any user
-
-  * :is-writable - is path writable by current user
-
-  * :meta-modified - when meta information of path was modified
-
-  * :mode - the mode of the path
-
-  * :modified - when path was last modified
-
-  * :shell - run shell command, include if successful
-
-  * :uid - numeric uid of path
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:accept</td> <td>given an IO::Path, is path acceptable</td> </tr> <tr> <td>:accessed</td> <td>when was path last accessed</td> </tr> <tr> <td>:blocks</td> <td>number of filesystem blocks</td> </tr> <tr> <td>:created</td> <td>when was path created</td> </tr> <tr> <td>:deny</td> <td>given an IO::Path, is path NOT acceptable</td> </tr> <tr> <td>:device-number</td> <td>device number on which path is located</td> </tr> <tr> <td>:exec</td> <td>run program, include if successful</td> </tr> <tr> <td>:filesize</td> <td>size of the path in bytes</td> </tr> <tr> <td>:gid</td> <td>numeric gid of the path</td> </tr> <tr> <td>:hard-links</td> <td>number of hard-links to path on filesystem</td> </tr> <tr> <td>:has-setgid</td> <td>has SETGID bit set in attributes</td> </tr> <tr> <td>:has-setuid</td> <td>has SETUID bit set in attributes</td> </tr> <tr> <td>:inode</td> <td>inode of path on filesystem</td> </tr> <tr> <td>:is-empty</td> <td>is path empty (filesize == 0)</td> </tr> <tr> <td>:is-executable</td> <td>is path executable by current user</td> </tr> <tr> <td>:is-group-executable</td> <td>is path executable by group</td> </tr> <tr> <td>:is-group-readable</td> <td>is path readable by group</td> </tr> <tr> <td>:is-group-writable</td> <td>is path writable by group</td> </tr> <tr> <td>:is-owned-by-group</td> <td>is path owned by group of current user</td> </tr> <tr> <td>:is-owned-by-user</td> <td>is path owned by current user</td> </tr> <tr> <td>:is-owner-executable</td> <td>is path executable by owner</td> </tr> <tr> <td>:is-owner-readable</td> <td>is path readable by owner</td> </tr> <tr> <td>:is-owner-writable</td> <td>is path writable by owner</td> </tr> <tr> <td>:is-readable</td> <td>is path readable by current user</td> </tr> <tr> <td>:is-sticky</td> <td>has STICKY bit set in attributes</td> </tr> <tr> <td>:is-symbolic-link</td> <td>is path a symbolic link</td> </tr> <tr> <td>:is-text</td> <td>does path contains text?</td> </tr> <tr> <td>:is-world-executable</td> <td>is path executable by any user</td> </tr> <tr> <td>:is-world-readable</td> <td>is path readable by any user</td> </tr> <tr> <td>:is-world-writable</td> <td>is path writable by any user</td> </tr> <tr> <td>:is-writable</td> <td>is path writable by current user</td> </tr> <tr> <td>:meta-modified</td> <td>when meta information of path was modified</td> </tr> <tr> <td>:mode</td> <td>the mode of the path</td> </tr> <tr> <td>:modified</td> <td>when path was last modified</td> </tr> <tr> <td>:shell</td> <td>run shell command, include if successful</td> </tr> <tr> <td>:uid</td> <td>numeric uid of path</td> </tr>
+</tbody>
+</table>
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
@@ -145,17 +71,14 @@ The third step is to create the logic for creating items to search in from the o
 
 Related named arguments are (in alphabetical order):
 
-  * :encoding - encoding to be used when creating items
-
-  * :find - map sequence of step 1 to item producer
-
-  * :produce-one - produce one item per given source
-
-  * :produce-many - produce zero or more items by given source
-
-  * :omit-item-number - do not store item numbers in result
-
-  * :with-line-ending - produce lines with line endings
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:encoding</td> <td>encoding to be used when creating items</td> </tr> <tr> <td>:find</td> <td>map sequence of step 1 to item producer</td> </tr> <tr> <td>:produce-one</td> <td>produce one item per given source</td> </tr> <tr> <td>:produce-many</td> <td>produce zero or more items by given source</td> </tr> <tr> <td>:omit-item-number</td> <td>do not store item numbers in result</td> </tr> <tr> <td>:with-line-ending</td> <td>produce lines with line endings</td> </tr>
+</tbody>
+</table>
 
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
@@ -165,17 +88,14 @@ Take the logic of the pattern `Callable`, and create a `Callable` to do the actu
 
 Related named arguments are (in alphabetical order):
 
-  * :invert-match - invert the logic of matching
-
-  * :old-new - produce pairs of old/new state
-
-  * :quietly - absorb any warnings produced by the matcher
-
-  * :silently - absorb any output done by the matcher
-
-  * :stats - produce results and statistics
-
-  * :stats-only - don't produce results, just statistics
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:invert-match</td> <td>invert the logic of matching</td> </tr> <tr> <td>:old-new</td> <td>produce pairs of old/new state</td> </tr> <tr> <td>:quietly</td> <td>absorb any warnings produced by the matcher</td> </tr> <tr> <td>:silently</td> <td>absorb any output done by the matcher</td> </tr> <tr> <td>:stats</td> <td>produce results and statistics</td> </tr> <tr> <td>:stats-only</td> <td>don&#39;t produce results, just statistics</td> </tr>
+</tbody>
+</table>
 
 ### 5. Create logic for running
 
@@ -183,19 +103,14 @@ Take the matcher logic of the `Callable` of step 4 and create a runner `Callable
 
 Related named arguments are (in alphabetical order):
 
-  * :after-context - number of items to show after a match
-
-  * :before-context - number of items to show before a match
-
-  * :context - number of items to show around a match
-
-  * :paragraph-context - items around match until false item
-
-  * :passthru-context - pass on *all* items if there is a match
-
-  * :max-matches-per-source - max # of matches per source
-
-  * :passthru - pass on *all* items always
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:after-context</td> <td>number of items to show after a match</td> </tr> <tr> <td>:before-context</td> <td>number of items to show before a match</td> </tr> <tr> <td>:context</td> <td>number of items to show around a match</td> </tr> <tr> <td>:paragraph-context</td> <td>items around match until false item</td> </tr> <tr> <td>:passthru-context</td> <td>pass on *all* items if there is a match</td> </tr> <tr> <td>:max-matches-per-source</td> <td>max # of matches per source</td> </tr> <tr> <td>:passthru</td> <td>pass on *all* items always</td> </tr>
+</tbody>
+</table>
 
 Matching items are represented by `PairMatched` objects, and items that have been added because of the above context arguments, are represented by `PairContext` objects. Unless `:omit-item-number` has been specified with a trueish value, in which case items will always be just a string, whether they matched or not (if part of a context specification).
 
@@ -209,25 +124,14 @@ Or, produces sequence of whatever a specified mapper returned and/or with unique
 
 Related named arguments are (in alphabetical order):
 
-  * :sort - sort the sources before processing
-
-  * :eager - produce all results before creating Rak object
-
-  * :mapper - code to map results of a single source
-
-  * :map-all - also call mapper if a source has no matches
-
-  * :sources-only - only produce the source of any match
-
-  * :sources-without-only - produce the source without any match
-
-  * :frequencies - produce items and their frequencies
-
-  * :classify - classify items according to a single key
-
-  * :categorize - classify items according to zero or more keys
-
-  * :unique - only produce unique items
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:sort</td> <td>sort the sources before processing</td> </tr> <tr> <td>:eager</td> <td>produce all results before creating Rak object</td> </tr> <tr> <td>:mapper</td> <td>code to map results of a single source</td> </tr> <tr> <td>:map-all</td> <td>also call mapper if a source has no matches</td> </tr> <tr> <td>:sources-only</td> <td>only produce the source of any match</td> </tr> <tr> <td>:sources-without-only</td> <td>produce the source without any match</td> </tr> <tr> <td>:frequencies</td> <td>produce items and their frequencies</td> </tr> <tr> <td>:classify</td> <td>classify items according to a single key</td> </tr> <tr> <td>:categorize</td> <td>classify items according to zero or more keys</td> </tr> <tr> <td>:unique</td> <td>only produce unique items</td> </tr>
+</tbody>
+</table>
 
 EXPORTED CLASSES
 ================
@@ -249,15 +153,14 @@ A `Bool` indicating whether the search has already been completed. This is typic
 
 A `Map` with any statistics collected (so far, in case an exception was thrown). If the `Map` is not empty, it contains the following keys:
 
-  * nr-sources - number of sources seen
-
-  * nr-items - number of items inspected
-
-  * nr-matches - number of items that matched
-
-  * nr-passthrus - number of items that have passed through
-
-  * nr-changes - number of items that would have been changed
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>nr-sources</td> <td>number of sources seen</td> </tr> <tr> <td>nr-items</td> <td>number of items inspected</td> </tr> <tr> <td>nr-matches</td> <td>number of items that matched</td> </tr> <tr> <td>nr-passthrus</td> <td>number of items that have passed through</td> </tr> <tr> <td>nr-changes</td> <td>number of items that would have been changed</td> </tr>
+</tbody>
+</table>
 
 ### exception
 
@@ -692,7 +595,7 @@ If you like this module, or what I’m doing more generally, committing to a [sm
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022 Elizabeth Mattijsen
+Copyright 2022, 2023 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 
