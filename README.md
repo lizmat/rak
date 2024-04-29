@@ -59,7 +59,7 @@ Filter down the list of sources from step 1 on any additional filesystem related
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:accept</td> <td>given an IO::Path, is path acceptable</td> </tr> <tr> <td>:accessed</td> <td>when was path last accessed</td> </tr> <tr> <td>:blocks</td> <td>number of filesystem blocks</td> </tr> <tr> <td>:created</td> <td>when was path created</td> </tr> <tr> <td>:deny</td> <td>given an IO::Path, is path NOT acceptable</td> </tr> <tr> <td>:device-number</td> <td>device number on which path is located</td> </tr> <tr> <td>:exec</td> <td>run program, include if successful</td> </tr> <tr> <td>:filesize</td> <td>size of the path in bytes</td> </tr> <tr> <td>:gid</td> <td>numeric gid of the path</td> </tr> <tr> <td>:hard-links</td> <td>number of hard-links to path on filesystem</td> </tr> <tr> <td>:has-setgid</td> <td>has SETGID bit set in attributes</td> </tr> <tr> <td>:has-setuid</td> <td>has SETUID bit set in attributes</td> </tr> <tr> <td>:inode</td> <td>inode of path on filesystem</td> </tr> <tr> <td>:is-empty</td> <td>is path empty (filesize == 0)</td> </tr> <tr> <td>:is-executable</td> <td>is path executable by current user</td> </tr> <tr> <td>:is-group-executable</td> <td>is path executable by group</td> </tr> <tr> <td>:is-group-readable</td> <td>is path readable by group</td> </tr> <tr> <td>:is-group-writable</td> <td>is path writable by group</td> </tr> <tr> <td>:is-owned-by-group</td> <td>is path owned by group of current user</td> </tr> <tr> <td>:is-owned-by-user</td> <td>is path owned by current user</td> </tr> <tr> <td>:is-owner-executable</td> <td>is path executable by owner</td> </tr> <tr> <td>:is-owner-readable</td> <td>is path readable by owner</td> </tr> <tr> <td>:is-owner-writable</td> <td>is path writable by owner</td> </tr> <tr> <td>:is-readable</td> <td>is path readable by current user</td> </tr> <tr> <td>:is-sticky</td> <td>has STICKY bit set in attributes</td> </tr> <tr> <td>:is-symbolic-link</td> <td>is path a symbolic link</td> </tr> <tr> <td>:is-text</td> <td>does path contains text?</td> </tr> <tr> <td>:is-world-executable</td> <td>is path executable by any user</td> </tr> <tr> <td>:is-world-readable</td> <td>is path readable by any user</td> </tr> <tr> <td>:is-world-writable</td> <td>is path writable by any user</td> </tr> <tr> <td>:is-writable</td> <td>is path writable by current user</td> </tr> <tr> <td>:meta-modified</td> <td>when meta information of path was modified</td> </tr> <tr> <td>:mode</td> <td>the mode of the path</td> </tr> <tr> <td>:modified</td> <td>when path was last modified</td> </tr> <tr> <td>:shell</td> <td>run shell command, include if successful</td> </tr> <tr> <td>:uid</td> <td>numeric uid of path</td> </tr>
+<tr> <td>:accept</td> <td>given an IO::Path, is path acceptable</td> </tr> <tr> <td>:accessed</td> <td>when was path last accessed</td> </tr> <tr> <td>:blocks</td> <td>number of filesystem blocks</td> </tr> <tr> <td>:created</td> <td>when was path created</td> </tr> <tr> <td>:deny</td> <td>given an IO::Path, is path NOT acceptable</td> </tr> <tr> <td>:device-number</td> <td>device number on which path is located</td> </tr> <tr> <td>:exec</td> <td>run program, include if successful</td> </tr> <tr> <td>:filesize</td> <td>size of the path in bytes</td> </tr> <tr> <td>:gid</td> <td>numeric gid of the path</td> </tr> <tr> <td>:hard-links</td> <td>number of hard-links to path on filesystem</td> </tr> <tr> <td>:has-setgid</td> <td>has SETGID bit set in attributes</td> </tr> <tr> <td>:has-setuid</td> <td>has SETUID bit set in attributes</td> </tr> <tr> <td>:inode</td> <td>inode of path on filesystem</td> </tr> <tr> <td>:is-empty</td> <td>is path empty (filesize == 0)</td> </tr> <tr> <td>:is-executable</td> <td>is path executable by current user</td> </tr> <tr> <td>:is-group-executable</td> <td>is path executable by group</td> </tr> <tr> <td>:is-group-readable</td> <td>is path readable by group</td> </tr> <tr> <td>:is-group-writable</td> <td>is path writable by group</td> </tr> <tr> <td>:is-moarvm</td> <td>is path a MoarVM bytecode file</td> </tr> <tr> <td>:is-owned-by-group</td> <td>is path owned by group of current user</td> </tr> <tr> <td>:is-owned-by-user</td> <td>is path owned by current user</td> </tr> <tr> <td>:is-owner-executable</td> <td>is path executable by owner</td> </tr> <tr> <td>:is-owner-readable</td> <td>is path readable by owner</td> </tr> <tr> <td>:is-owner-writable</td> <td>is path writable by owner</td> </tr> <tr> <td>:is-readable</td> <td>is path readable by current user</td> </tr> <tr> <td>:is-sticky</td> <td>has STICKY bit set in attributes</td> </tr> <tr> <td>:is-symbolic-link</td> <td>is path a symbolic link</td> </tr> <tr> <td>:is-text</td> <td>does path contains text?</td> </tr> <tr> <td>:is-world-executable</td> <td>is path executable by any user</td> </tr> <tr> <td>:is-world-readable</td> <td>is path readable by any user</td> </tr> <tr> <td>:is-world-writable</td> <td>is path writable by any user</td> </tr> <tr> <td>:is-writable</td> <td>is path writable by current user</td> </tr> <tr> <td>:meta-modified</td> <td>when meta information of path was modified</td> </tr> <tr> <td>:mode</td> <td>the mode of the path</td> </tr> <tr> <td>:modified</td> <td>when path was last modified</td> </tr> <tr> <td>:shell</td> <td>run shell command, include if successful</td> </tr> <tr> <td>:uid</td> <td>numeric uid of path</td> </tr>
 </tbody>
 </table>
 
@@ -366,9 +366,9 @@ Flag. If specified, indicates paths, that are **readable** by the current **grou
 
 Flag. If specified, indicates paths, that are **writable** by the current **group**, are (not) acceptable for further selection.
 
-#### :is-readable
+#### :is-moarvm
 
-Flag. If specified, indicates paths, that are **readable** by the current **user**, are (not) acceptable for further selection.
+Flag. If specified, indicates only paths that are `MoarVM` bytecode files are (not) acceptable for further selection.
 
 #### :is-owned-by-group
 
@@ -389,6 +389,10 @@ Flag. If specified, indicates paths, that are **readable** by the owner, are (no
 #### :is-owner-writable
 
 Flag. If specified, indicates paths, that are **writable** by the owner, are (not) acceptable for further selection.
+
+#### :is-readable
+
+Flag. If specified, indicates paths, that are **readable** by the current **user**, are (not) acceptable for further selection.
 
 #### :is-sticky
 
@@ -595,7 +599,7 @@ If you like this module, or what I’m doing more generally, committing to a [sm
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022, 2023 Elizabeth Mattijsen
+Copyright 2022, 2023, 2024 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

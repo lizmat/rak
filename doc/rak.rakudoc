@@ -86,6 +86,7 @@ strings of absolute paths to be checked (except where otherwise indicated).
   :is-group-executable  is path executable by group
   :is-group-readable    is path readable by group
   :is-group-writable    is path writable by group
+  :is-moarvm            is path a MoarVM bytecode file
   :is-owned-by-group    is path owned by group of current user
   :is-owned-by-user     is path owned by current user
   :is-owner-executable  is path executable by owner
@@ -552,10 +553,10 @@ B<group>, are (not) acceptable for further selection.
 Flag.  If specified, indicates paths, that are B<writable> by the current
 B<group>, are (not) acceptable for further selection.
 
-=head4 :is-readable
+=head4 :is-moarvm
 
-Flag.  If specified, indicates paths, that are B<readable> by the current
-B<user>, are (not) acceptable for further selection.
+Flag.  If specified, indicates only paths that are C<MoarVM> bytecode
+files are (not) acceptable for further selection.
 
 =head4 :is-owned-by-group
 
@@ -581,6 +582,11 @@ are (not) acceptable for further selection.
 
 Flag.  If specified, indicates paths, that are B<writable> by the owner,
 are (not) acceptable for further selection.
+
+=head4 :is-readable
+
+Flag.  If specified, indicates paths, that are B<readable> by the current
+B<user>, are (not) acceptable for further selection.
 
 =head4 :is-sticky
 
@@ -889,7 +895,7 @@ deal to me!
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2022, 2023 Elizabeth Mattijsen
+Copyright 2022, 2023, 2024 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under
 the Artistic License 2.0.

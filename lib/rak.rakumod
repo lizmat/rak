@@ -2,7 +2,7 @@
 use Git::Files:ver<0.0.6>:auth<zef:lizmat>;      # git-files
 use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize raceize
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
-use path-utils:ver<0.0.13>:auth<zef:lizmat>;     # path-*
+use path-utils:ver<0.0.14>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.1>:auth<zef:lizmat>;            # Trap
 
 # code to convert a path into an object that can do .lines and .slurp
@@ -307,6 +307,13 @@ my sub make-property-filter($seq is copy, %_) {
           (%_<is-text>:delete)
             ?? -> $path { path-is-text($path) ?? $path !! Empty }
             !! -> $path { path-is-text($path) ?? Empty !! $path }
+    }
+
+    if %_<is-moarvm>:exists {
+        $seq = $seq.map:
+          (%_<is-moarvm>:delete)
+            ?? -> $path { path-is-moarvm($path) ?? $path !! Empty }
+            !! -> $path { path-is-moarvm($path) ?? Empty !! $path }
     }
 
     $seq.map: &ioify
