@@ -2,9 +2,13 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.51  2024-05-08T21:56:49+02:00
+    - Bump dependency on path-utils to fix issue with ":is-moarvm"
+      on module precomp files with many dependencies
+
 0.0.50  2024-05-08T15:04:54+02:00
-    - Bump dependency on path-utils to fix issue with ":is-pdf" on
-      files that are too small
+    - Bump dependency on path-utils to fix issue with ":is-pdf"
+      on files that are too small
 
 0.0.49  2024-05-08T11:59:39+02:00
     - Bump dependency on path-utils
