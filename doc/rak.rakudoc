@@ -92,6 +92,7 @@ strings of absolute paths to be checked (except where otherwise indicated).
   :is-owner-executable  is path executable by owner
   :is-owner-readable    is path readable by owner
   :is-owner-writable    is path writable by owner
+  :is-pdf               is path a PDF file
   :is-readable          is path readable by current user
   :is-sticky            has STICKY bit set in attributes
   :is-symbolic-link     is path a symbolic link
@@ -582,6 +583,11 @@ are (not) acceptable for further selection.
 
 Flag.  If specified, indicates paths, that are B<writable> by the owner,
 are (not) acceptable for further selection.
+
+=head4 :is-pdf
+
+Flag.  If specified, indicates only paths that are C<PDF> files are
+(not) acceptable for further selection.
 
 =head4 :is-readable
 
