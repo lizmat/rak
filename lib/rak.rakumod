@@ -413,7 +413,8 @@ my sub make-passthru-context-runner(&matcher, $item-number) {
     my @before;
     $item-number
       ?? -> $item {
-             my $result := matcher($item.value);
+             my $value  := $item.value;
+             my $result := matcher($value);
              if not-acceptable($result) {  # no match
                  if $after {
                      $item
@@ -428,7 +429,7 @@ my sub make-passthru-context-runner(&matcher, $item-number) {
                  @before.push(
                    PairMatched.new:
                      $item.key,
-                     $result =:= True ?? $item.value !! $result
+                     $result =:= True ?? $value !! $result
                  ).splice.Slip
              }
          }
@@ -461,18 +462,19 @@ my multi sub make-paragraph-context-runner(
     my @before;
     $item-number
       ?? -> $item {
+             my $value := $item.value;
              if $matches-seen == $max-matches {  # enough matches seen
                  $after
-                   ?? $item.value
+                   ?? $value
                      ?? $item
                      !! (last)
                    !! (last)
              }
              else {  # must still try to match
-                 my $result := matcher($item.value);
+                 my $result := matcher($value);
                  if not-acceptable($result) {  # no match
                      if $after {
-                         if $item.value {
+                         if $value {
                              $item
                          }
                          else {
@@ -481,7 +483,7 @@ my multi sub make-paragraph-context-runner(
                          }
                      }
                      else {
-                         $item.value
+                         $value
                            ?? @before.push($item)
                            !! @before.splice;
                          Empty
@@ -493,7 +495,7 @@ my multi sub make-paragraph-context-runner(
                      @before.push(
                        PairMatched.new:
                          $item.key,
-                         $result =:= True ?? $item.value !! $result
+                         $result =:= True ?? $value !! $result
                      ).splice.Slip
                  }
              }
@@ -541,10 +543,11 @@ my multi sub make-paragraph-context-runner(&matcher, $item-number) {
     my @before;
     $item-number
       ?? -> $item {
-             my $result := matcher($item.value);
+             my $value  := $item.value;
+             my $result := matcher($value);
              if not-acceptable($result) {  # no match
                  if $after {
-                     if $item.value {
+                     if $value {
                          $item
                      }
                      else {
@@ -553,7 +556,7 @@ my multi sub make-paragraph-context-runner(&matcher, $item-number) {
                      }
                  }
                  else {
-                     $item.value
+                     $value
                        ?? @before.push($item)
                        !! @before.splice;
                      Empty
@@ -564,7 +567,7 @@ my multi sub make-paragraph-context-runner(&matcher, $item-number) {
                  @before.push(
                    PairMatched.new:
                      $item.key,
-                     $result =:= True ?? $item.value !! $result
+                     $result =:= True ?? $value !! $result
                  ).splice.Slip
              }
          }
@@ -616,7 +619,8 @@ my multi sub make-numeric-context-runner(
                      }
                  }
                  else {
-                     my $result := matcher($item.value);
+                     my $value  := $item.value;
+                     my $result := matcher($value);
                      if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
@@ -634,7 +638,7 @@ my multi sub make-numeric-context-runner(
                          @before.push(
                            PairMatched.new:
                              $item.key,
-                             $result =:= True ?? $item.value !! $result
+                             $result =:= True ?? $value !! $result
                          ).splice.Slip
                      }
                  }
@@ -685,7 +689,8 @@ my multi sub make-numeric-context-runner(
                      }
                  }
                  else {
-                     my $result := matcher($item.value);
+                     my $value  := $item.value;
+                     my $result := matcher($value);
                      if not-acceptable($result) {  # no match
                          if $todo {
                              --$todo; $item
@@ -699,7 +704,7 @@ my multi sub make-numeric-context-runner(
                          $todo = $after;
                          PairMatched.new:
                            $item.key,
-                           $result =:= True ?? $item.value !! $result
+                           $result =:= True ?? $value !! $result
                      }
                  }
              }
@@ -741,7 +746,8 @@ my multi sub make-numeric-context-runner(
 
         $item-number
           ?? -> $item {
-                 my $result := matcher($item.value);
+                 my $value  := $item.value;
+                 my $result := matcher($value);
                  if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
@@ -757,7 +763,7 @@ my multi sub make-numeric-context-runner(
                      @before.push(
                        PairMatched.new:
                          $item.key,
-                         $result =:= True ?? $item.value !! $result
+                         $result =:= True ?? $value !! $result
                      ).splice.Slip
                  }
              }
@@ -786,7 +792,8 @@ my multi sub make-numeric-context-runner(
         my $todo;
         $item-number
           ?? -> $item {
-                 my $result := matcher($item.value);
+                 my $value  := $item.value;
+                 my $result := matcher($value);
                  if not-acceptable($result) {  # no match
                      if $todo {
                          --$todo; $item
@@ -799,7 +806,7 @@ my multi sub make-numeric-context-runner(
                      $todo = $after;
                      PairMatched.new:
                        $item.key,
-                       $result =:= True ?? $item.value !! $result
+                       $result =:= True ?? $value !! $result
                  }
              }
           # no item numbers needed
@@ -828,7 +835,8 @@ my multi sub make-runner(&matcher, $item-number, int $max-matches) {
       ?? -> $item {
              last if $matches-seen == $max-matches;
 
-             my $result := matcher($item.value);
+             my $value  := $item.value;
+             my $result := matcher($value);
              if not-acceptable($result) {
                  Empty
              }
@@ -836,7 +844,7 @@ my multi sub make-runner(&matcher, $item-number, int $max-matches) {
                  ++$matches-seen;
                  PairMatched.new:
                    $item.key,
-                   $result =:= True ?? $item.value !! $result
+                   $result =:= True ?? $value !! $result
              }
          }
       # no item numbers needed
@@ -856,12 +864,13 @@ my multi sub make-runner(&matcher, $item-number, int $max-matches) {
 my multi sub make-runner(&matcher, $item-number) {
     $item-number
       ?? -> $item {
-             my $result := matcher($item.value);
+             my $value  := $item.value;
+             my $result := matcher($value);
              not-acceptable($result)
                ?? Empty
                !! PairMatched.new:
                     $item.key,
-                    $result =:= True ?? $item.value !! $result
+                    $result =:= True ?? $value !! $result
          }
       # no item numbers needed
       !! -> $item {
