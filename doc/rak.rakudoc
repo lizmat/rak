@@ -147,7 +147,7 @@ Related named arguments are (in alphabetical order):
   :old-new       produce pairs of old/new state
   :quietly       absorb any warnings produced by the matcher
   :silently      absorb any output done by the matcher
-  :stats         produce results and statistics
+  :stats         produce results and full statistics
   :stats-only    don't produce results, just statistics
 
 =head3 5. Create logic for running
@@ -200,15 +200,17 @@ Related named arguments are (in alphabetical order):
 =table
   argument               meaning
   ------------------------------
-  :sort                  sort the sources before processing
+  :categorize            classify items according to zero or more keys
+  :classify              classify items according to a single key
   :eager                 produce all results before creating Rak object
-  :mapper                code to map results of a single source
+  :frequencies           produce items and their frequencies
   :map-all               also call mapper if a source has no matches
+  :mapper                code to map results of a single source
+  :progress              code to show progress of running
+  :sort                  sort the result of :unique
+  :sort-sources          sort the sources before processing
   :sources-only          only produce the source of any match
   :sources-without-only  produce the source without any match
-  :frequencies           produce items and their frequencies
-  :classify              classify items according to a single key
-  :categorize            classify items according to zero or more keys
   :unique                only produce unique items
 
 =head1 EXPORTED CLASSES
@@ -217,16 +219,38 @@ Related named arguments are (in alphabetical order):
 
 The return value of a C<rak> search.  Contains the following attributes:
 
-=head3 result
-
-An C<Iterable> with search results.  This could be a lazy C<Seq> or a
-fully vivified C<List> (see below).
-
 =head3 completed
 
-A C<Bool> indicating whether the search has already been completed.  This
-is typically C<True> if statistics were asked to be collected, or the
-pattern C<Callable> contained C<LAST> phasers.
+A C<Bool> indicating whether the search has already been completed.
+
+=head3 exception
+
+Any C<Exception> object that was caught.
+
+=head3 nr-changes
+
+Number of items (that would have been) changed.
+
+=head3 nr-items
+
+Number of items inspected.
+
+=head3 nr-matches
+
+Number of items that matched.
+
+=head3 nr-passthrus
+
+Number of items that have passed through.
+
+=head3 nr-sources
+
+Number of sources seen.
+
+=head3 result
+
+A C<Seq> with search results.  This could be a lazy C<Seq> or a C<Seq> on
+a fully vivified C<List>.
 
 =head3 stats
 
@@ -242,9 +266,8 @@ thrown).  If the C<Map> is not empty, it contains the following keys:
   nr-passthrus  number of items that have passed through
   nr-changes    number of items that would have been changed
 
-=head3 exception
-
-Any C<Exception> object that was caught.
+If the C<Map> is empty, then no statistics (other than C<nr-sources>) have
+been collected.
 
 =head2 PairContext
 
@@ -257,6 +280,37 @@ returned and a certain item context was requested.
 A subclass of C<PairContext> of which the C<matched> method returns
 C<True>.  Used for matching items when item-numbers are required to
 be returned.
+
+=head2 Progress
+
+Passed to the C<:progress> C<Callable> 5 times per second while searching
+is taking place.  It provides several methods that allow a search application
+to show what is going on.
+
+=head3 nr-changes
+
+Number of items (that would have been) changed.  Continuously updated
+if the search has not been completed yet.
+
+=head3 nr-items
+
+Number of items inspected.  Continuously updated if the search has not
+been completed yet.
+
+=head3 nr-matches
+
+Number of items that matched.  Continuously updated if the search has
+not been completed yet.
+
+=head3 nr-passthrus
+
+Number of items that have passed through.  Continuously updated if the
+search has not been completed yet.
+
+=head3 nr-sources
+
+Number of sources seen.  Continuously updated if the search has not been
+completed yet.
 
 =head1 EXPORTED SUBROUTINES
 
@@ -272,10 +326,13 @@ that the C<rak> subroutine needed for its configuration and execution.
 =head3 Return value
 
 A C<Rak> object (see above) is always returned.  The object
-provides four attributes: C<result> (with the result C<Iterable>),
+provides three attributes: C<result> (with the result C<Iterable>),
 C<completed> (a Bool indicating whether all searching has been done
-already), C<stats> (Map with any statistics) and C<exception> (any
-C<Exception> object or C<Nil>).
+already), and C<exception> (any C<Exception> object or C<Nil>).
+
+Additionally it provides five methods that allow you to monitor
+progress and/or provide statistics at the end of a search.  They are:
+C<nr-sources>, C<nr-items>, C<nr-matches>, C<nr-changes>, C<nr-passthrus>.
 
 =head4 Result Iterable
 
@@ -305,7 +362,11 @@ In a graph:
 rak(...)
  |- Rak
      |- exception: Exception object or Nil
-     |- stats: Map with statistics (if any)
+     |- nr-sources: number of sources seen
+     |- nr-items: number of items seen
+     |- nr-matches: number of matches seen
+     |- nr-changes: number of changes (that could be) done
+     |- nr-passthrus: number of passthrus done
      |- completed: Bool whether all searching done already
      |- result: Iterable
           |- Pair
@@ -742,6 +803,14 @@ a source, and is expected to produce one items to be inspected.
 The C<Callable> should return C<Nil> if for some reason nothing
 could be produced).
 
+=head4 :progress(&announcer)
+
+If specified, indicates a C<Callable> that will be called 5 times
+per second to indicate how the search action is progressing.  It
+will either be called with a C<Progress> object (while the search
+action is still progressing) or B<without> any arguments to indicate
+that search has completed.
+
 =head4 :recurse-symlinked-dir
 
 Flag. If specified with a trueish value, will recurse into directories
@@ -776,9 +845,19 @@ and STDERR.  Optionally can only absorb STDOUT ("out"), STDERR
 
 =head4 :sort(&logic)
 
-When specified with C<True>, will sort the sources alphabetically.
-Can also be specified with a C<Callable>, which should contain
-the logic sorting (just as the argument to the C<.sort> method.
+When specified with C<True>, will sort the result alphabetically
+(using foldcase logic).  Can also be specified with a C<Callable>,
+which should contain the logic sorting (just as the argument to
+the C<.sort> method).
+
+Only supported with C<:unique> at this time.
+
+=head4 :sort-sources(&logic)
+
+When specified with C<True>, will sort the sources alphabetically
+(using foldcase logic).  Can also be specified with a C<Callable>,
+which should contain the logic sorting (just as the argument to
+the C<.sort> method).
 
 =head4 :sources(@objects)
 
@@ -800,15 +879,15 @@ to C<False>.
 =head4 :stats
 
 Flag.  If specified with a trueish value, will keep stats on number
-of files and number of items seen, and make that available in the
-C<stats> attribute of the C<Rak> object.
+number of items seen, number of matches, number of changes and number
+of passthrus.  Stats on number of sources seen, will always be kept.
 
 =head4 :stats-only
 
 Flag.  If specified with a trueish value, will perform all searching, but
 only update counters and not produce any result.  The statistics will
-be available in the C<stats> attribute, and the C<result> attribute
-will be C<Empty>.
+be available in C<nr-xxx> methods, and the C<result> attribute will
+be C<Empty>.
 
 =head4 :uid(&filter)
 

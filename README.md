@@ -93,7 +93,7 @@ Related named arguments are (in alphabetical order):
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:invert-match</td> <td>invert the logic of matching</td> </tr> <tr> <td>:old-new</td> <td>produce pairs of old/new state</td> </tr> <tr> <td>:quietly</td> <td>absorb any warnings produced by the matcher</td> </tr> <tr> <td>:silently</td> <td>absorb any output done by the matcher</td> </tr> <tr> <td>:stats</td> <td>produce results and statistics</td> </tr> <tr> <td>:stats-only</td> <td>don&#39;t produce results, just statistics</td> </tr>
+<tr> <td>:invert-match</td> <td>invert the logic of matching</td> </tr> <tr> <td>:old-new</td> <td>produce pairs of old/new state</td> </tr> <tr> <td>:quietly</td> <td>absorb any warnings produced by the matcher</td> </tr> <tr> <td>:silently</td> <td>absorb any output done by the matcher</td> </tr> <tr> <td>:stats</td> <td>produce results and full statistics</td> </tr> <tr> <td>:stats-only</td> <td>don&#39;t produce results, just statistics</td> </tr>
 </tbody>
 </table>
 
@@ -129,7 +129,7 @@ Related named arguments are (in alphabetical order):
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:sort</td> <td>sort the sources before processing</td> </tr> <tr> <td>:eager</td> <td>produce all results before creating Rak object</td> </tr> <tr> <td>:mapper</td> <td>code to map results of a single source</td> </tr> <tr> <td>:map-all</td> <td>also call mapper if a source has no matches</td> </tr> <tr> <td>:sources-only</td> <td>only produce the source of any match</td> </tr> <tr> <td>:sources-without-only</td> <td>produce the source without any match</td> </tr> <tr> <td>:frequencies</td> <td>produce items and their frequencies</td> </tr> <tr> <td>:classify</td> <td>classify items according to a single key</td> </tr> <tr> <td>:categorize</td> <td>classify items according to zero or more keys</td> </tr> <tr> <td>:unique</td> <td>only produce unique items</td> </tr>
+<tr> <td>:categorize</td> <td>classify items according to zero or more keys</td> </tr> <tr> <td>:classify</td> <td>classify items according to a single key</td> </tr> <tr> <td>:eager</td> <td>produce all results before creating Rak object</td> </tr> <tr> <td>:frequencies</td> <td>produce items and their frequencies</td> </tr> <tr> <td>:map-all</td> <td>also call mapper if a source has no matches</td> </tr> <tr> <td>:mapper</td> <td>code to map results of a single source</td> </tr> <tr> <td>:progress</td> <td>code to show progress of running</td> </tr> <tr> <td>:sort</td> <td>sort the result of :unique</td> </tr> <tr> <td>:sort-sources</td> <td>sort the sources before processing</td> </tr> <tr> <td>:sources-only</td> <td>only produce the source of any match</td> </tr> <tr> <td>:sources-without-only</td> <td>produce the source without any match</td> </tr> <tr> <td>:unique</td> <td>only produce unique items</td> </tr>
 </tbody>
 </table>
 
@@ -141,13 +141,37 @@ Rak
 
 The return value of a `rak` search. Contains the following attributes:
 
-### result
-
-An `Iterable` with search results. This could be a lazy `Seq` or a fully vivified `List` (see below).
-
 ### completed
 
-A `Bool` indicating whether the search has already been completed. This is typically `True` if statistics were asked to be collected, or the pattern `Callable` contained `LAST` phasers.
+A `Bool` indicating whether the search has already been completed.
+
+### exception
+
+Any `Exception` object that was caught.
+
+### nr-changes
+
+Number of items (that would have been) changed.
+
+### nr-items
+
+Number of items inspected.
+
+### nr-matches
+
+Number of items that matched.
+
+### nr-passthrus
+
+Number of items that have passed through.
+
+### nr-sources
+
+Number of sources seen.
+
+### result
+
+A `Seq` with search results. This could be a lazy `Seq` or a `Seq` on a fully vivified `List`.
 
 ### stats
 
@@ -162,9 +186,7 @@ A `Map` with any statistics collected (so far, in case an exception was thrown).
 </tbody>
 </table>
 
-### exception
-
-Any `Exception` object that was caught.
+If the `Map` is empty, then no statistics (other than `nr-sources`) have been collected.
 
 PairContext
 -----------
@@ -176,6 +198,31 @@ PairMatched
 
 A subclass of `PairContext` of which the `matched` method returns `True`. Used for matching items when item-numbers are required to be returned.
 
+Progress
+--------
+
+Passed to the `:progress` `Callable` 5 times per second while searching is taking place. It provides several methods that allow a search application to show what is going on.
+
+### nr-changes
+
+Number of items (that would have been) changed. Continuously updated if the search has not been completed yet.
+
+### nr-items
+
+Number of items inspected. Continuously updated if the search has not been completed yet.
+
+### nr-matches
+
+Number of items that matched. Continuously updated if the search has not been completed yet.
+
+### nr-passthrus
+
+Number of items that have passed through. Continuously updated if the search has not been completed yet.
+
+### nr-sources
+
+Number of sources seen. Continuously updated if the search has not been completed yet.
+
 EXPORTED SUBROUTINES
 ====================
 
@@ -186,7 +233,9 @@ The `rak` subroutine takes a `Callable` (or `Regex`) pattern as the only positio
 
 ### Return value
 
-A `Rak` object (see above) is always returned. The object provides four attributes: `result` (with the result `Iterable`), `completed` (a Bool indicating whether all searching has been done already), `stats` (Map with any statistics) and `exception` (any `Exception` object or `Nil`).
+A `Rak` object (see above) is always returned. The object provides three attributes: `result` (with the result `Iterable`), `completed` (a Bool indicating whether all searching has been done already), and `exception` (any `Exception` object or `Nil`).
+
+Additionally it provides five methods that allow you to monitor progress and/or provide statistics at the end of a search. They are: `nr-sources`, `nr-items`, `nr-matches`, `nr-changes`, `nr-passthrus`.
 
 #### Result Iterable
 
@@ -203,7 +252,11 @@ In a graph:
     rak(...)
      |- Rak
          |- exception: Exception object or Nil
-         |- stats: Map with statistics (if any)
+         |- nr-sources: number of sources seen
+         |- nr-items: number of items seen
+         |- nr-matches: number of matches seen
+         |- nr-changes: number of changes (that could be) done
+         |- nr-passthrus: number of passthrus done
          |- completed: Bool whether all searching done already
          |- result: Iterable
               |- Pair
@@ -492,6 +545,10 @@ If specified, indicates a `Callable` that will be called given a source, and is 
 
 The `Callable` should return `Nil` if for some reason nothing could be produced).
 
+#### :progress(&announcer)
+
+If specified, indicates a `Callable` that will be called 5 times per second to indicate how the search action is progressing. It will either be called with a `Progress` object (while the search action is still progressing) or **without** any arguments to indicate that search has completed.
+
 #### :recurse-symlinked-dir
 
 Flag. If specified with a trueish value, will recurse into directories that are actually symbolic links. The default is `False`: do **not** recurse into symlinked directories.
@@ -514,7 +571,13 @@ When specified with `True`, will absorb any output on STDOUT and STDERR. Optiona
 
 #### :sort(&logic)
 
-When specified with `True`, will sort the sources alphabetically. Can also be specified with a `Callable`, which should contain the logic sorting (just as the argument to the `.sort` method.
+When specified with `True`, will sort the result alphabetically (using foldcase logic). Can also be specified with a `Callable`, which should contain the logic sorting (just as the argument to the `.sort` method).
+
+Only supported with `:unique` at this time.
+
+#### :sort-sources(&logic)
+
+When specified with `True`, will sort the sources alphabetically (using foldcase logic). Can also be specified with a `Callable`, which should contain the logic sorting (just as the argument to the `.sort` method).
 
 #### :sources(@objects)
 
@@ -530,11 +593,11 @@ Flag. If specified with a trueish value, will only produce the source of a match
 
 #### :stats
 
-Flag. If specified with a trueish value, will keep stats on number of files and number of items seen, and make that available in the `stats` attribute of the `Rak` object.
+Flag. If specified with a trueish value, will keep stats on number number of items seen, number of matches, number of changes and number of passthrus. Stats on number of sources seen, will always be kept.
 
 #### :stats-only
 
-Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any result. The statistics will be available in the `stats` attribute, and the `result` attribute will be `Empty`.
+Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any result. The statistics will be available in `nr-xxx` methods, and the `result` attribute will be `Empty`.
 
 #### :uid(&filter)
 

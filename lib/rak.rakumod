@@ -18,14 +18,6 @@ my class PairMatched is PairContext is export {
     method matched(--> True) { }
 }
 
-# The result class returned by the rak call
-our class Rak {
-    has $.result    is built(:bind) = Empty;          # search result, if any
-    has $.completed is built(:bind) = False;          # True if done already
-    has $.stats     is built(:bind) = BEGIN Map.new;  # Map with stats, if any
-    has $.exception is built(:bind) = Nil;            # what was thrown
-}
-
 # Create an eager slip for a given Seq
 my sub eagerSlip($seq) {
     $seq.iterator.push-all(my $buffer := IterationBuffer.new);
@@ -342,7 +334,7 @@ my sub make-matcher(&pattern, %_) {
     my $silently := (%_<silently>:delete)<>;
     if %_<quietly>:delete {
         # the existence of a CONTROL block appears to disallow use of ternaries
-        # 2202.07
+        # 2022.07
         if $silently {
             if $silently =:= True || $silently eq 'out,err' | 'err,out' {
                 -> $haystack {
@@ -391,8 +383,9 @@ my sub make-matcher(&pattern, %_) {
 }
 
 # Not matching
-my sub not-acceptable($result) {
-    $result<> =:= False || $result<> =:= Empty || $result<> =:= Nil
+my sub not-acceptable($result is copy) {
+    $result := $result<>;
+    $result =:= False || $result =:= Empty || $result =:= Nil
 }
 
 # Return a runner Callable for passthru
@@ -879,6 +872,9 @@ my multi sub make-runner(&matcher, $item-number) {
          }
 }
 
+# Stub the Rak class here
+our class Rak { ... }
+
 proto sub rak(|) is export {*}
 multi sub rak(&pattern, *%n) {
     rak &pattern, %n
@@ -888,10 +884,7 @@ multi sub rak(&pattern, %n) {
     my $CATCH := !(%n<dont-catch>:delete);
     CATCH {
         $CATCH
-          ?? (return Rak.new:
-               exception => $_,
-               stats     => map-stats,
-             )
+          ?? (return Rak.new: exception => $_)
           !! .rethrow;
     }
 
@@ -940,9 +933,9 @@ multi sub rak(&pattern, %n) {
     my $sources-seq = %n<sources>:delete // get-sources-seq;
 
     # sort sources if we want them sorted
-    if %n<sort>:delete -> $sort {
+    if %n<sort-sources>:delete -> $sort {
         $sources-seq = Bool.ACCEPTS($sort)
-          ?? $sources-seq.sort
+          ?? $sources-seq.sort(*.fc)
           !! $sources-seq.sort($sort)
     }
 
@@ -951,6 +944,7 @@ multi sub rak(&pattern, %n) {
     my $sources-only;
     my $sources-without-only;
     my $unique;
+    my $sort;
     my $frequencies;
     my $classify;
     my $categorize;
@@ -972,6 +966,8 @@ multi sub rak(&pattern, %n) {
         if %n<unique>:delete {
             $unique      := $eager := True;
             $item-number := False;
+
+            $sort := %n<sort>:delete;
         }
         elsif %n<frequencies>:delete {
             $frequencies := $eager := True;
@@ -1062,7 +1058,10 @@ multi sub rak(&pattern, %n) {
         }
     }
 
-    # Stats keeping stuff
+    # Stats keeping stuff: these lexical variables will be directly accessible
+    # through the Rak object that is returned.  This is ok to do, since each
+    # call to the "rak" subroutine will result in a unique Rak object, so
+    # there's no danger of these lexicals seeping into the wrong Rak object
     my $stats;
     my $stats-only;
     my atomicint $nr-sources;
@@ -1071,9 +1070,46 @@ multi sub rak(&pattern, %n) {
     my atomicint $nr-passthrus;
     my atomicint $nr-changes;
 
-    sub map-stats() {
-        Map.new: (:$nr-sources, :$nr-items,
-          :$nr-matches, :$nr-passthrus, :$nr-changes)
+    # Progress monitoring class, to be passed on when :progress is specified
+    my $progress := %n<progress>:delete;
+    my $cancellation;
+    class Progress {
+        method nr-sources()   { ⚛$nr-sources   }
+        method nr-items()     { ⚛$nr-items     }
+        method nr-matches()   { ⚛$nr-matches   }
+        method nr-passthrus() { ⚛$nr-passthrus }
+        method nr-changes()   { ⚛$nr-changes   }
+    }
+
+    # The result class returned by the rak call
+    class Rak {
+        has $.result    is built(:bind) = Empty;  # search result
+        has $.completed is built(:bind) = False;  # True if done already
+        has $.exception is built(:bind) = Nil;    # What was thrown
+
+        # Final stats access
+        method stats() {
+            $stats || $stats-only
+              ?? Map.new((
+                  :$nr-changes, :$nr-items, :$nr-matches,
+                  :$nr-passthrus, :$nr-sources
+                 ))
+              !! BEGIN Map.new
+        }
+
+        # Final progress access
+        method nr-sources()   { ⚛$nr-sources   }
+        method nr-items()     { ⚛$nr-items     }
+        method nr-matches()   { ⚛$nr-matches   }
+        method nr-passthrus() { ⚛$nr-passthrus }
+        method nr-changes()   { ⚛$nr-changes   }
+
+        method stop-progress() {
+            if $cancellation {
+                $cancellation.cancel;
+                $progress();  # indicate we're done to the progress logic
+            }
+        }
     }
 
     # Only interested in counts, so update counters and remove result
@@ -1089,6 +1125,7 @@ multi sub rak(&pattern, %n) {
                 ++⚛$nr-matches if $result;
             }
             else {
+                ++⚛$nr-matches;
                 ++⚛$nr-changes unless $result eqv $_;
             }
             Empty
@@ -1096,7 +1133,7 @@ multi sub rak(&pattern, %n) {
     }
 
     # Add any stats keeping if necessary
-    elsif $stats := %n<stats>:delete {
+    elsif ($stats := %n<stats>:delete) || $progress {
         my &old-matcher = &matcher;
         &matcher = -> $_ {
             ++⚛$nr-items;
@@ -1108,6 +1145,7 @@ multi sub rak(&pattern, %n) {
                 ++⚛$nr-matches if $result;
             }
             else {
+                ++⚛$nr-matches;
                 ++⚛$nr-changes unless $result eqv $_;
             }
             $result
@@ -1303,8 +1341,14 @@ multi sub rak(&pattern, %n) {
         }
     }
 
+    # Set up any progress reporting and associated cancellation
+    $cancellation := $*SCHEDULER.cue(-> { $progress(Progress) }, :every(.2))
+      if $progress;
+
     # If we're not only counting
-    unless $stats-only {  # XXX all in here are not thread-safe with HyperSeq
+    unless $stats-only {
+        my $lock := Lock.new;  # all of these need race protection
+
         # Only want unique matches
         if $unique {
             my %seen;
@@ -1313,22 +1357,32 @@ multi sub rak(&pattern, %n) {
                 if Iterable.ACCEPTS($outer) {
                     $outer.map({
                         my $inner := Pair.ACCEPTS($_) ?? .value !! $_;
-                        $inner unless %seen{$inner.WHICH}++
+                        $inner
+                          unless $lock.protect: -> { %seen{$inner.WHICH}++ }
                     }).Slip
                 }
                 else {
-                    $outer unless %seen{$outer.WHICH}++
+                    $outer
+                      unless $lock.protect: -> { %seen{$outer.WHICH}++ }
                 }
+            }
+            if $sort {
+                $result-seq := Bool.ACCEPTS($sort)
+                  ?? $result-seq.sort(*.fc)
+                  !! $result-seq.sort($sort)
             }
         }
 
         # Want classification
         elsif $classify -> &classifier {
             my %classified{Any};
+
             my sub store(\key, $value) {
-                (%classified{key} //
-                  (%classified{key} := IterationBuffer.new)
-                ).push: $value;
+                $lock.protect: {
+                    (%classified{key} //
+                      (%classified{key} := IterationBuffer.new)
+                    ).push: $value;
+                }
             }
 
             for $result-seq {
@@ -1342,8 +1396,10 @@ multi sub rak(&pattern, %n) {
                 else {
                     store classifier($outer), $outer;
                     my $key := classifier($outer);
-                    (%classified{$key} // (%classified{$key} := []))
-                      .push: $outer;
+                    $lock.protect: {
+                        (%classified{$key} // (%classified{$key} := []))
+                          .push: $outer;
+                    }
                 }
             }
             $result-seq := %classified.sort(-*.value.elems).map: {
@@ -1354,11 +1410,14 @@ multi sub rak(&pattern, %n) {
         # Want categorization
         elsif $categorize -> &categorizer {
             my %categorized{Any};
+
             my sub store(\keys, $value) {
-                for keys -> $key {
-                    (%categorized{$key} //
-                      (%categorized{$key} := IterationBuffer.new)
-                    ).push: $value;
+                $lock.protect: {
+                    for keys -> $key {
+                        (%categorized{$key} //
+                          (%categorized{$key} := IterationBuffer.new)
+                        ).push: $value;
+                    }
                 }
             }
 
@@ -1381,6 +1440,7 @@ multi sub rak(&pattern, %n) {
     }
 
     # Need to run all searches before returning
+    my %args;
     if $eager
       || $stats    # XXX this should really be lazy
       || &last-mapper-phaser
@@ -1404,13 +1464,9 @@ multi sub rak(&pattern, %n) {
         last-phaser()        if &last-phaser;
         last-mapper-phaser() if &last-mapper-phaser;
 
-        # For some reason we cannot do this in one statement, "stats" is
-        # getting called *always*, 2022.07
-        my %args =
-          (result => $buffer.Seq unless $stats-only),
-          (stats  => map-stats() if $stats || $stats-only),
-          :completed;
-        Rak.new: |%args;
+        $stats-only
+          ?? Rak.new(:completed)
+          !! Rak.new(:completed, :result($buffer.List))
     }
 
     # We can be lazy

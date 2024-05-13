@@ -1,3 +1,4 @@
+BEGIN %*ENV<RAKU_TEST_DIE_ON_FAIL> = 1;
 use Test;
 use rak;
 
@@ -284,7 +285,7 @@ is-deeply rak( -> $_ {
     }
 }, :paths($dir), :stats).stats,
   Map.new((
-    :nr-changes(5), :nr-items(55), :nr-matches(47),
+    :nr-changes(5), :nr-items(55), :nr-matches(52),
     :nr-passthrus(3), :nr-sources(10)
   )),
   "did stats work out?";
@@ -302,7 +303,7 @@ $rak := rak( -> $_ {
 }, :paths($dir), :stats-only);
 is-deeply $rak.stats, 
    Map.new((
-    :nr-changes(5), :nr-items(55), :nr-matches(47),
+    :nr-changes(5), :nr-items(55), :nr-matches(52),
     :nr-passthrus(3), :nr-sources(10)
   )),
   "did stats-only work out for stats?";
@@ -313,12 +314,12 @@ $rak := rak &defined, :paths($dir), :find, :omit-item-number, :dont-catch;
 ok $rak.result.head.value>>.absolute (==) %path2name.keys,
   'did a :find with &defined pattern work out';
 
-$rak := rak &defined, :paths($dir), :find, :sort, :omit-item-number;
+$rak := rak &defined, :paths($dir), :find, :sort-sources, :omit-item-number;
 is-deeply $rak.result.head.value>>.absolute, %path2name.keys.sort,
   'did a :find with &defined pattern work out sorted';
 
 $rak := rak &defined, :paths($dir), :find, :omit-item-number,
-  :sort({ $^b cmp $^a});
+  :sort-sources({ $^b cmp $^a});
 is-deeply $rak.result.head.value>>.absolute, %path2name.keys.sort.reverse,
   'did a :find with &defined pattern work out sorted reversed';
 

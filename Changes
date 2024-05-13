@@ -2,6 +2,20 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.53  2024-05-13T15:24:36+02:00
+    - Rename option ":sort" to ":sort-sources" to be more clear
+      about its function
+    - Remove the "stats" attribute from the Rak object, replace
+      them by "nr-sources", "nr-items", "nr-matches", "nr-passthrus"
+      and "nr-changes" methods and a "stats" method that will return
+      a Map with these counters (for compatibility with previous
+      versions)
+    - Add ":progress" option, for displaying search progress and
+      export associated Progress object
+    - Add ":sort" option, to sort result (currently only if ":unique"
+      has also been specified
+    - Fix race conditions with ":unique", ":classify", ":categorize"
+
 0.0.52  2024-05-09T13:49:19+02:00
     - Bump dependency on path-utils to fix issue with unreadable
       files and the :is-test
