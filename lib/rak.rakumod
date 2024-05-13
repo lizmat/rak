@@ -1012,7 +1012,7 @@ multi sub rak(&pattern, %n) {
     elsif (%n<produce-many>:delete)<> -> $produce-many {
         $item-number
           ?? -> $source {
-                 my $line-number = 0;
+                 my int $line-number;
                  $produce-many($source).map: {
                      PairContext.new: ++$line-number, $_
                  }
@@ -1036,6 +1036,11 @@ multi sub rak(&pattern, %n) {
             if (IO::Path.ACCEPTS($source) && $source.r)
                  || !IO::Path.ACCEPTS($source) {
                 my $seq := $source.lines(:$chomp, :$enc);
+
+                # Hyperize files of more than 2 MB
+                $seq := $seq.hyper(:batch(4096))
+                  if $source.s > 2097152;
+
                 my int $line-number;
                 $item-number
                   ?? $seq.map: { PairContext.new: ++$line-number, $_ }
