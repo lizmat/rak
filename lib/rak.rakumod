@@ -1033,13 +1033,13 @@ multi sub rak(&pattern, %n) {
         my $chomp := !(%n<with-line-endings>:delete);
         -> $source {
             # source exists and is readable
-            if (IO::Path.ACCEPTS($source) && $source.r)
-                 || !IO::Path.ACCEPTS($source) {
+            my $is-IO := IO::Path.ACCEPTS($source);
+            if ($is-IO && $source.r) || !$is-IO {
                 my $seq := $source.lines(:$chomp, :$enc);
 
                 # Hyperize files of more than 2 MB
                 $seq := $seq.hyper(:batch(4096))
-                  if $source.s > 2097152;
+                  if $is-IO && $source.s > 2097152;
 
                 my int $line-number;
                 $item-number
