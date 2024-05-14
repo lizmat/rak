@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.56  2024-05-14T14:18:49+02:00
     - Only hyperize large files if we don't have a maximum number
       of matches.  This is really a stopgap measure until we can
       actually terminate something hypered immediately
