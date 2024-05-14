@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.54  2024-05-14T12:13:55+02:00
     - If an IO::Path as source is more than 2MB, then the producer
       of that file will be hyperized for better performance when
       e.g. searching a single (large) file
