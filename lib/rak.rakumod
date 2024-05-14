@@ -1,6 +1,6 @@
 # The modules that we need here, with their full identities
 use Git::Files:ver<0.0.6>:auth<zef:lizmat>;      # git-files
-use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize raceize
+use hyperize:ver<0.0.2>:auth<zef:lizmat>;        # hyperize racify
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
 use path-utils:ver<0.0.18>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.1>:auth<zef:lizmat>;            # Trap
@@ -1038,8 +1038,10 @@ multi sub rak(&pattern, %n) {
                 my $seq := $source.lines(:$chomp, :$enc);
 
                 # Hyperize files of more than 2 MB
-                $seq := $seq.hyper(:batch(4096))
-                  if $is-IO && $source.s > 2097152;
+                $seq := $seq.&hyperize(4096, $degree)
+                  if !$max-matches-per-source
+                  && $is-IO
+                  && $source.s > 2097152;
 
                 my int $line-number;
                 $item-number

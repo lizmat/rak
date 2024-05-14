@@ -1,6 +1,9 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Only hyperize large files if we don't have a maximum number
+      of matches.  This is really a stopgap measure until we can
+      actually terminate something hypered immediately
 
 0.0.55  2024-05-14T12:46:38+02:00
     - Fix issue with ":unicode" option
