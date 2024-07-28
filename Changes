@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Add separate CI badges for each OS
+    - Add sponsor button
 
 0.0.57  2024-07-28T18:21:59+02:00
     - Disable ":max-matches-per-source" if ":unique", ":frequencies",
