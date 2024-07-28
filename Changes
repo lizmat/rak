@@ -1,6 +1,13 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Disable ":max-matches-per-source" if ":unique", ":frequencies",
+      ":classify" or ":categorize" have been specified
+    - Replace dependency on "hyperize" by "ParaSeq", and re-design
+      some internals so that large files (with more than 2K lines)
+      will be hyperized.
+    - No longer eagerly create result Slips, as these will probably
+      do too much, but rely on the result sequences lazily if possible
 
 0.0.56  2024-05-14T14:18:49+02:00
     - Only hyperize large files if we don't have a maximum number

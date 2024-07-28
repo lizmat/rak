@@ -269,6 +269,9 @@ thrown).  If the C<Map> is not empty, it contains the following keys:
 If the C<Map> is empty, then no statistics (other than C<nr-sources>) have
 been collected.
 
+Note that if the result is lazy, then the statistics won't be complete until
+every result has been processed.
+
 =head2 PairContext
 
 A subclass of C<Pair> of which the C<matched> method returns C<False>.
@@ -882,12 +885,15 @@ Flag.  If specified with a trueish value, will keep stats on number
 number of items seen, number of matches, number of changes and number
 of passthrus.  Stats on number of sources seen, will always be kept.
 
+Note that on lazy results, the statistics won't be complete until all
+results have been processed.
+
 =head4 :stats-only
 
 Flag.  If specified with a trueish value, will perform all searching, but
 only update counters and not produce any result.  The statistics will
 be available in C<nr-xxx> methods, and the C<result> attribute will
-be C<Empty>.
+be C<Empty>.  Note that this causes eager evaluation.
 
 =head4 :uid(&filter)
 

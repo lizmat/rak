@@ -7,7 +7,7 @@
   ],
   "depends": [
     "Git::Files:ver<0.0.6>:auth<zef:lizmat>",
-    "hyperize:ver<0.0.2>:auth<zef:lizmat>",
+    "ParaSeq:ver<0.2.5>:auth<zef:lizmat>",
     "paths:ver<10.0.9>:auth<zef:lizmat>",
     "path-utils:ver<0.0.18>:auth<zef:lizmat>",
     "Trap:ver<0.0.1>:auth<zef:lizmat>"
@@ -29,5 +29,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.56"
+  "version": "0.0.57"
 }

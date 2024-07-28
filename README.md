@@ -188,6 +188,8 @@ A `Map` with any statistics collected (so far, in case an exception was thrown).
 
 If the `Map` is empty, then no statistics (other than `nr-sources`) have been collected.
 
+Note that if the result is lazy, then the statistics won't be complete until every result has been processed.
+
 PairContext
 -----------
 
@@ -595,9 +597,11 @@ Flag. If specified with a trueish value, will only produce the source of a match
 
 Flag. If specified with a trueish value, will keep stats on number number of items seen, number of matches, number of changes and number of passthrus. Stats on number of sources seen, will always be kept.
 
+Note that on lazy results, the statistics won't be complete until all results have been processed.
+
 #### :stats-only
 
-Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any result. The statistics will be available in `nr-xxx` methods, and the `result` attribute will be `Empty`.
+Flag. If specified with a trueish value, will perform all searching, but only update counters and not produce any result. The statistics will be available in `nr-xxx` methods, and the `result` attribute will be `Empty`. Note that this causes eager evaluation.
 
 #### :uid(&filter)
 
