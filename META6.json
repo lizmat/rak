@@ -6,11 +6,11 @@
   "build-depends": [
   ],
   "depends": [
-    "Git::Files:ver<0.0.6>:auth<zef:lizmat>",
+    "Git::Files:ver<0.0.7>:auth<zef:lizmat>",
     "ParaSeq:ver<0.2.5>:auth<zef:lizmat>",
     "paths:ver<10.0.9>:auth<zef:lizmat>",
-    "path-utils:ver<0.0.18>:auth<zef:lizmat>",
-    "Trap:ver<0.0.1>:auth<zef:lizmat>"
+    "path-utils:ver<0.0.19>:auth<zef:lizmat>",
+    "Trap:ver<0.0.2>:auth<zef:lizmat>"
   ],
   "description": "Plumbing to be able to look for stuff",
   "license": "Artistic-2.0",
@@ -29,5 +29,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.58"
+  "version": "0.0.59"
 }

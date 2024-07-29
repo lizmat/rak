@@ -1,9 +1,9 @@
 # The modules that we need here, with their full identities
-use Git::Files:ver<0.0.6>:auth<zef:lizmat>;      # git-files
+use Git::Files:ver<0.0.7>:auth<zef:lizmat>;      # git-files
 use ParaSeq:ver<0.2.5>:auth<zef:lizmat>;         # hyperize racify
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
-use path-utils:ver<0.0.18>:auth<zef:lizmat>;     # path-*
-use Trap:ver<0.0.1>:auth<zef:lizmat>;            # Trap
+use path-utils:ver<0.0.19>:auth<zef:lizmat>;     # path-*
+use Trap:ver<0.0.2>:auth<zef:lizmat>;            # Trap
 
 # code to convert a path into an object that can do .lines and .slurp
 my &ioify = *.IO;
