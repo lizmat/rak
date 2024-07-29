@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.58  2024-07-29T11:50:20+02:00
     - Add ".changed" method to PairContext, returning False
     - Add PairChanged subclass of PairMatched, with a ".changed"
       method returning True

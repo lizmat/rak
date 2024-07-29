@@ -390,7 +390,7 @@ my sub not-acceptable($result is copy) {
     $result =:= False || $result =:= Empty || $result =:= Nil
 }
 
-my sub acceptable($item, $result) {
+my sub acceptable($item is raw, $result is raw) {
    $result =:= True || $result eqv $item.value
      ?? PairMatched.new($item.key, $item.value)
      !! PairChanged.new($item.key, $result)

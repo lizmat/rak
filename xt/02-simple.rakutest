@@ -26,10 +26,12 @@ LEAVE {
 # Line locations and their contents for matches
 my \l0 = PairMatched.new:  1, "zero";
 my \L0 = PairMatched.new:  1, "ZERO";
+my \C0 = PairChanged.new:  1, "ZERO";
 my \l1 = PairMatched.new:  2, "one";
 my \l2 = PairMatched.new:  3, "two";
-my \o2 = PairMatched.new:  3, "two" => "tvo";
+my \o2 = PairChanged.new:  3, "two" => "tvo";
 my \L2 = PairMatched.new:  3, "TWO";
+my \C2 = PairChanged.new:  3, "TWO";
 my \l3 = PairMatched.new:  4, "three";
 my \l4 = PairMatched.new:  5, "four";
 my \l5 = PairMatched.new:  6, "five";
@@ -119,16 +121,16 @@ lookup '*.ends-with("o")', :paths($dir), :is-text,
 ;
 
 lookup '-> $_ { .ends-with("o") && .uc }', :paths($dir),
-  "zero"  => (L0,),
-  "one"   => (L0,),
-  "two"   => (L0, L2),
-  "three" => (L0, L2),
-  "four"  => (L0, L2),
-  "five"  => (L0, L2),
-  "six"   => (L0, L2),
-  "seven" => (L0, L2),
-  "eight" => (L0, L2),
-  "nine"  => (L0, L2),
+  "zero"  => (C0,),
+  "one"   => (C0,),
+  "two"   => (C0, C2),
+  "three" => (C0, C2),
+  "four"  => (C0, C2),
+  "five"  => (C0, C2),
+  "six"   => (C0, C2),
+  "seven" => (C0, C2),
+  "eight" => (C0, C2),
+  "nine"  => (C0, C2),
 ;
 
 lookup "/ er /", :paths(%name2path<nine>),
