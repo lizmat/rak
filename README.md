@@ -193,12 +193,17 @@ Note that if the result is lazy, then the statistics won't be complete until eve
 PairContext
 -----------
 
-A subclass of `Pair` of which the `matched` method returns `False`. Used for non-matching items when item-numbers are required to be returned and a certain item context was requested.
+A subclass of `Pair` of which both the `matched` **and** `changed` method return `False`. Used for non-matching items when item-numbers are required to be returned and a certain item context was requested.
 
 PairMatched
 -----------
 
-A subclass of `PairContext` of which the `matched` method returns `True`. Used for matching items when item-numbers are required to be returned.
+A subclass of `PairContext` of which the `matched` method returns `True`, but the `changed` method returns `False`. Used for matching items when item-numbers are required to be returned.
+
+PairChanged
+-----------
+
+A subclass of `PairMatched` of which the `matched` **and** `changed` method return `True`. Used for changed items when item-numbers are required to be returned.
 
 Progress
 --------

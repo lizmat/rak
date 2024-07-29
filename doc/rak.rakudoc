@@ -274,14 +274,20 @@ every result has been processed.
 
 =head2 PairContext
 
-A subclass of C<Pair> of which the C<matched> method returns C<False>.
-Used for non-matching items when item-numbers are required to be
-returned and a certain item context was requested.
+A subclass of C<Pair> of which both the C<matched> B<and> C<changed> method
+return C<False>.  Used for non-matching items when item-numbers are
+required to be returned and a certain item context was requested.
 
 =head2 PairMatched
 
 A subclass of C<PairContext> of which the C<matched> method returns
-C<True>.  Used for matching items when item-numbers are required to
+C<True>, but the C<changed> method returns C<False>.  Used for matching
+items when item-numbers are required to be returned.
+
+=head2 PairChanged
+
+A subclass of C<PairMatched> of which the C<matched> B<and> C<changed> method
+return C<True>.  Used for changed items when item-numbers are required to
 be returned.
 
 =head2 Progress

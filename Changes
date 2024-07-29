@@ -1,6 +1,9 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Add ".changed" method to PairContext, returning False
+    - Add PairChanged subclass of PairMatched, with a ".changed"
+      method returning True
     - Add separate CI badges for each OS
     - Add sponsor button
 
@@ -9,7 +12,7 @@ Revision history for rak
       ":classify" or ":categorize" have been specified
     - Replace dependency on "hyperize" by "ParaSeq", and re-design
       some internals so that large files (with more than 2K lines)
-      will be hyperized.
+      will be hyperized
     - No longer eagerly create result Slips, as these will probably
       do too much, but rely on the result sequences lazily if possible
 

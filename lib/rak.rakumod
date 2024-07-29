@@ -11,11 +11,17 @@ my &ioify = *.IO;
 # The classes for matching and not-matching items (that have been added
 # because of some context argument having been specified).
 my class PairContext is Pair is export {
+    method changed(--> False) { }
     method matched(--> False) { }
     method Str(--> Str:D) { self.key ~ ':' ~ self.value }
 }
 my class PairMatched is PairContext is export {
     method matched(--> True) { }
+}
+
+# The special case for matches that resulted in a change
+my class PairChanged is PairMatched is export {
+    method changed(--> True) { }
 }
 
 # Message for humans on STDERR
@@ -384,17 +390,22 @@ my sub not-acceptable($result is copy) {
     $result =:= False || $result =:= Empty || $result =:= Nil
 }
 
+my sub acceptable($item, $result) {
+   $result =:= True || $result eqv $item.value
+     ?? PairMatched.new($item.key, $item.value)
+     !! PairChanged.new($item.key, $result)
+}
+
 # Return a runner Callable for passthru
 my sub make-passthru-runner($source, &matcher, $item-number) {
     $item-number
       ?? -> $item {
              my $*SOURCE := $source;
-             my $result  := matcher($item.value);
+             my $value   := $item.value;
+             my $result  := matcher($value);
              not-acceptable($result)
                ?? $item
-               !! PairMatched.new:
-                     $item.key,
-                     $result =:= True ?? $item.value !! $result
+               !! acceptable($item, $result)
          }
       !! -> $item {
              my $result := matcher($item);
@@ -424,11 +435,7 @@ my sub make-passthru-context-runner($source, &matcher, $item-number) {
              }
              else {  # match or something else was produced from match
                  $after = True;
-                 @before.push(
-                   PairMatched.new:
-                     $item.key,
-                     $result =:= True ?? $value !! $result
-                 ).splice.Slip
+                 @before.push(acceptable $item, $result).splice.Slip
              }
          }
       !! -> $item {
@@ -492,11 +499,7 @@ my multi sub make-paragraph-context-runner(
                  else {  # match or something else was produced from match
                      ++$matches-seen;
                      $after = True;
-                     @before.push(
-                       PairMatched.new:
-                         $item.key,
-                         $result =:= True ?? $value !! $result
-                     ).splice.Slip
+                     @before.push(acceptable $item, $result).splice.Slip
                  }
              }
          }
@@ -566,11 +569,7 @@ my multi sub make-paragraph-context-runner($source, &matcher, $item-number) {
              }
              else {  # match or something else was produced from match
                  $after = True;
-                 @before.push(
-                   PairMatched.new:
-                     $item.key,
-                     $result =:= True ?? $value !! $result
-                 ).splice.Slip
+                 @before.push(acceptable $item, $result).splice.Slip
              }
          }
       # no item numbers needed
@@ -639,11 +638,7 @@ my multi sub make-numeric-context-runner(
                      else {  # match or something was produced from match
                          ++$matches-seen;
                          $todo = $after;
-                         @before.push(
-                           PairMatched.new:
-                             $item.key,
-                             $result =:= True ?? $value !! $result
-                         ).splice.Slip
+                         @before.push(acceptable $item, $result).splice.Slip
                      }
                  }
              }
@@ -708,9 +703,7 @@ my multi sub make-numeric-context-runner(
                      else {  # match or something was produced from match
                          ++$matches-seen;
                          $todo = $after;
-                         PairMatched.new:
-                           $item.key,
-                           $result =:= True ?? $value !! $result
+                         acceptable($item, $result)
                      }
                  }
              }
@@ -768,11 +761,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {  # match or something was produced from match
                      $todo = $after;
-                     @before.push(
-                       PairMatched.new:
-                         $item.key,
-                         $result =:= True ?? $value !! $result
-                     ).splice.Slip
+                     @before.push(acceptable $item, $result).splice.Slip
                  }
              }
           # no item numbers needed
@@ -814,9 +803,7 @@ my multi sub make-numeric-context-runner(
                  }
                  else {  # match or something was produced from match
                      $todo = $after;
-                     PairMatched.new:
-                       $item.key,
-                       $result =:= True ?? $value !! $result
+                     acceptable($item, $result)
                  }
              }
           # no item numbers needed
@@ -854,9 +841,7 @@ my multi sub make-runner($source, &matcher, $item-number, uint $max-matches) {
              }
              else {
                  ++$matches-seen;
-                 PairMatched.new:
-                   $item.key,
-                   $result =:= True ?? $value !! $result
+                 acceptable($item, $result)
              }
          }
       # no item numbers needed
@@ -882,9 +867,7 @@ my multi sub make-runner($source, &matcher, $item-number) {
              my $result  := matcher($value);
              not-acceptable($result)
                ?? Empty
-               !! PairMatched.new:
-                    $item.key,
-                    $result =:= True ?? $value !! $result
+               !!  acceptable($item, $result)
          }
       # no item numbers needed
       !! -> $item {
@@ -1157,7 +1140,7 @@ multi sub rak(&pattern, %n) {
         &matcher = -> $_ {
             ++⚛$nr-items;
             my $result := old-matcher($_);
-            if $result =:= Empty {
+            if $result =:= Empty || $result eqv $_ {
                 ++$nr-passthrus;
             }
             elsif Bool.ACCEPTS($result) {
@@ -1165,7 +1148,7 @@ multi sub rak(&pattern, %n) {
             }
             else {
                 ++⚛$nr-matches;
-                ++⚛$nr-changes unless $result eqv $_;
+                ++⚛$nr-changes;
             }
             Empty
         }
@@ -1177,7 +1160,7 @@ multi sub rak(&pattern, %n) {
         &matcher = -> $_ {
             ++⚛$nr-items;
             my $result := old-matcher($_);
-            if $result =:= Empty {
+            if $result =:= Empty || $result eqv $_ {
                 ++$nr-passthrus;
             }
             elsif Bool.ACCEPTS($result) {
@@ -1185,7 +1168,7 @@ multi sub rak(&pattern, %n) {
             }
             else {
                 ++⚛$nr-matches;
-                ++⚛$nr-changes unless $result eqv $_;
+                ++⚛$nr-changes;
             }
             $result
         }
