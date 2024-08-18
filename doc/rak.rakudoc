@@ -165,6 +165,7 @@ Related named arguments are (in alphabetical order):
 =table
   argument                 meaning
   --------------------------------
+  :also-first              initial items to show if there is a match
   :after-context           number of items to show after a match
   :before-context          number of items to show before a match
   :context                 number of items to show around a match
@@ -418,6 +419,12 @@ for further selection.
 
 Indicate the number of items that should also be returned B<after>
 an item with a pattern match.  Defaults to B<0>.
+
+=head4 :also-first(N)
+
+Indicate the number of initial items seen to be produced B<if> there is
+an item with a pattern match.  Defaults to B<0>.  If specified as a flag,
+will assume B<1>.
 
 =head4 :batch(N)
 
@@ -722,7 +729,7 @@ C<False>.
 =head4 :max-matches-per-source(N)
 
 Indicate the maximum number of items that may be produce per source.
-Defaults to B<all> (which can also be specified by an falsish value).
+Defaults to B<all> (which can also be specified by a falsish value).
 
 =head4 :meta-modified(&filter)
 
