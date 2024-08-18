@@ -121,14 +121,15 @@ own logic for producing items to search in.
 Related named arguments are (in alphabetical order):
 
 =table
-  argument           meaning
-  --------------------------
-  :encoding          encoding to be used when creating items
-  :find              map sequence of step 1 to item producer
-  :produce-one       produce one item per given source
-  :produce-many      produce zero or more items by given source
-  :omit-item-number  do not store item numbers in result
-  :with-line-ending  produce lines with line endings
+  argument             meaning
+  -----------------------------
+  :encoding            encoding to be used when creating items
+  :find                map sequence of step 1 to item producer
+  :produce-one         produce one item per given source
+  :produce-many        produce zero or more items by given source
+  :produce-many-pairs  produce 0+ items by given source as pairs
+  :omit-item-number    do not store item numbers in result
+  :with-line-ending    produce lines with line endings
 
 The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
@@ -800,6 +801,18 @@ a source, and is expected to produce zero or more items to be
 inspected.  Defaults to a producer that calles the C<lines> method
 on a given source, with the C<:encoding> and C<:with-line-ending>
 arguments.
+
+The C<Callable> should return C<Empty> if for some reason nothing
+could be produced.
+
+=head4 :produce-many-pairs(&producer)
+
+If specified, indicates a C<Callable> that will be called given
+a source, and is expected to produce zero or more C<PairContext>
+objects to be inspected, in which the key represents the item
+number.
+
+This option will set the C<:omit-item-number> option to C<False>.
 
 The C<Callable> should return C<Empty> if for some reason nothing
 could be produced.

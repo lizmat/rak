@@ -76,7 +76,7 @@ Related named arguments are (in alphabetical order):
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:encoding</td> <td>encoding to be used when creating items</td> </tr> <tr> <td>:find</td> <td>map sequence of step 1 to item producer</td> </tr> <tr> <td>:produce-one</td> <td>produce one item per given source</td> </tr> <tr> <td>:produce-many</td> <td>produce zero or more items by given source</td> </tr> <tr> <td>:omit-item-number</td> <td>do not store item numbers in result</td> </tr> <tr> <td>:with-line-ending</td> <td>produce lines with line endings</td> </tr>
+<tr> <td>:encoding</td> <td>encoding to be used when creating items</td> </tr> <tr> <td>:find</td> <td>map sequence of step 1 to item producer</td> </tr> <tr> <td>:produce-one</td> <td>produce one item per given source</td> </tr> <tr> <td>:produce-many</td> <td>produce zero or more items by given source</td> </tr> <tr> <td>:produce-many-pairs</td> <td>produce 0+ items by given source as pairs</td> </tr> <tr> <td>:omit-item-number</td> <td>do not store item numbers in result</td> </tr> <tr> <td>:with-line-ending</td> <td>produce lines with line endings</td> </tr>
 </tbody>
 </table>
 
@@ -543,6 +543,14 @@ If specified, indicates a list of paths that should be used as the base of the p
 #### :produce-many(&producer)
 
 If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more items to be inspected. Defaults to a producer that calles the `lines` method on a given source, with the `:encoding` and `:with-line-ending` arguments.
+
+The `Callable` should return `Empty` if for some reason nothing could be produced.
+
+#### :produce-many-pairs(&producer)
+
+If specified, indicates a `Callable` that will be called given a source, and is expected to produce zero or more `PairContext` objects to be inspected, in which the key represents the item number.
+
+This option will set the `:omit-item-number` option to `False`.
 
 The `Callable` should return `Empty` if for some reason nothing could be produced.
 
