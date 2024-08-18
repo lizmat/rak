@@ -2,6 +2,10 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.60  2024-08-18T12:09:20+02:00
+    - Add ":produce-many-pairs" option
+    - Up dependency on path-utils to keep in sync
+
 0.0.59  2024-07-29T12:41:21+02:00
     - Up dependencies on Git::Files, path-utils and Trap to keep
       in sync

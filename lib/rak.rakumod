@@ -2,7 +2,7 @@
 use Git::Files:ver<0.0.7>:auth<zef:lizmat>;      # git-files
 use ParaSeq:ver<0.2.5>:auth<zef:lizmat>;         # hyperize racify
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
-use path-utils:ver<0.0.19>:auth<zef:lizmat>;     # path-*
+use path-utils:ver<0.0.20>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.2>:auth<zef:lizmat>;            # Trap
 
 # code to convert a path into an object that can do .lines and .slurp
@@ -867,7 +867,7 @@ my multi sub make-runner($source, &matcher, $item-number) {
              my $result  := matcher($value);
              not-acceptable($result)
                ?? Empty
-               !!  acceptable($item, $result)
+               !! acceptable($item, $result)
          }
       # no item numbers needed
       !! -> $item {
@@ -1015,6 +1015,10 @@ multi sub rak(&pattern, %n) {
                 !! ($producer,)
           }
     }
+    elsif (%n<produce-many-pairs>:delete)<> -> $produce-many-pairs {
+        $item-number := True;
+        $produce-many-pairs
+    }
     elsif (%n<produce-many>:delete)<> -> $produce-many {
         $item-number
           ?? -> $source {
@@ -1024,7 +1028,7 @@ multi sub rak(&pattern, %n) {
                  }
              }
           # no item numbers produced
-          !! -> $source { $produce-many($source) }
+          !! $produce-many
     }
     elsif %n<find>:delete {
         my $seq := $sources-seq<>;
