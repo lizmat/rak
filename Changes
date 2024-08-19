@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.61  2024-08-19T12:13:16+02:00
     - Add ":also-first" and ":always-first" options
 
 0.0.60  2024-08-18T12:09:20+02:00
