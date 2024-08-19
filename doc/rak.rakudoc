@@ -166,6 +166,7 @@ Related named arguments are (in alphabetical order):
   argument                 meaning
   --------------------------------
   :also-first              initial items to show if there is a match
+  :always-first            initial items to show always
   :after-context           number of items to show after a match
   :before-context          number of items to show before a match
   :context                 number of items to show around a match
@@ -422,9 +423,15 @@ an item with a pattern match.  Defaults to B<0>.
 
 =head4 :also-first(N)
 
-Indicate the number of initial items seen to be produced B<if> there is
-an item with a pattern match.  Defaults to B<0>.  If specified as a flag,
+Indicate the number of initial items to be produced B<if> there is an
+item with a pattern match.  Defaults to B<0>.  If specified as a flag,
 will assume B<1>.
+
+=head4 :always-first(N)
+
+Indicate the number of initial items to be B<always> be produced
+regardless whether there is an item with a pattern match or not.
+Defaults to B<0>.  If specified as a flag, will assume B<1>.
 
 =head4 :batch(N)
 

@@ -1,7 +1,7 @@
 Revision history for rak
 
 {{$NEXT}}
-    - Add ":also-first" option
+    - Add ":also-first" and ":always-first" options
 
 0.0.60  2024-08-18T12:09:20+02:00
     - Add ":produce-many-pairs" option

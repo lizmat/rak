@@ -108,7 +108,7 @@ Related named arguments are (in alphabetical order):
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:also-first</td> <td>initial items to show if there is a match</td> </tr> <tr> <td>:after-context</td> <td>number of items to show after a match</td> </tr> <tr> <td>:before-context</td> <td>number of items to show before a match</td> </tr> <tr> <td>:context</td> <td>number of items to show around a match</td> </tr> <tr> <td>:paragraph-context</td> <td>items around match until false item</td> </tr> <tr> <td>:passthru-context</td> <td>pass on *all* items if there is a match</td> </tr> <tr> <td>:max-matches-per-source</td> <td>max # of matches per source</td> </tr> <tr> <td>:passthru</td> <td>pass on *all* items always</td> </tr>
+<tr> <td>:also-first</td> <td>initial items to show if there is a match</td> </tr> <tr> <td>:always-first</td> <td>initial items to show always</td> </tr> <tr> <td>:after-context</td> <td>number of items to show after a match</td> </tr> <tr> <td>:before-context</td> <td>number of items to show before a match</td> </tr> <tr> <td>:context</td> <td>number of items to show around a match</td> </tr> <tr> <td>:paragraph-context</td> <td>items around match until false item</td> </tr> <tr> <td>:passthru-context</td> <td>pass on *all* items if there is a match</td> </tr> <tr> <td>:max-matches-per-source</td> <td>max # of matches per source</td> </tr> <tr> <td>:passthru</td> <td>pass on *all* items always</td> </tr>
 </tbody>
 </table>
 
@@ -298,7 +298,11 @@ Indicate the number of items that should also be returned **after** an item with
 
 #### :also-first(N)
 
-Indicate the number of initial items seen to be produced **if** there is an item with a pattern match. Defaults to **0**. If specified as a flag, will assume **1**.
+Indicate the number of initial items to be produced **if** there is an item with a pattern match. Defaults to **0**. If specified as a flag, will assume **1**.
+
+#### :always-first(N)
+
+Indicate the number of initial items to be **always** be produced regardless whether there is an item with a pattern match or not. Defaults to **0**. If specified as a flag, will assume **1**.
 
 #### :batch(N)
 

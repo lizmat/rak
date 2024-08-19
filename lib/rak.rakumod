@@ -449,6 +449,35 @@ my sub make-also-first-runner($source, &matcher, $items, $item-number) {
          }
 }
 
+# Return a runner Callable for "always first" context
+my sub make-always-first-runner($source, &matcher, $items, $item-number) {
+    my int $todo = $items;
+    $item-number
+      ?? -> $item {
+             my $*SOURCE := $source;
+             my $value   := $item.value;
+             my $result  := matcher($value);
+             if not-acceptable($result) {  # no match
+                 ($todo && $todo--) ?? $item !! Empty
+             }
+             else {  # match or something else was produced from match
+                 --$todo if $todo;
+                 acceptable $item, $result
+             }
+         }
+      !! -> $item {
+             my $*SOURCE := $source;
+             my $result  := matcher($item);
+             if not-acceptable($result) {  # no match
+                 ($todo && $todo--) ?? $item !! Empty
+             }
+             else {  # match or something else was produced from match
+                 --$todo if $todo;
+                 $result =:= True ?? $item !! $result
+             }
+         }
+}
+
 # Return a runner Callable for passthru context
 my sub make-passthru-context-runner($source, &matcher, $item-number) {
     my $after;
@@ -941,12 +970,13 @@ multi sub rak(&pattern, %n) {
 
     # Get any of the context flags, and a flag to rule them all
     my $any-context := (my $passthru := %n<passthru>:delete)
-      || (my $also-first-context := %n<also-first>:delete)
-      || (my $passthru-context   := %n<passthru-context>:delete)
-      || (my $context            := %n<context>:delete)
-      || (my $before-context     := %n<before-context>:delete)
-      || (my $after-context      := %n<after-context>:delete)
-      || (my $paragraph-context  := %n<paragraph-context>:delete);
+      || (my $also-first-context   := %n<also-first>:delete)
+      || (my $always-first-context := %n<always-first>:delete)
+      || (my $passthru-context     := %n<passthru-context>:delete)
+      || (my $context              := %n<context>:delete)
+      || (my $before-context       := %n<before-context>:delete)
+      || (my $after-context        := %n<after-context>:delete)
+      || (my $paragraph-context    := %n<paragraph-context>:delete);
 
     my sub get-sources-seq() {
         my $seq := do if %n<files-from>:delete -> $files-from {
@@ -1241,6 +1271,11 @@ multi sub rak(&pattern, %n) {
         elsif $also-first-context -> $items {
             -> $source {
                 make-also-first-runner $source, &matcher, $items, $item-number
+            }
+        }
+        elsif $always-first-context -> $items {
+            -> $source {
+                make-always-first-runner $source, &matcher, $items, $item-number
             }
         }
         elsif $passthru-context {
