@@ -2,6 +2,11 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.63  2024-08-21T21:01:43+02:00
+    - Remove hypering of large files for now: they appear to tickle
+      some issue in MoarVM, causing crashes
+    - Bump dependency on ParaSeq for safer queueing of blocks
+
 0.0.62  2024-08-19T21:32:46+02:00
     - Bump dependency on ParaSeq for exception handling fix
 

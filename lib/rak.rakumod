@@ -1,6 +1,6 @@
 # The modules that we need here, with their full identities
 use Git::Files:ver<0.0.7>:auth<zef:lizmat>;      # git-files
-use ParaSeq:ver<0.2.6+>:auth<zef:lizmat>;        # hyperize racify
+use ParaSeq:ver<0.2.7+>:auth<zef:lizmat>;        # hyperize racify
 use paths:ver<10.0.9>:auth<zef:lizmat> 'paths';  # paths
 use path-utils:ver<0.0.20>:auth<zef:lizmat>;     # path-*
 use Trap:ver<0.0.2>:auth<zef:lizmat>;            # Trap
@@ -1118,10 +1118,12 @@ multi sub rak(&pattern, %n) {
                 $seq := $seq.map({ PairContext.new: ++$line-number, $_ })
                   if $item-number;
 
+$seq
+
                 # Hyperize if it is a path
-                $is-IO && $ok-to-hyper
-                  ?? $seq.&hyperize(2048, $degree)
-                  !! $seq.Seq   # XXX why???
+#                $is-IO && $ok-to-hyper
+#                  ?? $seq.&hyperize(2048, $degree)
+#                  !! $seq.Seq   # XXX why???
             }
         }
     }
