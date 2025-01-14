@@ -127,7 +127,7 @@ Related named arguments are (in alphabetical order):
   :find                map sequence of step 1 to item producer
   :produce-one         produce one item per given source
   :produce-many        produce zero or more items by given source
-  :produce-many-pairs  produce 0+ items by given source as pairs
+  :produce-many-pairs  produce zero or more items by given source as pairs
   :omit-item-number    do not store item numbers in result
   :with-line-ending    produce lines with line endings
 
