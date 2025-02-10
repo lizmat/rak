@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Update dependencies, because we can
+    - Update copyright year
 
 0.0.63  2024-08-21T21:01:43+02:00
     - Remove hypering of large files for now: they appear to tickle
