@@ -76,7 +76,7 @@ Related named arguments are (in alphabetical order):
 <th>argument</th> <th>meaning</th>
 </tr></thead>
 <tbody>
-<tr> <td>:encoding</td> <td>encoding to be used when creating items</td> </tr> <tr> <td>:find</td> <td>map sequence of step 1 to item producer</td> </tr> <tr> <td>:produce-one</td> <td>produce one item per given source</td> </tr> <tr> <td>:produce-many</td> <td>produce zero or more items by given source</td> </tr> <tr> <td>:produce-many-pairs</td> <td>produce 0+ items by given source as pairs</td> </tr> <tr> <td>:omit-item-number</td> <td>do not store item numbers in result</td> </tr> <tr> <td>:with-line-ending</td> <td>produce lines with line endings</td> </tr>
+<tr> <td>:encoding</td> <td>encoding to be used when creating items</td> </tr> <tr> <td>:find</td> <td>map sequence of step 1 to item producer</td> </tr> <tr> <td>:produce-one</td> <td>produce one item per given source</td> </tr> <tr> <td>:produce-many</td> <td>produce zero or more items by given source</td> </tr> <tr> <td>:produce-many-pairs</td> <td>produce zero or more items by given source as pairs</td> </tr> <tr> <td>:omit-item-number</td> <td>do not store item numbers in result</td> </tr> <tr> <td>:with-line-ending</td> <td>produce lines with line endings</td> </tr>
 </tbody>
 </table>
 
@@ -691,7 +691,7 @@ If you like this module, or what I’m doing more generally, committing to a [sm
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022, 2023, 2024 Elizabeth Mattijsen
+Copyright 2022, 2023, 2024, 2025 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

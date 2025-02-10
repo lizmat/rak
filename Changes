@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+
+0.0.64  2025-02-10T16:12:14+01:00
     - Update dependencies, because we can
     - Update copyright year
 
