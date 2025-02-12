@@ -1,6 +1,8 @@
 Revision history for rak
 
 {{$NEXT}}
+    - Remove ParaSeq as a dependency for now, it is causing too
+      many gotchas, revert back to hyperize
 
 0.0.64  2025-02-10T16:12:14+01:00
     - Update dependencies, because we can
