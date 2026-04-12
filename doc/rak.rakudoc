@@ -40,7 +40,15 @@ functionality to be used by modules such as (porcelain) C<App::Rak>.
 =head1 THEORY OF OPERATION
 
 The C<rak> subroutine basically goes through 6 steps to produce a
-C<Rak> object.
+C<Rak> object.  Any execution error will be caught and made harmless
+and inspectable with the C<.exception> method on the C<Rak> object.
+
+This behaviour can be adapted:
+
+=table
+  argument    meaning
+  -------------------------------
+  dont-catch  do *not* catch exception, immediately throw
 
 =head3 1. Acquire sources
 
@@ -69,6 +77,14 @@ The result of this step, is a (potentially lazy and hyperable)
 sequence of objects.
 
 =head3 2. Filter applicable objects
+
+Filtering may occur using hypering, depending on these arguments:
+
+=table
+  argument  meaning
+  -------------------------------
+  :batch    number of items per thread at a time
+  :degree   maximum number of threads
 
 Filter down the list of sources from step 1 on any additional filesystem
 related properties.  This assumes that the list of objects created are

@@ -38,7 +38,18 @@ The `rak` subroutine provides a mostly abstract core search (plumbing) functiona
 THEORY OF OPERATION
 ===================
 
-The `rak` subroutine basically goes through 6 steps to produce a `Rak` object.
+The `rak` subroutine basically goes through 6 steps to produce a `Rak` object. Any execution error will be caught and made harmless and inspectable with the `.exception` method on the `Rak` object.
+
+This behaviour can be adapted:
+
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>dont-catch</td> <td>do *not* catch exception, immediately throw</td> </tr>
+</tbody>
+</table>
 
 ### 1. Acquire sources
 
@@ -58,6 +69,17 @@ Related named arguments are (in alphabetical order):
 The result of this step, is a (potentially lazy and hyperable) sequence of objects.
 
 ### 2. Filter applicable objects
+
+Filtering may occur using hypering, depending on these arguments:
+
+<table class="pod-table">
+<thead><tr>
+<th>argument</th> <th>meaning</th>
+</tr></thead>
+<tbody>
+<tr> <td>:batch</td> <td>number of items per thread at a time</td> </tr> <tr> <td>:degree</td> <td>maximum number of threads</td> </tr>
+</tbody>
+</table>
 
 Filter down the list of sources from step 1 on any additional filesystem related properties. This assumes that the list of objects created are strings of absolute paths to be checked (except where otherwise indicated).
 
