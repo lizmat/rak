@@ -5,6 +5,13 @@ NAME
 
 rak - plumbing to be able to look for stuff
 
+NOTE
+====
+
+If you are here looking for the `rak` command-line interface, then you should look at: [App::Rak](https://raku.land/zef:lizmat/App::Rak) or [App::Rak::Complete](https://raku.land/zef:lizmat/App::Rak::Complete).
+
+If you are interested in the underlying search logic that `App::Rak` provides and want to use that in a more customized environment, then please read on!
+
 SYNOPSIS
 ========
 
@@ -691,7 +698,7 @@ If you like this module, or what I’m doing more generally, committing to a [sm
 COPYRIGHT AND LICENSE
 =====================
 
-Copyright 2022, 2023, 2024, 2025 Elizabeth Mattijsen
+Copyright 2022, 2023, 2024, 2025, 2026 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
 

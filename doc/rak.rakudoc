@@ -4,10 +4,20 @@
 
 rak - plumbing to be able to look for stuff
 
+=head1 NOTE
+
+If you are here looking for the C<rak> command-line interface, then
+you should look at:
+L<App::Rak|https://raku.land/zef:lizmat/App::Rak> or
+L<App::Rak::Complete|https://raku.land/zef:lizmat/App::Rak::Complete>.
+
+If you are interested in the underlying search logic that C<App::Rak>
+provides and want to use that in a more customized environment, then
+please read on!
+
 =head1 SYNOPSIS
 
 =begin code :lang<raku>
-
 use rak;
 
 # look for "foo" in all .txt files from current directory
@@ -20,7 +30,6 @@ for $rak.result -> (:key($path), :value(@found)) {
         say .key ~ ':' ~ .value for @found;
     }
 }
-
 =end code
 
 =head1 DESCRIPTION
@@ -1019,7 +1028,7 @@ deal to me!
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2022, 2023, 2024, 2025 Elizabeth Mattijsen
+Copyright 2022, 2023, 2024, 2025, 2026 Elizabeth Mattijsen
 
 This library is free software; you can redistribute it and/or modify it under
 the Artistic License 2.0.
