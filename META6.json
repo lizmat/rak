@@ -5,23 +5,32 @@
   ],
   "build-depends": [
   ],
-  "depends": [
-    "Git::Files:ver<0.0.8+>:auth<zef:lizmat>",
-    "hyperize:ver<0.0.4+>:auth<zef:lizmat>",
-    "paths:ver<10.1+>:auth<zef:lizmat>",
-    "path-utils:ver<0.0.21+>:auth<zef:lizmat>",
-    "Trap:ver<0.0.2+>:auth<zef:lizmat>"
-  ],
+  "depends": {
+    "runtime": {
+      "requires": [
+        "Git::Files:ver<0.0.8+>:auth<zef:lizmat>",
+        "hyperize:ver<0.0.4+>:auth<zef:lizmat>",
+        "paths:ver<10.1+>:auth<zef:lizmat>",
+        "path-utils:ver<0.0.21+>:auth<zef:lizmat>",
+        "Trap:ver<0.0.2+>:auth<zef:lizmat>"
+      ]
+    }
+  },
   "description": "Plumbing to be able to look for stuff",
   "license": "Artistic-2.0",
   "name": "rak",
-  "perl": "6.d",
   "provides": {
     "rak": "lib/rak.rakumod"
   },
+  "raku": "6.d",
   "resources": [
   ],
   "source-url": "https://github.com/lizmat/rak.git",
+  "support": {
+    "bugtracker": "https://github.com/lizmat/rak/issues",
+    "email": "liz@raku.rocks",
+    "source": "https://github.com/lizmat/rak.git"
+  },
   "tags": [
     "RAK",
     "SEARCH",
@@ -29,5 +38,5 @@
   ],
   "test-depends": [
   ],
-  "version": "0.0.65"
+  "version": "0.0.66"
 }

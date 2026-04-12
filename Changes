@@ -2,6 +2,13 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.66  2026-04-12T15:05:06+02:00
+    - Add link to App::Rak(::Complete) in docs
+    - Better document :batch, :degree, :dont-catch arguments
+    - Add examples of Callable usage to documentation
+    - Modernize META
+    - Update copyright year
+
 0.0.65  2025-02-12T17:03:00+01:00
     - Remove ParaSeq as a dependency for now, it is causing too
       many gotchas, revert back to hyperize
