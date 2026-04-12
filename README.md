@@ -674,6 +674,15 @@ Flag. If specified, indicates line endings are to be kept when producing items t
 PATTERN RETURN VALUES
 ---------------------
 
+Some examples using `Callable`s:
+
+```raku
+rak { .contains(/ foo /) };            # True || False
+rak { True if .contains(/ foo /) };    # True || Empty
+rak { Nil unless .contains(/ foo /) }; # Nil || Empty
+rak { ~$/ if .contains(/ foo \w+ /) }; # "foobar" || Empty
+```
+
 The return value of the pattern `Callable` match is interpreted in the following way:
 
 ### True

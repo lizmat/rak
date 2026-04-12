@@ -985,6 +985,15 @@ removed from items to check.  Only applicable with line-based checking.
 
 =head2 PATTERN RETURN VALUES
 
+Some examples using C<Callable>s:
+
+=begin code :lang<raku>
+rak { .contains(/ foo /) };            # True || False
+rak { True if .contains(/ foo /) };    # True || Empty
+rak { Nil unless .contains(/ foo /) }; # Nil || Empty
+rak { ~$/ if .contains(/ foo \w+ /) }; # "foobar" || Empty  
+=end code
+
 The return value of the pattern C<Callable> match is interpreted in the
 following way:
 
