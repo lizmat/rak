@@ -2,6 +2,9 @@ Revision history for rak
 
 {{$NEXT}}
 
+0.0.67  2026-05-28T17:37:52+02:00
+    - Bump dependencies, because we can
+
 0.0.66  2026-04-12T15:05:06+02:00
     - Add link to App::Rak(::Complete) in docs
     - Better document :batch, :degree, :dont-catch arguments
